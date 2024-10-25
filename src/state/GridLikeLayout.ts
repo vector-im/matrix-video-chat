@@ -25,7 +25,10 @@ export function gridLikeLayout(
 ): [Layout & { type: GridLikeLayoutType }, TileStore] {
   const update = prevTiles.from(visibleTiles);
   if (media.spotlight !== undefined)
-    update.registerSpotlight(media.spotlight, false);
+    update.registerSpotlight(
+      media.spotlight,
+      media.type === "spotlight-portrait",
+    );
   for (const mediaVm of media.grid) update.registerGridTile(mediaVm);
   const tiles = update.build();
 
