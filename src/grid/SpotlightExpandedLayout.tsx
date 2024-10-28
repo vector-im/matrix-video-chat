@@ -63,6 +63,7 @@ export const makeSpotlightExpandedLayout: CallLayout<
             id={model.pip.id}
             model={model.pip}
             onDrag={onDragPip}
+            onVisibilityChange={model.pip.setVisible}
             data-block-alignment={pipAlignmentValue.block}
             data-inline-alignment={pipAlignmentValue.inline}
           />

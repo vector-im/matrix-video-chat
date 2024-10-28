@@ -93,7 +93,13 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         }
       >
         {model.grid.map((m) => (
-          <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
+          <Slot
+            key={m.id}
+            className={styles.slot}
+            id={m.id}
+            model={m}
+            onVisibilityChange={m.setVisible}
+          />
         ))}
       </div>
     );

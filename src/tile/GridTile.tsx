@@ -10,7 +10,6 @@ import {
   ReactNode,
   forwardRef,
   useCallback,
-  useEffect,
   useRef,
   useState,
 } from "react";
@@ -284,16 +283,6 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
     const ref = useMergedRefs(ourRef, theirRef);
     const media = useObservableEagerState(vm.media);
     const displayName = useDisplayName(media);
-    useEffect(() => {
-      const io = new IntersectionObserver(
-        (entries) => {
-          vm.setVisible(entries.some((e) => e.isIntersecting));
-        },
-        { threshold: 1 },
-      );
-      io.observe(ourRef.current!);
-      return (): void => io.disconnect();
-    }, [vm]);
 
     if (media instanceof LocalUserMediaViewModel) {
       return (

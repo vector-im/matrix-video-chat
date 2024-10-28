@@ -24,9 +24,7 @@ export class GridTileViewModel extends ViewModel {
    */
   public readonly visible: Observable<boolean> = this.visible_;
 
-  public setVisible(value: boolean): void {
-    this.visible_.next(value);
-  }
+  public setVisible = (value: boolean): void => this.visible_.next(value);
 
   public constructor(public readonly media: Observable<UserMediaViewModel>) {
     super();
