@@ -79,6 +79,12 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     const { t } = useTranslation();
     const video = useObservableEagerState(vm.video);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
+    const encryptionKeyMissing = useObservableEagerState(
+      vm.encryptionKeyMissing,
+    );
+    const encryptionKeyInvalid = useObservableEagerState(
+      vm.encryptionKeyInvalid,
+    );
     const audioEnabled = useObservableEagerState(vm.audioEnabled);
     const videoEnabled = useObservableEagerState(vm.videoEnabled);
     const speaking = useObservableEagerState(vm.speaking);
@@ -113,6 +119,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         video={video}
         member={vm.member}
         unencryptedWarning={unencryptedWarning}
+        encryptionKeyMissing={encryptionKeyMissing}
+        encryptionKeyInvalid={encryptionKeyInvalid}
         videoEnabled={videoEnabled && showVideo}
         videoFit={cropVideo ? "cover" : "contain"}
         className={classNames(className, styles.tile, {

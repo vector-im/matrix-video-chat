@@ -166,5 +166,9 @@
     "expand": "Expand",
     "mute_for_me": "Mute for me",
     "volume": "Volume"
+  },
+  "e2ee_encryption_status": {
+    "key_missing": "Waiting for the end-to-end encryption key",
+    "key_invalid": "Invalid end-to-end encryption key"
   }
 }

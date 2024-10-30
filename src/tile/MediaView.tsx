@@ -29,6 +29,8 @@ interface Props extends ComponentProps<typeof animated.div> {
   member: RoomMember | undefined;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
+  encryptionKeyMissing: boolean;
+  encryptionKeyInvalid: boolean;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
@@ -50,6 +52,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTagLeadingIcon,
       displayName,
       primaryButton,
+      encryptionKeyMissing,
+      encryptionKeyInvalid,
       ...props
     },
     ref,
@@ -60,7 +64,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       <animated.div
         className={classNames(styles.media, className, {
           [styles.mirror]: mirror,
-          [styles.videoMuted]: !videoEnabled,
+          [styles.videoMuted]:
+            !videoEnabled || encryptionKeyInvalid || encryptionKeyMissing,
         })}
         style={style}
         ref={ref}
@@ -86,6 +91,20 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
         </div>
         <div className={styles.fg}>
+          {encryptionKeyMissing && (
+            <div className={styles.status}>
+              <Text as="span" size="sm" weight="medium" className={styles.name}>
+                {t("e2ee_encryption_status.key_missing")}
+              </Text>
+            </div>
+          )}
+          {encryptionKeyInvalid && (
+            <div className={styles.status}>
+              <Text as="span" size="sm" weight="medium" className={styles.name}>
+                {t("e2ee_encryption_status.key_invalid")}
+              </Text>
+            </div>
+          )}
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
             <Text as="span" size="sm" weight="medium" className={styles.name}>

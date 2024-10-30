@@ -126,6 +126,7 @@ export async function withLocalMedia(
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
+    mockLivekitRoom({}),
   );
   try {
     await continuation(vm);
@@ -159,6 +160,7 @@ export async function withRemoteMedia(
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
+    mockLivekitRoom({}),
   );
   try {
     await continuation(vm);

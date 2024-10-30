@@ -51,6 +51,8 @@ interface SpotlightItemBaseProps {
   video: TrackReferenceOrPlaceholder;
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
+  encryptionKeyMissing: boolean;
+  encryptionKeyInvalid: boolean;
   displayName: string;
   "aria-hidden"?: boolean;
 }
@@ -130,6 +132,12 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
     const displayName = useDisplayName(vm);
     const video = useObservableEagerState(vm.video);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
+    const encryptionKeyMissing = useObservableEagerState(
+      vm.encryptionKeyMissing,
+    );
+    const encryptionKeyInvalid = useObservableEagerState(
+      vm.encryptionKeyInvalid,
+    );
 
     // Hook this item up to the intersection observer
     useEffect(() => {
@@ -156,6 +164,8 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       member: vm.member,
       unencryptedWarning,
       displayName,
+      encryptionKeyMissing,
+      encryptionKeyInvalid,
       "aria-hidden": ariaHidden,
     };
 

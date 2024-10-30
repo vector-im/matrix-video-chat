@@ -169,6 +169,7 @@ class UserMedia {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
+    livekitRoom: LivekitRoom,
   ) {
     this.vm = participant.isLocal
       ? new LocalUserMediaViewModel(
@@ -176,12 +177,14 @@ class UserMedia {
           member,
           participant as LocalParticipant,
           encryptionSystem,
+          livekitRoom,
         )
       : new RemoteUserMediaViewModel(
           id,
           member,
           participant as RemoteParticipant,
           encryptionSystem,
+          livekitRoom,
         );
 
     this.speaker = this.vm.speaking.pipe(
@@ -225,12 +228,14 @@ class ScreenShare {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
+    liveKitRoom: LivekitRoom,
   ) {
     this.vm = new ScreenShareViewModel(
       id,
       member,
       participant,
       encryptionSystem,
+      liveKitRoom,
     );
   }
 
@@ -360,6 +365,7 @@ export class CallViewModel extends ViewModel {
                       member,
                       p,
                       this.encryptionSystem,
+                      this.livekitRoom,
                     ),
                 ];
 
@@ -373,6 +379,7 @@ export class CallViewModel extends ViewModel {
                         member,
                         p,
                         this.encryptionSystem,
+                        this.livekitRoom,
                       ),
                   ];
                 }
