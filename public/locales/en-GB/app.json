@@ -169,8 +169,8 @@
   },
   "e2ee_encryption_status": {
     "connecting": "Establishing end-to-end encrypted media connection...",
-    "key_missing": "You haven't yet received the latest end-to-end encrypted media key for this person",
     "key_invalid": "The end-to-end encrypted media key for this person is invalid",
+    "key_missing": "You haven't yet received the latest end-to-end encrypted media key for this person",
     "password_invalid": "This person is using a different password so you won't be able to communicate with them"
   }
 }
