@@ -168,7 +168,9 @@
     "volume": "Volume"
   },
   "e2ee_encryption_status": {
-    "key_missing": "Waiting for the end-to-end encryption key",
-    "key_invalid": "Invalid end-to-end encryption key"
+    "connecting": "Establishing end-to-end encrypted media connection...",
+    "key_missing": "You haven't yet received the latest end-to-end encrypted media key for this person",
+    "key_invalid": "The end-to-end encrypted media key for this person is invalid",
+    "password_invalid": "This person is using a different password so you won't be able to communicate with them"
   }
 }

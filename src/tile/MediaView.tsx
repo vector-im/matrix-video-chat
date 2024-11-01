@@ -17,6 +17,7 @@ import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
+import { EncryptionStatus } from "../state/MediaViewModel";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -29,8 +30,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   member: RoomMember | undefined;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
-  encryptionKeyMissing: boolean;
-  encryptionKeyInvalid: boolean;
+  encryptionStatus: EncryptionStatus;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
@@ -52,8 +52,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTagLeadingIcon,
       displayName,
       primaryButton,
-      encryptionKeyMissing,
-      encryptionKeyInvalid,
+      encryptionStatus,
       ...props
     },
     ref,
@@ -65,7 +64,10 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
         className={classNames(styles.media, className, {
           [styles.mirror]: mirror,
           [styles.videoMuted]:
-            !videoEnabled || encryptionKeyInvalid || encryptionKeyMissing,
+            !videoEnabled ||
+            ![EncryptionStatus.Connecting, EncryptionStatus.Okay].includes(
+              encryptionStatus,
+            ),
         })}
         style={style}
         ref={ref}
@@ -91,17 +93,17 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
         </div>
         <div className={styles.fg}>
-          {encryptionKeyMissing && (
+          {encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>
               <Text as="span" size="sm" weight="medium" className={styles.name}>
-                {t("e2ee_encryption_status.key_missing")}
-              </Text>
-            </div>
-          )}
-          {encryptionKeyInvalid && (
-            <div className={styles.status}>
-              <Text as="span" size="sm" weight="medium" className={styles.name}>
-                {t("e2ee_encryption_status.key_invalid")}
+                {encryptionStatus === EncryptionStatus.Connecting &&
+                  t("e2ee_encryption_status.connecting")}
+                {encryptionStatus === EncryptionStatus.KeyMissing &&
+                  t("e2ee_encryption_status.key_missing")}
+                {encryptionStatus === EncryptionStatus.KeyInvalid &&
+                  t("e2ee_encryption_status.key_invalid")}
+                {encryptionStatus === EncryptionStatus.PasswordInvalid &&
+                  t("e2ee_encryption_status.password_invalid")}
               </Text>
             </div>
           )}
