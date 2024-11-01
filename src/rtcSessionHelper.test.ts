@@ -10,6 +10,7 @@ import { expect, test, vi } from "vitest";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { Config } from "../src/config/Config";
+import { E2eeType } from "../src/e2ee/e2eeType";
 import { DEFAULT_CONFIG } from "./config/ConfigOptions";
 
 test("It joins the correct Session", async () => {
@@ -52,7 +53,7 @@ test("It joins the correct Session", async () => {
     }),
     joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
-  await enterRTCSession(mockedSession, false);
+  await enterRTCSession(mockedSession, E2eeType.NONE);
 
   expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
     [

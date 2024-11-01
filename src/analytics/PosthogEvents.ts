@@ -14,13 +14,30 @@ import {
   PosthogAnalytics,
   RegistrationType,
 } from "./PosthogAnalytics";
+import { E2eeType } from "../e2ee/e2eeType";
 
+type EncryptionScheme = "none" | "shared" | "per_sender";
+
+function mapE2eeType(type: E2eeType): EncryptionScheme {
+  switch (type) {
+    case E2eeType.NONE:
+      return "none";
+    case E2eeType.SHARED_KEY:
+      return "shared";
+    case E2eeType.PER_PARTICIPANT:
+      return "per_sender";
+  }
+}
 interface CallEnded extends IPosthogEvent {
   eventName: "CallEnded";
   callId: string;
   callParticipantsOnLeave: number;
   callParticipantsMax: number;
   callDuration: number;
+  encryption: EncryptionScheme;
+  toDeviceEncryptionKeysSent: number;
+  toDeviceEncryptionKeysReceived: number;
+  toDeviceEncryptionKeysReceivedAverageAge: number;
   roomEventEncryptionKeysSent: number;
   roomEventEncryptionKeysReceived: number;
   roomEventEncryptionKeysReceivedAverageAge: number;
@@ -46,6 +63,8 @@ export class CallEndedTracker {
   public track(
     callId: string,
     callParticipantsNow: number,
+    e2eeType: E2eeType,
+    rtcSession: MatrixRTCSession,
     sendInstantly: boolean,
     rtcSession: MatrixRTCSession,
   ): void {
@@ -56,6 +75,17 @@ export class CallEndedTracker {
         callParticipantsMax: this.cache.maxParticipantsCount,
         callParticipantsOnLeave: callParticipantsNow,
         callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
+        encryption: mapE2eeType(e2eeType),
+        toDeviceEncryptionKeysSent:
+          rtcSession.statistics.counters.toDeviceEncryptionKeysSent,
+        toDeviceEncryptionKeysReceived:
+          rtcSession.statistics.counters.toDeviceEncryptionKeysReceived,
+        toDeviceEncryptionKeysReceivedAverageAge:
+          rtcSession.statistics.counters.toDeviceEncryptionKeysReceived > 0
+            ? rtcSession.statistics.totals
+                .toDeviceEncryptionKeysReceivedTotalAge /
+              rtcSession.statistics.counters.toDeviceEncryptionKeysReceived
+            : 0,
         roomEventEncryptionKeysSent:
           rtcSession.statistics.counters.roomEventEncryptionKeysSent,
         roomEventEncryptionKeysReceived:
@@ -75,13 +105,15 @@ export class CallEndedTracker {
 interface CallStarted extends IPosthogEvent {
   eventName: "CallStarted";
   callId: string;
+  encryption: EncryptionScheme;
 }
 
 export class CallStartedTracker {
-  public track(callId: string): void {
+  public track(callId: string, e2eeType: E2eeType): void {
     PosthogAnalytics.instance.trackEvent<CallStarted>({
       eventName: "CallStarted",
       callId: callId,
+      encryption: mapE2eeType(e2eeType),
     });
   }
 }

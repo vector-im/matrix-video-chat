@@ -171,6 +171,7 @@ class UserMedia {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
+    livekitRoom: LivekitRoom,
   ) {
     this.vm = participant.isLocal
       ? new LocalUserMediaViewModel(
@@ -178,12 +179,14 @@ class UserMedia {
           member,
           participant as LocalParticipant,
           callEncrypted,
+          livekitRoom,
         )
       : new RemoteUserMediaViewModel(
           id,
           member,
           participant as RemoteParticipant,
           callEncrypted,
+          livekitRoom,
         );
 
     this.speaker = this.vm.speaking.pipe(
@@ -227,8 +230,15 @@ class ScreenShare {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
+    liveKitRoom: LivekitRoom,
   ) {
-    this.vm = new ScreenShareViewModel(id, member, participant, callEncrypted);
+    this.vm = new ScreenShareViewModel(
+      id,
+      member,
+      participant,
+      callEncrypted,
+      liveKitRoom,
+    );
   }
 
   public destroy(): void {
@@ -363,7 +373,13 @@ export class CallViewModel extends ViewModel {
                 yield [
                   userMediaId,
                   prevItems.get(userMediaId) ??
-                    new UserMedia(userMediaId, member, p, this.encrypted),
+                    new UserMedia(
+                      userMediaId,
+                      member,
+                      p,
+                      this.encrypted,
+                      this.livekitRoom,
+                    ),
                 ];
 
                 if (p.isScreenShareEnabled) {
@@ -371,7 +387,13 @@ export class CallViewModel extends ViewModel {
                   yield [
                     screenShareId,
                     prevItems.get(screenShareId) ??
-                      new ScreenShare(screenShareId, member, p, this.encrypted),
+                      new ScreenShare(
+                        screenShareId,
+                        member,
+                        p,
+                        this.encrypted,
+                        this.livekitRoom,
+                      ),
                   ];
                 }
               }
