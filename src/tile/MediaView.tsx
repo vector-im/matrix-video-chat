@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { ComponentProps, ReactNode, forwardRef } from "react";
+import { encodeUnpaddedBase64, RoomMember } from "matrix-js-sdk/src/matrix";
+import { ComponentProps, FC, ReactNode, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -18,7 +18,11 @@ import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
-import { showHandRaisedTimer, useSetting } from "../settings/settings";
+import {
+  showHandRaisedTimer,
+  showMediaKeys as showMediaKeysSettings,
+  useSetting,
+} from "../settings/settings";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -62,6 +66,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
   ) => {
     const { t } = useTranslation();
     const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
+    const [showMediaKeys] = useSetting(showMediaKeysSettings);
 
     const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
@@ -100,12 +105,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             minature={avatarSize < 96}
             showTimer={handRaiseTimerVisible}
           />
-          {/* {keys &&
-            keys.map(({ index, key }) => (
-              <Text as="span" size="sm">
-                index:{index}, key:{key}
-              </Text>
-            ))} */}
+          {keys && showMediaKeys && <MediaKeyList keys={keys} />}
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
             <Text as="span" size="sm" weight="medium" className={styles.name}>
@@ -132,5 +132,45 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
     );
   },
 );
+interface MediaKeyListProps {
+  keys: {
+    index: number;
+    key: Uint8Array;
+  }[];
+}
 
+export const MediaKeyList: FC<MediaKeyListProps> = ({ keys }) => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "70%",
+        overflow: "scroll",
+        color: "white",
+      }}
+    >
+      {keys.map(({ index, key }) => (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            backgroundColor: "#000000c0",
+            margin: "3px",
+            padding: "5px",
+            borderRadius: "5px",
+          }}
+          key={index}
+        >
+          <Text as="span" size="sm">
+            index:{index}
+          </Text>
+          <Text as="span" size="xs">
+            key:{key ? encodeUnpaddedBase64(key) : "unavailable"}
+          </Text>
+        </div>
+      ))}
+    </div>
+  );
+};
 MediaView.displayName = "MediaView";

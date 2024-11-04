@@ -41,7 +41,6 @@ import {
   MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc";
-import { logger } from "matrix-js-sdk/src/logger";
 
 import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
@@ -221,18 +220,22 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Camera,
     );
 
-    // rtcSession.on(
-    //   MatrixRTCSessionEvent.EncryptionKeyChanged,
-    //   (key, index, participantId) => {
-    //     if (id.startsWith(participantId))
-    //       logger.info("got new keys: ", participant, { index, key });
-    //     logger.info("All keys for participant ", participant, " - ", [
-    //       ...this.keys.value,
-    //       { index, key },
-    //     ]);
-    //     this.keys.next([...this.keys.value, { index, key }]);
-    //   },
-    // );
+    combineLatest([
+      participant,
+      fromEvent(rtcSession, MatrixRTCSessionEvent.EncryptionKeyChanged).pipe(
+        startWith(null),
+      ),
+    ]).subscribe(([par, ev]) => {
+      for (const participantKeys of rtcSession.getEncryptionKeys()) {
+        if (participantKeys[0] === par?.identity) {
+          this.keys.next(
+            Array.from(participantKeys[1].entries()).map(([i, k]) => {
+              return { index: i, key: k };
+            }),
+          );
+        }
+      }
+    });
 
     const media = participant.pipe(
       switchMap((p) => (p && observeParticipantMedia(p)) ?? of(undefined)),

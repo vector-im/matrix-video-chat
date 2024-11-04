@@ -72,7 +72,9 @@ export const developerSettingsTab = new Setting(
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
 
-export const nonMemberTiles = new Setting("non-member-tiles", true);
+export const nonMemberTiles = new Setting("non-member-tiles", false);
+
+export const showMediaKeys = new Setting("non-member-tiles", false);
 
 export const audioInput = new Setting<string | undefined>(
   "audio-input",

@@ -28,6 +28,7 @@ import {
   developerSettingsTab as developerSettingsTabSetting,
   duplicateTiles as duplicateTilesSetting,
   nonMemberTiles as nonMemberTilesSetting,
+  showMediaKeys as showMediaKeysSetting,
   useOptInAnalytics,
 } from "./settings";
 import { isFirefox } from "../Platform";
@@ -70,6 +71,8 @@ export const SettingsModal: FC<Props> = ({
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
 
   const [nonMemberTiles, setNonMemberTiles] = useSetting(nonMemberTilesSetting);
+
+  const [showMediaKeys, setShowMediaKeys] = useSetting(showMediaKeysSetting);
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (
@@ -250,6 +253,20 @@ export const SettingsModal: FC<Props> = ({
                 setNonMemberTiles(event.target.checked);
               },
               [setNonMemberTiles],
+            )}
+          />
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="showMediaKeys"
+            type="checkbox"
+            label={t("settings.show_media_keys")}
+            checked={showMediaKeys}
+            onChange={useCallback(
+              (event: ChangeEvent<HTMLInputElement>): void => {
+                setShowMediaKeys(event.target.checked);
+              },
+              [setShowMediaKeys],
             )}
           />
         </FieldRow>
