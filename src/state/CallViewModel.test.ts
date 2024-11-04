@@ -151,6 +151,15 @@ function withCallViewModel(
     .spyOn(ComponentsCore, "observeParticipantEvents")
     .mockImplementation((p) => cold("a", { a: p }));
 
+  const roomEventSelectorSpy = vi
+    .spyOn(ComponentsCore, "roomEventSelector")
+    .mockImplementation((room, eventType) => cold("a", { a: [] }));
+
+  const liveKitRoom = mockLivekitRoom(
+    { localParticipant },
+    { remoteParticipants },
+  );
+
   const vm = new CallViewModel(
     mockMatrixRoom({
       client: {
@@ -158,7 +167,7 @@ function withCallViewModel(
       } as Partial<MatrixClient> as MatrixClient,
       getMember: (userId) => members.get(userId) ?? null,
     }),
-    mockLivekitRoom({ localParticipant }),
+    liveKitRoom,
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -170,6 +179,7 @@ function withCallViewModel(
     participantsSpy!.mockRestore();
     mediaSpy!.mockRestore();
     eventsSpy!.mockRestore();
+    roomEventSelectorSpy!.mockRestore();
   });
 
   continuation(vm);
