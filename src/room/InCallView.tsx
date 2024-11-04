@@ -19,6 +19,7 @@ import {
   TouchEvent,
   forwardRef,
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -40,6 +41,8 @@ import {
   VideoButton,
   ShareScreenButton,
   SettingsButton,
+  RaiseHandToggleButton,
+  SwitchCameraButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useUrlParams } from "../UrlParams";
@@ -78,6 +81,10 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { ReactionsProvider, useReactions } from "../useReactions";
+import handSoundOgg from "../sound/raise_hand.ogg?url";
+import handSoundMp3 from "../sound/raise_hand.mp3?url";
+import { useSwitchCamera } from "./useSwitchCamera";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -130,12 +137,14 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <InCallView
-        {...props}
-        vm={vm}
-        livekitRoom={livekitRoom}
-        connState={connState}
-      />
+      <ReactionsProvider rtcSession={props.rtcSession}>
+        <InCallView
+          {...props}
+          vm={vm}
+          livekitRoom={livekitRoom}
+          connState={connState}
+        />
+      </ReactionsProvider>
     </RoomContext.Provider>
   );
 };
@@ -168,6 +177,13 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
+  const { supportsReactions, raisedHands } = useReactions();
+  const raisedHandCount = useMemo(
+    () => Object.keys(raisedHands).length,
+    [raisedHands],
+  );
+  const previousRaisedHandCount = useDeferredValue(raisedHandCount);
+
   useWakeLock();
 
   useEffect(() => {
@@ -217,6 +233,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const gridMode = useObservableEagerState(vm.gridMode);
   const showHeader = useObservableEagerState(vm.showHeader);
   const showFooter = useObservableEagerState(vm.showFooter);
+  const switchCamera = useSwitchCamera(vm.localVideo);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -260,10 +277,17 @@ export const InCallView: FC<InCallViewProps> = ({
     [setSettingsModalOpen],
   );
 
-  const openProfile = useCallback(() => {
-    setSettingsTab("profile");
-    setSettingsModalOpen(true);
-  }, [setSettingsTab, setSettingsModalOpen]);
+  const openProfile = useMemo(
+    () =>
+      // Profile settings are unavailable in widget mode
+      widget === null
+        ? (): void => {
+            setSettingsTab("profile");
+            setSettingsModalOpen(true);
+          }
+        : null,
+    [setSettingsTab, setSettingsModalOpen],
+  );
 
   const [headerRef, headerBounds] = useMeasure();
   const [footerRef, footerBounds] = useMeasure();
@@ -297,6 +321,19 @@ export const InCallView: FC<InCallViewProps> = ({
     (mode: GridMode) => vm.setGridMode(mode),
     [vm],
   );
+
+  // Play a sound when the raised hand count increases.
+  const handRaisePlayer = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    if (!handRaisePlayer.current) {
+      return;
+    }
+    if (previousRaisedHandCount < raisedHandCount) {
+      handRaisePlayer.current.play().catch((ex) => {
+        logger.warn("Failed to play raise hand sound", ex);
+      });
+    }
+  }, [raisedHandCount, handRaisePlayer, previousRaisedHandCount]);
 
   useEffect(() => {
     widget?.api.transport
@@ -488,14 +525,14 @@ export const InCallView: FC<InCallViewProps> = ({
 
     buttons.push(
       <MicButton
-        key="1"
+        key="audio"
         muted={!muteStates.audio.enabled}
         onClick={toggleMicrophone}
         disabled={muteStates.audio.setEnabled === null}
         data-testid="incall_mute"
       />,
       <VideoButton
-        key="2"
+        key="video"
         muted={!muteStates.video.enabled}
         onClick={toggleCamera}
         disabled={muteStates.video.setEnabled === null}
@@ -503,22 +540,35 @@ export const InCallView: FC<InCallViewProps> = ({
       />,
     );
     if (!reducedControls) {
+      if (switchCamera !== null)
+        buttons.push(
+          <SwitchCameraButton key="switch_camera" onClick={switchCamera} />,
+        );
       if (canScreenshare && !hideScreensharing) {
         buttons.push(
           <ShareScreenButton
-            key="3"
+            key="share_screen"
             enabled={isScreenShareEnabled}
             onClick={toggleScreensharing}
             data-testid="incall_screenshare"
           />,
         );
       }
-      buttons.push(<SettingsButton key="4" onClick={openSettings} />);
+      if (supportsReactions) {
+        buttons.push(
+          <RaiseHandToggleButton
+            client={client}
+            rtcSession={rtcSession}
+            key="4"
+          />,
+        );
+      }
+      buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
     }
 
     buttons.push(
       <EndCallButton
-        key="6"
+        key="end_call"
         onClick={function (): void {
           onLeave();
         }}
@@ -594,6 +644,10 @@ export const InCallView: FC<InCallViewProps> = ({
         ))}
       <RoomAudioRenderer />
       {renderContent()}
+      <audio ref={handRaisePlayer} hidden>
+        <source src={handSoundOgg} type="audio/ogg; codecs=vorbis" />
+        <source src={handSoundMp3} type="audio/mpeg" />
+      </audio>
       {footer}
       {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
       <SettingsModal
