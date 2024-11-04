@@ -83,7 +83,7 @@ import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
 import { ReactionsProvider, useReactions } from "../useReactions";
 import handSoundOgg from "../sound/raise_hand.ogg?url";
-import handSoundMp3 from "../sound/raise_hand.mp3?url"
+import handSoundMp3 from "../sound/raise_hand.mp3?url";
 import { useSwitchCamera } from "./useSwitchCamera";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
