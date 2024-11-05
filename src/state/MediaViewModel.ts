@@ -32,7 +32,6 @@ import {
   Observable,
   Subject,
   combineLatest,
-  debounceTime,
   distinctUntilChanged,
   distinctUntilKeyChanged,
   filter,
@@ -95,8 +94,6 @@ function observeRemoteTrackReceivingOkay(
   participant: Participant,
   source: Track.Source,
 ): Observable<boolean | undefined> {
-  const seconds = interval(1000);
-  const trackReference = observeTrackReference(participant, source);
   let lastStats: {
     framesDecoded: number | undefined;
     framesDropped: number | undefined;
@@ -107,7 +104,10 @@ function observeRemoteTrackReceivingOkay(
     framesReceived: undefined,
   };
 
-  return combineLatest([trackReference, seconds.pipe(startWith(0))]).pipe(
+  return combineLatest([
+    observeTrackReference(participant, source),
+    interval(1000).pipe(startWith(0)),
+  ]).pipe(
     switchMap(async ([trackReference]) => {
       const track = trackReference.publication?.track;
       if (!track || !(track instanceof RemoteTrack)) {
@@ -133,7 +133,7 @@ function observeRemoteTrackReceivingOkay(
       return undefined;
     }),
     filter((newStats) => !!newStats),
-    map((newStats) => {
+    map((newStats): boolean | undefined => {
       const oldStats = lastStats;
       lastStats = newStats;
       if (
@@ -152,10 +152,10 @@ function observeRemoteTrackReceivingOkay(
         if (framesReceivedDelta > 0) {
           return framesDecodedDelta > 0;
         }
-
-        // no change
-        return undefined;
       }
+
+      // no change
+      return undefined;
     }),
     filter((x) => typeof x === "boolean"),
     startWith(undefined),
@@ -168,10 +168,7 @@ function encryptionErrorObservable(
   encryptionSystem: EncryptionSystem,
   criteria: string,
 ): Observable<boolean> {
-  const roomEvents = roomEventSelector(
-    room,
-    LivekitRoomEvent.EncryptionError,
-  ).pipe(
+  return roomEventSelector(room, LivekitRoomEvent.EncryptionError).pipe(
     map((e) => {
       const [err] = e;
       if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
@@ -191,14 +188,6 @@ function encryptionErrorObservable(
     }),
     throttleTime(1000), // Throttle to avoid spamming the UI
     startWith(false),
-  );
-
-  return merge(
-    roomEvents,
-    roomEvents.pipe(
-      debounceTime(3000), // Wait 3 seconds before clearing the error, toast style
-      map(() => false),
-    ),
   );
 }
 
