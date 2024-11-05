@@ -38,6 +38,7 @@ import {
   ECAddonConnectionState,
   ECConnectionState,
 } from "../livekit/useECConnectionState";
+import { E2eeType } from "../e2ee/e2eeType";
 
 vi.mock("@livekit/components-core");
 
@@ -201,7 +202,9 @@ function withCallViewModel(
       getMember: (userId) => members.get(userId) ?? null,
     }),
     mockLivekitRoom({ localParticipant }),
-    true,
+    {
+      kind: E2eeType.PER_PARTICIPANT,
+    },
     connectionState,
   );
 
@@ -259,7 +262,7 @@ test("screen sharing activates spotlight layout", () => {
     // sharing, then return to grid, then manually go into spotlight, and
     // remain in spotlight until we manually go back to grid
     const laytMarbles = "abcdaefeg";
-
+    const showMarbles = "y----------ny---n---y";
     withCallViewModel(
       cold(partMarbles, {
         a: [aliceParticipant, bobParticipant],
@@ -311,6 +314,10 @@ test("screen sharing activates spotlight layout", () => {
             spotlight: undefined,
             grid: ["local:0", `${bobId}:0`, `${aliceId}:0`],
           },
+        });
+        expectObservable(vm.showSpeakingIndicators).toBe(showMarbles, {
+          y: true,
+          n: false,
         });
       },
     );

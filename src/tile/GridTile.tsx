@@ -47,6 +47,7 @@ import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
+import { useReactions } from "../useReactions";
 
 interface TileProps {
   className?: string;
@@ -91,6 +92,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
+    const { raisedHands } = useReactions();
 
     const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
 
@@ -108,6 +110,10 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       </>
     );
 
+    const handRaised: Date | undefined = raisedHands[vm.member?.userId ?? ""];
+
+    const showSpeaking = showSpeakingIndicators && speaking;
+
     const tile = (
       <MediaView
         ref={ref}
@@ -117,7 +123,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         videoEnabled={videoEnabled}
         videoFit={cropVideo ? "cover" : "contain"}
         className={classNames(className, styles.tile, {
-          [styles.speaking]: showSpeakingIndicators && speaking,
+          [styles.speaking]: showSpeaking,
+          [styles.handRaised]: !showSpeaking && !!handRaised,
         })}
         nameTagLeadingIcon={
           <MicIcon
@@ -145,6 +152,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
             {menu}
           </Menu>
         }
+        raisedHandTime={handRaised}
         {...props}
       />
     );
@@ -161,7 +169,7 @@ UserMediaTile.displayName = "UserMediaTile";
 
 interface LocalUserMediaTileProps extends TileProps {
   vm: LocalUserMediaViewModel;
-  onOpenProfile: () => void;
+  onOpenProfile: (() => void) | null;
 }
 
 const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
@@ -192,11 +200,13 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
           />
         }
         menuEnd={
-          <MenuItem
-            Icon={UserProfileIcon}
-            label={t("common.profile")}
-            onSelect={onOpenProfile}
-          />
+          onOpenProfile && (
+            <MenuItem
+              Icon={UserProfileIcon}
+              label={t("common.profile")}
+              onSelect={onOpenProfile}
+            />
+          )
         }
         {...props}
       />
@@ -269,7 +279,7 @@ RemoteUserMediaTile.displayName = "RemoteUserMediaTile";
 
 interface GridTileProps {
   vm: GridTileViewModel;
-  onOpenProfile: () => void;
+  onOpenProfile: (() => void) | null;
   targetWidth: number;
   targetHeight: number;
   className?: string;

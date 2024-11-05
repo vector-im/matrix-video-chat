@@ -10,10 +10,12 @@ import { test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { of } from "rxjs";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { GridTile } from "./GridTile";
 import { withRemoteMedia } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
+import { ReactionsProvider } from "../useReactions";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -33,14 +35,28 @@ test("GridTile is accessible", async () => {
         ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
     },
     async (vm) => {
+      const fakeRtcSession = {
+        on: () => {},
+        off: () => {},
+        room: {
+          on: () => {},
+          off: () => {},
+          client: {
+            getUserId: () => null,
+          },
+        },
+        memberships: [],
+      } as unknown as MatrixRTCSession;
       const { container } = render(
-        <GridTile
-          vm={new GridTileViewModel(of(vm))}
-          onOpenProfile={() => {}}
-          targetWidth={300}
-          targetHeight={200}
-          showSpeakingIndicators
-        />,
+        <ReactionsProvider rtcSession={fakeRtcSession}>
+          <GridTile
+            vm={new GridTileViewModel(of(vm))}
+            onOpenProfile={() => {}}
+            targetWidth={300}
+            targetHeight={200}
+            showSpeakingIndicators
+          />
+        </ReactionsProvider>,
       );
       expect(await axe(container)).toHaveNoViolations();
       // Name should be visible
