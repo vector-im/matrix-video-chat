@@ -9,6 +9,7 @@ import { describe, expect, test } from "vitest";
 import { render, configure } from "@testing-library/react";
 
 import { RaisedHandIndicator } from "./RaisedHandIndicator";
+import { click } from "@testing-library";
 
 configure({
   defaultHidden: true,
@@ -39,5 +40,17 @@ describe("RaisedHandIndicator", () => {
       <RaisedHandIndicator raisedHandTime={dateTime} minature showTimer />,
     );
     expect(container.firstChild).toMatchSnapshot();
+  });
+  test("can be clicked", () => {
+    const dateTime = new Date();
+    let wasClicked = false;
+    const { getByRole } = render(
+      <RaisedHandIndicator
+        raisedHandTime={dateTime}
+        onClick={() => (wasClicked = true)}
+      />,
+    );
+    getByRole("button").click();
+    expect(wasClicked).toBe(true);
   });
 });

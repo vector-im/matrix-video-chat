@@ -5,6 +5,10 @@
   color: var(--cpd-color-icon-secondary);
 }
 
+.link {
+  text-decoration: none;
+}
+
 .raisedHandWidget > p {
   padding: none;
   margin-top: auto;
