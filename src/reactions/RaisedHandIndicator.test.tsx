@@ -9,7 +9,6 @@ import { describe, expect, test } from "vitest";
 import { render, configure } from "@testing-library/react";
 
 import { RaisedHandIndicator } from "./RaisedHandIndicator";
-import { click } from "@testing-library";
 
 configure({
   defaultHidden: true,

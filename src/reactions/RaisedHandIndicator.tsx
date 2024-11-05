@@ -38,7 +38,7 @@ export function RaisedHandIndicator({
 }): ReactNode {
   const [raisedHandDuration, setRaisedHandDuration] = useState("");
 
-  const clickCallback = useCallback<MouseEventHandler<HTMLAnchorElement>>(
+  const clickCallback = useCallback<MouseEventHandler<HTMLButtonElement>>(
     (event) => {
       if (!onClick) {
         return;
@@ -96,15 +96,13 @@ export function RaisedHandIndicator({
 
   if (onClick) {
     return (
-      <a
-        role="button"
+      <button
         aria-label="lower raised hand"
-        className={styles.link}
-        href="#"
+        className={styles.button}
         onClick={clickCallback}
       >
         {content}
-      </a>
+      </button>
     );
   }
 

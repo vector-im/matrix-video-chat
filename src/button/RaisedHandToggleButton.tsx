@@ -62,7 +62,7 @@ export function RaiseHandToggleButton({
   client,
   rtcSession,
 }: RaisedHandToggleButtonProps): ReactNode {
-  const { raisedHands, myReactionId, lowerHand } = useReactions();
+  const { raisedHands, lowerHand } = useReactions();
   const [busy, setBusy] = useState(false);
   const userId = client.getUserId()!;
   const isHandRaised = !!raisedHands[userId];
@@ -111,9 +111,9 @@ export function RaiseHandToggleButton({
     client,
     isHandRaised,
     memberships,
-    myReactionId,
     rtcSession.room.roomId,
     userId,
+    lowerHand,
   ]);
 
   return (

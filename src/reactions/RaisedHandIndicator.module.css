@@ -5,8 +5,9 @@
   color: var(--cpd-color-icon-secondary);
 }
 
-.link {
-  text-decoration: none;
+.button {
+  display: contents;
+  background: none;
 }
 
 .raisedHandWidget > p {

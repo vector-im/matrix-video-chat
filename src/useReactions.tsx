@@ -30,8 +30,7 @@ import { useClientState } from "./ClientContext";
 interface ReactionsContextType {
   raisedHands: Record<string, Date>;
   supportsReactions: boolean;
-  myReactionId: string | null;
-  lowerHand: () => void;
+  lowerHand: () => Promise<void>;
 }
 
 const ReactionsContext = createContext<ReactionsContextType | undefined>(
@@ -80,13 +79,6 @@ export const ReactionsProvider = ({
     clientState?.state === "valid" && clientState.supportedFeatures.reactions;
   const room = rtcSession.room;
   const myUserId = room.client.getUserId();
-
-  // Calculate our own reaction event.
-  const myReactionId = useMemo(
-    (): string | null =>
-      (myUserId && raisedHands[myUserId]?.reactionEventId) ?? null,
-    [raisedHands, myUserId],
-  );
 
   // Reduce the data down for the consumers.
   const resultRaisedHands = useMemo(
@@ -266,7 +258,6 @@ export const ReactionsProvider = ({
       value={{
         raisedHands: resultRaisedHands,
         supportsReactions,
-        myReactionId,
         lowerHand,
       }}
     >
