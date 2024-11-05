@@ -262,7 +262,7 @@ test("screen sharing activates spotlight layout", () => {
     // sharing, then return to grid, then manually go into spotlight, and
     // remain in spotlight until we manually go back to grid
     const laytMarbles = "abcdaefeg";
-    const showMarbles = "y----------ny---n---y";
+    const showMarbles = "yn--yn--y";
     withCallViewModel(
       cold(partMarbles, {
         a: [aliceParticipant, bobParticipant],
