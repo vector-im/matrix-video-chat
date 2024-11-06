@@ -196,7 +196,7 @@ function withCallViewModel(
 
   const roomEventSelectorSpy = vi
     .spyOn(ComponentsCore, "roomEventSelector")
-    .mockImplementation((room, eventType) => cold("a", { a: [] }));
+    .mockImplementation((room, eventType) => of());
 
   const liveKitRoom = mockLivekitRoom(
     { localParticipant },
