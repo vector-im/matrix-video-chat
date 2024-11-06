@@ -848,23 +848,27 @@ export class CallViewModel extends ViewModel {
   );
 
   public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
-    map((l) => {
+    switchMap((l) => {
       switch (l.type) {
         case "spotlight-landscape":
         case "spotlight-portrait":
           // If the spotlight is showing the active speaker, we can do without
           // speaking indicators as they're a redundant visual cue. But if
           // screen sharing feeds are in the spotlight we still need them.
-          return l.spotlight[0] instanceof ScreenShareViewModel;
+          return l.spotlight.media.pipe(
+            map((models: MediaViewModel[]) =>
+              models.some((m) => m instanceof ScreenShareViewModel),
+            ),
+          );
         // In expanded spotlight layout, the active speaker is always shown in
         // the picture-in-picture tile so there is no need for speaking
         // indicators. And in one-on-one layout there's no question as to who is
         // speaking.
         case "spotlight-expanded":
         case "one-on-one":
-          return false;
+          return of(false);
         default:
-          return true;
+          return of(true);
       }
     }),
     this.scope.state(),
