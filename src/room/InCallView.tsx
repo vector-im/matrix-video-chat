@@ -19,6 +19,7 @@ import {
   TouchEvent,
   forwardRef,
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -27,7 +28,7 @@ import {
 import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
-import { BehaviorSubject, map, of } from "rxjs";
+import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -40,6 +41,7 @@ import {
   VideoButton,
   ShareScreenButton,
   SettingsButton,
+  RaiseHandToggleButton,
   SwitchCameraButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
@@ -70,7 +72,6 @@ import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
   CallLayoutOutputs,
-  TileModel,
   defaultPipAlignment,
   defaultSpotlightAlignment,
 } from "../grid/CallLayout";
@@ -78,6 +79,10 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { GridTileViewModel, TileViewModel } from "../state/TileViewModel";
+import { ReactionsProvider, useReactions } from "../useReactions";
+import handSoundOgg from "../sound/raise_hand.ogg?url";
+import handSoundMp3 from "../sound/raise_hand.mp3?url";
 import { useSwitchCamera } from "./useSwitchCamera";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
@@ -117,7 +122,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       const vm = new CallViewModel(
         props.rtcSession.room,
         livekitRoom,
-        props.e2eeSystem.kind !== E2eeType.NONE,
+        props.e2eeSystem,
         connStateObservable,
       );
       setVm(vm);
@@ -126,7 +131,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   }, [
     props.rtcSession.room,
     livekitRoom,
-    props.e2eeSystem.kind,
+    props.e2eeSystem,
     connStateObservable,
   ]);
 
@@ -134,12 +139,14 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <InCallView
-        {...props}
-        vm={vm}
-        livekitRoom={livekitRoom}
-        connState={connState}
-      />
+      <ReactionsProvider rtcSession={props.rtcSession}>
+        <InCallView
+          {...props}
+          vm={vm}
+          livekitRoom={livekitRoom}
+          connState={connState}
+        />
+      </ReactionsProvider>
     </RoomContext.Provider>
   );
 };
@@ -172,6 +179,13 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
+  const { supportsReactions, raisedHands } = useReactions();
+  const raisedHandCount = useMemo(
+    () => Object.keys(raisedHands).length,
+    [raisedHands],
+  );
+  const previousRaisedHandCount = useDeferredValue(raisedHandCount);
+
   useWakeLock();
 
   useEffect(() => {
@@ -265,10 +279,17 @@ export const InCallView: FC<InCallViewProps> = ({
     [setSettingsModalOpen],
   );
 
-  const openProfile = useCallback(() => {
-    setSettingsTab("profile");
-    setSettingsModalOpen(true);
-  }, [setSettingsTab, setSettingsModalOpen]);
+  const openProfile = useMemo(
+    () =>
+      // Profile settings are unavailable in widget mode
+      widget === null
+        ? (): void => {
+            setSettingsTab("profile");
+            setSettingsModalOpen(true);
+          }
+        : null,
+    [setSettingsTab, setSettingsModalOpen],
+  );
 
   const [headerRef, headerBounds] = useMeasure();
   const [footerRef, footerBounds] = useMeasure();
@@ -305,6 +326,19 @@ export const InCallView: FC<InCallViewProps> = ({
     (mode: GridMode) => vm.setGridMode(mode),
     [vm],
   );
+
+  // Play a sound when the raised hand count increases.
+  const handRaisePlayer = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    if (!handRaisePlayer.current) {
+      return;
+    }
+    if (previousRaisedHandCount < raisedHandCount) {
+      handRaisePlayer.current.play().catch((ex) => {
+        logger.warn("Failed to play raise hand sound", ex);
+      });
+    }
+  }, [raisedHandCount, handRaisePlayer, previousRaisedHandCount]);
 
   useEffect(() => {
     widget?.api.transport
@@ -350,7 +384,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () =>
       forwardRef<
         HTMLDivElement,
-        PropsWithoutRef<TileProps<TileModel, HTMLDivElement>>
+        PropsWithoutRef<TileProps<TileViewModel, HTMLDivElement>>
       >(function Tile(
         { className, style, targetWidth, targetHeight, model },
         ref,
@@ -359,13 +393,6 @@ export const InCallView: FC<InCallViewProps> = ({
         const onToggleExpanded = useObservableEagerState(
           vm.toggleSpotlightExpanded,
         );
-        const showVideo = useObservableEagerState(
-          useMemo(
-            () =>
-              model.type === "grid" ? vm.showGridVideo(model.vm) : of(true),
-            [model],
-          ),
-        );
         const showSpeakingIndicatorsValue = useObservableEagerState(
           vm.showSpeakingIndicators,
         );
@@ -373,23 +400,21 @@ export const InCallView: FC<InCallViewProps> = ({
           vm.showSpotlightIndicators,
         );
 
-        return model.type === "grid" ? (
+        return model instanceof GridTileViewModel ? (
           <GridTile
             ref={ref}
-            vm={model.vm}
+            vm={model}
             onOpenProfile={openProfile}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
             className={classNames(className, styles.tile)}
             style={style}
-            showVideo={showVideo}
             showSpeakingIndicators={showSpeakingIndicatorsValue}
           />
         ) : (
           <SpotlightTile
             ref={ref}
-            vms={model.vms}
-            maximised={model.maximised}
+            vm={model}
             expanded={spotlightExpanded}
             onToggleExpanded={onToggleExpanded}
             targetWidth={targetWidth}
@@ -423,8 +448,7 @@ export const InCallView: FC<InCallViewProps> = ({
       return (
         <SpotlightTile
           className={classNames(styles.tile, styles.maximised)}
-          vms={layout.spotlight!}
-          maximised
+          vm={layout.spotlight}
           expanded
           onToggleExpanded={null}
           targetWidth={gridBounds.height}
@@ -525,6 +549,15 @@ export const InCallView: FC<InCallViewProps> = ({
           />,
         );
       }
+      if (supportsReactions) {
+        buttons.push(
+          <RaiseHandToggleButton
+            client={client}
+            rtcSession={rtcSession}
+            key="4"
+          />,
+        );
+      }
       buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
     }
 
@@ -606,6 +639,10 @@ export const InCallView: FC<InCallViewProps> = ({
         ))}
       <RoomAudioRenderer />
       {renderContent()}
+      <audio ref={handRaisePlayer} hidden>
+        <source src={handSoundOgg} type="audio/ogg; codecs=vorbis" />
+        <source src={handSoundMp3} type="audio/mpeg" />
+      </audio>
       {footer}
       {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
       <SettingsModal
