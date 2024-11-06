@@ -221,24 +221,24 @@ function withCallViewModel(
 test("participants are retained during a focus switch", () => {
   withTestScheduler(({ cold, expectObservable }) => {
     // Participants disappear on frame 2 and come back on frame 3
-    const partMarbles = "a-ba";
+    const participantMarbles = "a-ba";
     // Start switching focus on frame 1 and reconnect on frame 3
-    const connMarbles = "cs-c";
+    const connectionMarbles = " cs-c";
     // The visible participants should remain the same throughout the switch
-    const laytMarbles = "a";
+    const layoutMarbles = "     a";
 
     withCallViewModel(
-      cold(partMarbles, {
+      cold(participantMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [],
       }),
-      cold(connMarbles, {
+      cold(connectionMarbles, {
         c: ConnectionState.Connected,
         s: ECAddonConnectionState.ECSwitchingFocus,
       }),
       new Map(),
       (vm) => {
-        expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
+        expectObservable(summarizeLayout(vm.layout)).toBe(layoutMarbles, {
           a: {
             type: "grid",
             spotlight: undefined,
@@ -254,17 +254,17 @@ test("screen sharing activates spotlight layout", () => {
   withTestScheduler(({ cold, schedule, expectObservable }) => {
     // Start with no screen shares, then have Alice and Bob share their screens,
     // then return to no screen shares, then have just Alice share for a bit
-    const partMarbles = "abcda-ba";
+    const participantMarbles = " abcda-ba";
     // While there are no screen shares, switch to spotlight manually, and then
     // switch back to grid at the end
-    const modeMarbles = "-----s--g";
+    const modeMarbles = "        -----s--g";
     // We should automatically enter spotlight for the first round of screen
     // sharing, then return to grid, then manually go into spotlight, and
     // remain in spotlight until we manually go back to grid
-    const laytMarbles = "abcdaefeg";
-    const showMarbles = "yn--yn--y";
+    const layoutMarbles = "      abcdaefeg";
+    const showSpeakingMarbles = "yn--yn--y";
     withCallViewModel(
-      cold(partMarbles, {
+      cold(participantMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [aliceSharingScreen, bobParticipant],
         c: [aliceSharingScreen, bobSharingScreen],
@@ -278,7 +278,7 @@ test("screen sharing activates spotlight layout", () => {
           g: () => vm.setGridMode("grid"),
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
+        expectObservable(summarizeLayout(vm.layout)).toBe(layoutMarbles, {
           a: {
             type: "grid",
             spotlight: undefined,
@@ -315,7 +315,7 @@ test("screen sharing activates spotlight layout", () => {
             grid: ["local:0", `${bobId}:0`, `${aliceId}:0`],
           },
         });
-        expectObservable(vm.showSpeakingIndicators).toBe(showMarbles, {
+        expectObservable(vm.showSpeakingIndicators).toBe(showSpeakingMarbles, {
           y: true,
           n: false,
         });
@@ -326,27 +326,27 @@ test("screen sharing activates spotlight layout", () => {
 
 test("participants stay in the same order unless to appear/disappear", () => {
   withTestScheduler(({ cold, schedule, expectObservable }) => {
-    const initMarbles = "a";
+    const modeMarbles = "a";
     // First Bob speaks, then Dave, then Alice
-    const aSpkMarbles = "n- 1998ms - 1999ms y";
-    const bSpkMarbles = "ny 1998ms n 1999ms ";
-    const dSpkMarbles = "n- 1998ms y 1999ms n";
+    const aSpeakingMarbles = "n- 1998ms - 1999ms y";
+    const bSpeakingMarbles = "ny 1998ms n 1999ms ";
+    const dSpeakingMarbles = "n- 1998ms y 1999ms n";
     // Nothing should change when Bob speaks, because Bob is already on screen.
     // When Dave speaks he should switch with Alice because she's the one who
     // hasn't spoken at all. Then when Alice speaks, she should return to her
     // place at the top.
-    const laytMarbles = "a 1999ms b 1999ms a 57999ms c 1999ms a";
+    const layoutMarbles = "   a  1999ms b 1999ms a 57999ms c 1999ms a";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, cold(aSpkMarbles, { y: true, n: false })],
-        [bobParticipant, cold(bSpkMarbles, { y: true, n: false })],
-        [daveParticipant, cold(dSpkMarbles, { y: true, n: false })],
+        [aliceParticipant, cold(aSpeakingMarbles, { y: true, n: false })],
+        [bobParticipant, cold(bSpeakingMarbles, { y: true, n: false })],
+        [daveParticipant, cold(dSpeakingMarbles, { y: true, n: false })],
       ]),
       (vm) => {
-        schedule(initMarbles, {
+        schedule(modeMarbles, {
           a: () => {
             // We imagine that only three tiles (the first three) will be visible
             // on screen at a time
@@ -359,7 +359,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
           },
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
+        expectObservable(summarizeLayout(vm.layout)).toBe(layoutMarbles, {
           a: {
             type: "grid",
             spotlight: undefined,
@@ -384,29 +384,29 @@ test("participants stay in the same order unless to appear/disappear", () => {
 test("spotlight speakers swap places", () => {
   withTestScheduler(({ cold, schedule, expectObservable }) => {
     // Go immediately into spotlight mode for the test
-    const initMarbles = "s";
+    const modeMarbles = "     s";
     // First Bob speaks, then Dave, then Alice
-    const aSpkMarbles = "n--y";
-    const bSpkMarbles = "nyn";
-    const dSpkMarbles = "n-yn";
+    const aSpeakingMarbles = "n--y";
+    const bSpeakingMarbles = "nyn";
+    const dSpeakingMarbles = "n-yn";
     // Alice should start in the spotlight, then Bob, then Dave, then Alice
     // again. However, the positions of Dave and Bob in the grid should be
     // reversed by the end because they've been swapped in and out of the
     // spotlight.
-    const laytMarbles = "abcd";
+    const layoutMarbles = "   abcd";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, cold(aSpkMarbles, { y: true, n: false })],
-        [bobParticipant, cold(bSpkMarbles, { y: true, n: false })],
-        [daveParticipant, cold(dSpkMarbles, { y: true, n: false })],
+        [aliceParticipant, cold(aSpeakingMarbles, { y: true, n: false })],
+        [bobParticipant, cold(bSpeakingMarbles, { y: true, n: false })],
+        [daveParticipant, cold(dSpeakingMarbles, { y: true, n: false })],
       ]),
       (vm) => {
-        schedule(initMarbles, { s: () => vm.setGridMode("spotlight") });
+        schedule(modeMarbles, { s: () => vm.setGridMode("spotlight") });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
+        expectObservable(summarizeLayout(vm.layout)).toBe(layoutMarbles, {
           a: {
             type: "spotlight-landscape",
             spotlight: [`${aliceId}:0`],
@@ -436,21 +436,21 @@ test("spotlight speakers swap places", () => {
 test("layout enters picture-in-picture mode when requested", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     // Enable then disable picture-in-picture
-    const pipCMarbles = "-ed";
+    const pipControlMarbles = "-ed";
     // Should go into picture-in-picture layout then back to grid
-    const laytMarbles = "aba";
+    const layoutMarbles = "    aba";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant]),
       of(ConnectionState.Connected),
       new Map(),
       (vm) => {
-        schedule(pipCMarbles, {
+        schedule(pipControlMarbles, {
           e: () => window.controls.enablePip(),
           d: () => window.controls.disablePip(),
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
+        expectObservable(summarizeLayout(vm.layout)).toBe(layoutMarbles, {
           a: {
             type: "grid",
             spotlight: undefined,
@@ -470,12 +470,12 @@ test("spotlight remembers whether it's expanded", () => {
   withTestScheduler(({ schedule, expectObservable }) => {
     // Start in spotlight mode, then switch to grid and back to spotlight a
     // couple times
-    const modeMarbles = "s-gs-gs";
+    const modeMarbles = "  s-gs-gs";
     // Expand and collapse the spotlight
-    const expdMarbles = "-a--a";
+    const expandMarbles = "-a--a";
     // Spotlight should stay expanded during the first mode switch, and stay
     // collapsed during the second mode switch
-    const laytMarbles = "abcbada";
+    const layoutMarbles = "abcbada";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant]),
@@ -486,7 +486,7 @@ test("spotlight remembers whether it's expanded", () => {
           s: () => vm.setGridMode("spotlight"),
           g: () => vm.setGridMode("grid"),
         });
-        schedule(expdMarbles, {
+        schedule(expandMarbles, {
           a: () => {
             let toggle: () => void;
             vm.toggleSpotlightExpanded.subscribe((val) => (toggle = val!));
@@ -494,7 +494,7 @@ test("spotlight remembers whether it's expanded", () => {
           },
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
+        expectObservable(summarizeLayout(vm.layout)).toBe(layoutMarbles, {
           a: {
             type: "spotlight-landscape",
             spotlight: [`${aliceId}:0`],
