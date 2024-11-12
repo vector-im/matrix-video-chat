@@ -9,6 +9,7 @@ import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
 import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import {
   createClient,
+  Filter,
   ICreateClientOpts,
   Preset,
   Visibility,
@@ -164,7 +165,20 @@ export async function initClient(
   // Otherwise, a sync may complete before the listener gets applied,
   // and we will miss it.
   const syncPromise = waitForSync(client);
-  await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
+  await client.startClient({
+    clientWellKnownPollPeriod: 60 * 10,
+    // ask for a high limit to try and avoid gappy syncs
+    filter: Filter.fromJson(undefined, "element-call", {
+      room: {
+        timeline: {
+          limit: 1000,
+        },
+      },
+    }),
+    // we ask for 20 past message to try and get some recent context
+    // n.b. past reactions are not guaranteed to be visible
+    initialSyncLimit: 20,
+  });
   await syncPromise;
 
   return client;
