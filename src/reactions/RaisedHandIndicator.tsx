@@ -12,12 +12,11 @@ import {
   useEffect,
   useState,
 } from "react";
-import { DurationFormat } from "@formatjs/intl-durationformat";
 import { useTranslation } from "react-i18next";
 
 import { ReactionIndicator } from "./ReactionIndicator";
 
-const durationFormatter = new DurationFormat(undefined, {
+const durationFormatter = new Intl.DurationFormat(undefined, {
   minutesDisplay: "always",
   secondsDisplay: "always",
   hoursDisplay: "auto",

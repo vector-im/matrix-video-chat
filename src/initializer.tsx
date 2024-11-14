@@ -12,6 +12,7 @@ import Backend from "i18next-http-backend";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/src/logger";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
+import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill";
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
@@ -43,9 +44,16 @@ export class Initializer {
   }
 
   public static async initBeforeReact(): Promise<void> {
+    const polyfills: Promise<unknown>[] = [];
     if (shouldPolyfillSegmenter()) {
-      await import("@formatjs/intl-segmenter/polyfill-force");
+      polyfills.push(import("@formatjs/intl-segmenter/polyfill-force"));
     }
+
+    if (shouldPolyfillDurationFormat()) {
+      polyfills.push(import("@formatjs/intl-durationformat/polyfill-force"));
+    }
+
+    await Promise.all(polyfills);
 
     //i18n
     const languageDetector = new LanguageDetector();
