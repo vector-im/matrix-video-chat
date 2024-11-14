@@ -6,6 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import "global-jsdom/register";
+import "@formatjs/intl-durationformat/polyfill";
+import "@formatjs/intl-segmenter/polyfill";
 import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
