@@ -11,17 +11,11 @@ import {
   useCallback,
   useEffect,
   useState,
+  useMemo,
 } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ReactionIndicator } from "./ReactionIndicator";
-
-const durationFormatter = new Intl.DurationFormat(undefined, {
-  minutesDisplay: "always",
-  secondsDisplay: "always",
-  hoursDisplay: "auto",
-  style: "digital",
-});
 
 export function RaisedHandIndicator({
   raisedHandTime,
@@ -36,6 +30,17 @@ export function RaisedHandIndicator({
 }): ReactNode {
   const { t } = useTranslation();
   const [raisedHandDuration, setRaisedHandDuration] = useState("");
+
+  const durationFormatter = useMemo(
+    () =>
+      new Intl.DurationFormat(undefined, {
+        minutesDisplay: "always",
+        secondsDisplay: "always",
+        hoursDisplay: "auto",
+        style: "digital",
+      }),
+    [],
+  );
 
   const clickCallback = useCallback<MouseEventHandler<HTMLButtonElement>>(
     (event) => {
@@ -68,7 +73,7 @@ export function RaisedHandIndicator({
     calculateTime();
     const to = setInterval(calculateTime, 1000);
     return (): void => clearInterval(to);
-  }, [setRaisedHandDuration, raisedHandTime, showTimer]);
+  }, [setRaisedHandDuration, raisedHandTime, showTimer, durationFormatter]);
 
   if (!raisedHandTime) {
     return;
