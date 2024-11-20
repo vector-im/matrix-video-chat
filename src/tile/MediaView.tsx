@@ -76,7 +76,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       <animated.div
         className={classNames(styles.media, className, {
           [styles.mirror]: mirror,
-          [styles.videoMuted]: !videoEnabled,
         })}
         style={style}
         ref={ref}
@@ -91,6 +90,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             size={avatarSize}
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
+            style={{ display: videoEnabled ? "none" : "initial" }}
+            data-testid="avatar"
           />
           {video.publication !== undefined && (
             <VideoTrack
@@ -98,6 +99,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               // There's no reason for this to be focusable
               tabIndex={-1}
               disablePictureInPicture
+              style={{ display: videoEnabled ? "block" : "none" }}
+              data-testid="video"
             />
           )}
         </div>

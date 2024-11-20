@@ -9,8 +9,11 @@ import { describe, expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { TrackReferencePlaceholder } from "@livekit/components-core";
-import { Track } from "livekit-client";
+import {
+  TrackReference,
+  TrackReferencePlaceholder,
+} from "@livekit/components-core";
+import { Track, TrackPublication } from "livekit-client";
 
 import { MediaView } from "./MediaView";
 import { EncryptionStatus } from "../state/MediaViewModel";
@@ -21,6 +24,10 @@ describe("MediaView", () => {
   const trackReferencePlaceholder: TrackReferencePlaceholder = {
     participant,
     source: Track.Source.Camera,
+  };
+  const trackReference: TrackReference = {
+    ...trackReferencePlaceholder,
+    publication: new TrackPublication(Track.Kind.Video, "id", "name"),
   };
 
   test("is accessible", async () => {
@@ -34,7 +41,7 @@ describe("MediaView", () => {
         encryptionStatus={EncryptionStatus.Connecting}
         mirror={false}
         unencryptedWarning={false}
-        video={trackReferencePlaceholder}
+        video={trackReference}
         member={undefined}
       />,
     );
@@ -53,7 +60,7 @@ describe("MediaView", () => {
           encryptionStatus={EncryptionStatus.Connecting}
           mirror={false}
           unencryptedWarning={false}
-          video={trackReferencePlaceholder}
+          video={trackReference}
           member={undefined}
         />,
       );
@@ -74,7 +81,7 @@ describe("MediaView", () => {
             encryptionStatus={EncryptionStatus.Connecting}
             mirror={false}
             unencryptedWarning={true}
-            video={trackReferencePlaceholder}
+            video={trackReference}
             member={undefined}
           />
         </TooltipProvider>,
@@ -101,6 +108,50 @@ describe("MediaView", () => {
         </TooltipProvider>,
       );
       expect(screen.queryByTestId("unencrypted_warning_icon")).toBeNull();
+    });
+  });
+
+  describe("videoMuted", () => {
+    test("just video is visible", () => {
+      render(
+        <TooltipProvider>
+          <MediaView
+            displayName="Bob"
+            videoEnabled={true}
+            videoFit="contain"
+            targetWidth={300}
+            targetHeight={200}
+            encryptionStatus={EncryptionStatus.Connecting}
+            mirror={false}
+            unencryptedWarning={true}
+            video={trackReference}
+            member={undefined}
+          />
+        </TooltipProvider>,
+      );
+      expect(screen.getByTestId("video")).toBeVisible();
+      expect(screen.getByTestId("avatar")).not.toBeVisible();
+    });
+
+    test("just avatar is visible", () => {
+      render(
+        <TooltipProvider>
+          <MediaView
+            displayName="Bob"
+            videoEnabled={false}
+            videoFit="contain"
+            targetWidth={300}
+            targetHeight={200}
+            encryptionStatus={EncryptionStatus.Connecting}
+            mirror={false}
+            unencryptedWarning={false}
+            video={trackReference}
+            member={undefined}
+          />
+        </TooltipProvider>,
+      );
+      expect(screen.getByTestId("avatar")).toBeVisible();
+      expect(screen.getByTestId("video")).not.toBeVisible();
     });
   });
 });
