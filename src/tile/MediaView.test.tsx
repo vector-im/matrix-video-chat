@@ -57,7 +57,7 @@ describe("MediaView", () => {
           member={undefined}
         />,
       );
-      expect(screen.getByTestId("name_tag")?.textContent).toEqual("Bob");
+      expect(screen.getByTestId("name_tag")).toHaveTextContent("Bob");
     });
   });
 
