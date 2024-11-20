@@ -133,7 +133,13 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )*/}
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
-            <Text as="span" size="sm" weight="medium" className={styles.name}>
+            <Text
+              as="span"
+              size="sm"
+              weight="medium"
+              className={styles.name}
+              data-testid="name_tag"
+            >
               {displayName}
             </Text>
             {unencryptedWarning && (
@@ -146,6 +152,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
                   width={20}
                   height={20}
                   className={styles.errorIcon}
+                  data-testid="unencrypted_warning_icon"
                 />
               </Tooltip>
             )}
