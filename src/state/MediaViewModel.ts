@@ -335,19 +335,14 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
    * Whether the participant is speaking.
    */
   public readonly speaking = this.participant.pipe(
-    switchMap((p) => {
-      if (p) {
-        return observeParticipantEvents(
-          p,
-          ParticipantEvent.IsSpeakingChanged,
-        ).pipe(
-          map((p) => p.isSpeaking),
-          this.scope.state(),
-        );
-      } else {
-        return of(false);
-      }
-    }),
+    switchMap((p) =>
+      p
+        ? observeParticipantEvents(p, ParticipantEvent.IsSpeakingChanged).pipe(
+            map((p) => p.isSpeaking),
+          )
+        : of(false),
+    ),
+    this.scope.state(),
   );
 
   /**
