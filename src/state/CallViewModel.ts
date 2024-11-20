@@ -1020,7 +1020,7 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  public readonly showFooter: Observable<boolean> = this.windowMode.pipe(
+  public readonly showFooter = this.windowMode.pipe(
     switchMap((mode) => {
       switch (mode) {
         case "pip":
