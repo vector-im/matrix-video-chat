@@ -663,9 +663,11 @@ export class CallViewModel extends ViewModel {
                         switchMap((mediaItems) => {
                           const localUserMedia = mediaItems.find(
                             (m) => m.vm instanceof LocalUserMediaViewModel,
-                          ) as LocalUserMediaViewModel | undefined;
+                          ) as UserMedia | undefined;
                           return (
-                            localUserMedia?.alwaysShow?.pipe(
+                            (
+                              localUserMedia?.vm as LocalUserMediaViewModel
+                            ).alwaysShow.pipe(
                               map((alwaysShow) =>
                                 alwaysShow ? localUserMedia : undefined,
                               ),
