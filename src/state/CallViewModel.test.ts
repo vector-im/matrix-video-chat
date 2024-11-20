@@ -558,3 +558,55 @@ test("spotlight remembers whether it's expanded", () => {
     );
   });
 });
+
+test("participants must have a MatrixRTCSession to be visible", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    // iterate through a number of combinations of participants and MatrixRTC memberships
+    // Bob never has an MatrixRTC membership
+    const scenarioInputMarbles = " abcdec";
+    // Bob should never be visible
+    const expectedLayoutMarbles = "a-bc-b";
+
+    withCallViewModel(
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [bobParticipant],
+        c: [aliceParticipant, bobParticipant],
+        d: [aliceParticipant, daveParticipant, bobParticipant],
+        e: [aliceParticipant, daveParticipant, bobSharingScreen],
+      }),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [],
+        c: [aliceRtcMember],
+        d: [aliceRtcMember, daveRtcMember],
+        e: [aliceRtcMember, daveRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        vm.setGridMode("grid");
+        expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0"],
+            },
+            b: {
+              type: "one-on-one",
+              local: "local:0",
+              remote: `${aliceId}:0`,
+            },
+            c: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+            },
+          },
+        );
+      },
+    );
+  });
+});
