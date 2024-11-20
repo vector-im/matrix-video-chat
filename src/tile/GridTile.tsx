@@ -250,7 +250,6 @@ const RemoteUserMediaTile = forwardRef<
   const { t } = useTranslation();
   const locallyMuted = useObservableEagerState(vm.locallyMuted);
   const localVolume = useObservableEagerState(vm.localVolume);
-
   const onSelectMute = useCallback(
     (e: Event) => {
       e.preventDefault();
