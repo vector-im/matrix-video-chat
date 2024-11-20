@@ -668,8 +668,11 @@ export class CallViewModel extends ViewModel {
                             (
                               localUserMedia?.vm as LocalUserMediaViewModel
                             ).alwaysShow.pipe(
-                              map((alwaysShow) =>
-                                alwaysShow ? localUserMedia : undefined,
+                              map(
+                                (alwaysShow) =>
+                                  (alwaysShow
+                                    ? localUserMedia?.vm
+                                    : undefined) ?? null,
                               ),
                             ) ?? of(null)
                           );
