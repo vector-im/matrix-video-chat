@@ -60,7 +60,6 @@ const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
 const localParticipant = mockLocalParticipant({ identity: "" });
-
 const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
 const aliceSharingScreen = mockRemoteParticipant({
   identity: aliceId,

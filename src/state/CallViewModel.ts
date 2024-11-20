@@ -868,6 +868,7 @@ export class CallViewModel extends ViewModel {
     }),
     this.scope.state(),
   );
+
   /**
    * The layout of tiles in the call interface.
    */

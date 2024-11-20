@@ -136,7 +136,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             <Text as="span" size="sm" weight="medium" className={styles.name}>
               {displayName}
             </Text>
-
             {unencryptedWarning && (
               <Tooltip
                 label={t("common.unencrypted")}
