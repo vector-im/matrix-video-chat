@@ -48,6 +48,27 @@ describe("MediaView", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  describe("placeholder track", () => {
+    test("neither video nor avatar are shown", () => {
+      render(
+        <MediaView
+          displayName="Bob"
+          videoEnabled
+          videoFit="contain"
+          targetWidth={300}
+          targetHeight={200}
+          encryptionStatus={EncryptionStatus.Connecting}
+          mirror={false}
+          unencryptedWarning={false}
+          video={trackReferencePlaceholder}
+          member={undefined}
+        />,
+      );
+      expect(screen.queryByTestId("video")).toBeNull();
+      expect(screen.getByTestId("avatar")).not.toBeVisible();
+    });
+  });
+
   describe("name tag", () => {
     test("is shown", () => {
       render(
