@@ -5,24 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
+import { Button as CpdButton, Tooltip, Alert } from "@vector-im/compound-web";
 import {
-  Button as CpdButton,
-  Tooltip,
-  Search,
-  Form,
-  Alert,
-} from "@vector-im/compound-web";
-import {
-  SearchIcon,
-  CloseIcon,
   RaisedHandSolidIcon,
-  ReactionIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ReactionSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
-  ChangeEventHandler,
   ComponentPropsWithoutRef,
   FC,
-  KeyboardEventHandler,
   ReactNode,
   useCallback,
   useEffect,
@@ -31,19 +23,11 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
-import { EventType, RelationType } from "matrix-js-sdk/src/matrix";
-import { MatrixClient } from "matrix-js-sdk/src/client";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
 
 import { useReactions } from "../useReactions";
-import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import styles from "./ReactionToggleButton.module.css";
-import {
-  ReactionOption,
-  ReactionSet,
-  ElementCallReactionEventType,
-} from "../reactions";
+import { ReactionOption, ReactionSet, ReactionsRowSize } from "../reactions";
 import { Modal } from "../Modal";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {
@@ -55,15 +39,14 @@ const InnerButton: FC<InnerButtonProps> = ({ raised, open, ...props }) => {
   const { t } = useTranslation();
 
   return (
-    <Tooltip label={t("action.raise_hand_or_send_reaction")}>
+    <Tooltip label={t("common.reactions")}>
       <CpdButton
         className={classNames(raised && styles.raisedButton)}
         aria-expanded={open}
         aria-haspopup
-        aria-label={t("action.raise_hand_or_send_reaction")}
         kind={raised || open ? "primary" : "secondary"}
         iconOnly
-        Icon={raised ? RaisedHandSolidIcon : ReactionIcon}
+        Icon={raised ? RaisedHandSolidIcon : ReactionSolidIcon}
         {...props}
       />
     </Tooltip>
@@ -84,43 +67,11 @@ export function ReactionPopupMenu({
   canReact: boolean;
 }): ReactNode {
   const { t } = useTranslation();
-  const [searchText, setSearchText] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const onSearch = useCallback<ChangeEventHandler<HTMLInputElement>>((ev) => {
-    ev.preventDefault();
-    setSearchText(ev.target.value.trim().toLocaleLowerCase());
-  }, []);
+  const [isFullyExpanded, setExpanded] = useState(false);
 
   const filteredReactionSet = useMemo(
-    () =>
-      ReactionSet.filter(
-        (reaction) =>
-          !isSearching ||
-          (!!searchText &&
-            (reaction.name.startsWith(searchText) ||
-              reaction.alias?.some((a) => a.startsWith(searchText)))),
-      ).slice(0, 6),
-    [searchText, isSearching],
-  );
-
-  const onSearchKeyDown = useCallback<KeyboardEventHandler<never>>(
-    (ev) => {
-      if (ev.key === "Enter") {
-        ev.preventDefault();
-        if (!canReact) {
-          return;
-        }
-        if (filteredReactionSet.length !== 1) {
-          return;
-        }
-        sendReaction(filteredReactionSet[0]);
-        setIsSearching(false);
-      } else if (ev.key === "Escape") {
-        ev.preventDefault();
-        setIsSearching(false);
-      }
-    },
-    [sendReaction, filteredReactionSet, canReact, setIsSearching],
+    () => (isFullyExpanded ? ReactionSet : ReactionSet.slice(0, 5)),
+    [isFullyExpanded],
   );
   const label = isHandRaised ? t("action.lower_hand") : t("action.raise_hand");
   return (
@@ -136,9 +87,10 @@ export function ReactionPopupMenu({
       )}
       <div className={styles.reactionPopupMenu}>
         <section className={styles.handRaiseSection}>
-          <Tooltip label={label}>
+          <Tooltip label={label} caption="H">
             <CpdButton
               kind={isHandRaised ? "primary" : "secondary"}
+              aria-keyshortcuts="H"
               aria-pressed={isHandRaised}
               aria-label={label}
               onClick={() => toggleRaisedHand()}
@@ -148,41 +100,33 @@ export function ReactionPopupMenu({
           </Tooltip>
         </section>
         <div className={styles.verticalSeperator} />
-        <section>
-          {isSearching ? (
-            <>
-              <Form.Root className={styles.searchForm}>
-                <Search
-                  required
-                  value={searchText}
-                  name="reactionSearch"
-                  placeholder={t("reaction_search")}
-                  onChange={onSearch}
-                  onKeyDown={onSearchKeyDown}
-                  // This is a reasonable use of autofocus, we are focusing when
-                  // the search button is clicked (which matches the Element Web reaction picker)
-                  // eslint-disable-next-line jsx-a11y/no-autofocus
-                  autoFocus
-                />
-                <CpdButton
-                  Icon={CloseIcon}
-                  aria-label={t("action.close_search")}
-                  size="sm"
-                  kind="destructive"
-                  onClick={() => setIsSearching(false)}
-                />
-              </Form.Root>
-            </>
-          ) : null}
-          <menu className={styles.reactionsMenu}>
-            {filteredReactionSet.map((reaction) => (
-              <li className={styles.reactionPopupMenuItem} key={reaction.name}>
-                <Tooltip label={reaction.name}>
+        <section className={styles.reactionsMenuSection}>
+          <menu
+            className={classNames(
+              isFullyExpanded && styles.reactionsMenuExpanded,
+              styles.reactionsMenu,
+            )}
+          >
+            {filteredReactionSet.map((reaction, index) => (
+              <li key={reaction.name}>
+                <Tooltip
+                  label={reaction.name}
+                  caption={
+                    index < ReactionsRowSize
+                      ? (index + 1).toString()
+                      : undefined
+                  }
+                >
                   <CpdButton
                     kind="secondary"
                     className={styles.reactionButton}
                     disabled={!canReact}
                     onClick={() => sendReaction(reaction)}
+                    aria-keyshortcuts={
+                      index < ReactionsRowSize
+                        ? (index + 1).toString()
+                        : undefined
+                    }
                   >
                     {reaction.emoji}
                   </CpdButton>
@@ -191,73 +135,56 @@ export function ReactionPopupMenu({
             ))}
           </menu>
         </section>
-        {!isSearching ? (
-          <section style={{ marginLeft: "var(--cpd-separator-spacing)" }}>
-            <li key="search" className={styles.reactionPopupMenuItem}>
-              <Tooltip label={t("common.search")}>
-                <CpdButton
-                  iconOnly
-                  aria-label={t("action.open_search")}
-                  Icon={SearchIcon}
-                  kind="tertiary"
-                  onClick={() => setIsSearching(true)}
-                />
-              </Tooltip>
-            </li>
-          </section>
-        ) : null}
+        <section style={{ marginLeft: "var(--cpd-separator-spacing)" }}>
+          <Tooltip
+            label={
+              isFullyExpanded ? t("action.show_less") : t("action.show_more")
+            }
+          >
+            <CpdButton
+              iconOnly
+              aria-label={
+                isFullyExpanded ? t("action.show_less") : t("action.show_more")
+              }
+              Icon={isFullyExpanded ? ChevronUpIcon : ChevronDownIcon}
+              kind="tertiary"
+              onClick={() => setExpanded(!isFullyExpanded)}
+            />
+          </Tooltip>
+        </section>
       </div>
     </>
   );
 }
 
 interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
-  rtcSession: MatrixRTCSession;
-  client: MatrixClient;
+  userId: string;
 }
 
 export function ReactionToggleButton({
-  client,
-  rtcSession,
+  userId,
   ...props
 }: ReactionToggleButtonProps): ReactNode {
   const { t } = useTranslation();
-  const { raisedHands, lowerHand, reactions } = useReactions();
+  const { raisedHands, toggleRaisedHand, sendReaction, reactions } =
+    useReactions();
   const [busy, setBusy] = useState(false);
-  const userId = client.getUserId()!;
-  const isHandRaised = !!raisedHands[userId];
-  const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const [showReactionsMenu, setShowReactionsMenu] = useState(false);
   const [errorText, setErrorText] = useState<string>();
+
+  const isHandRaised = !!raisedHands[userId];
+  const canReact = !reactions[userId];
 
   useEffect(() => {
     // Clear whenever the reactions menu state changes.
     setErrorText(undefined);
   }, [showReactionsMenu]);
 
-  const canReact = !reactions[userId];
-
   const sendRelation = useCallback(
     async (reaction: ReactionOption) => {
       try {
-        const myMembership = memberships.find((m) => m.sender === userId);
-        if (!myMembership?.eventId) {
-          throw new Error("Cannot find own membership event");
-        }
-        const parentEventId = myMembership.eventId;
         setBusy(true);
-        await client.sendEvent(
-          rtcSession.room.roomId,
-          ElementCallReactionEventType,
-          {
-            "m.relates_to": {
-              rel_type: RelationType.Reference,
-              event_id: parentEventId,
-            },
-            emoji: reaction.emoji,
-            name: reaction.name,
-          },
-        );
+        await sendReaction(reaction);
         setErrorText(undefined);
         setShowReactionsMenu(false);
       } catch (ex) {
@@ -267,59 +194,25 @@ export function ReactionToggleButton({
         setBusy(false);
       }
     },
-    [memberships, client, userId, rtcSession],
+    [sendReaction],
   );
 
-  const toggleRaisedHand = useCallback(() => {
-    const raiseHand = async (): Promise<void> => {
-      if (isHandRaised) {
-        try {
-          setBusy(true);
-          await lowerHand();
-          setShowReactionsMenu(false);
-        } finally {
-          setBusy(false);
-        }
-      } else {
-        try {
-          const myMembership = memberships.find((m) => m.sender === userId);
-          if (!myMembership?.eventId) {
-            throw new Error("Cannot find own membership event");
-          }
-          const parentEventId = myMembership.eventId;
-          setBusy(true);
-          const reaction = await client.sendEvent(
-            rtcSession.room.roomId,
-            EventType.Reaction,
-            {
-              "m.relates_to": {
-                rel_type: RelationType.Annotation,
-                event_id: parentEventId,
-                key: "🖐️",
-              },
-            },
-          );
-          logger.debug("Sent raise hand event", reaction.event_id);
-          setErrorText(undefined);
-          setShowReactionsMenu(false);
-        } catch (ex) {
-          setErrorText(ex instanceof Error ? ex.message : "Unknown error");
-          logger.error("Failed to raise hand", ex);
-        } finally {
-          setBusy(false);
-        }
+  const wrappedToggleRaisedHand = useCallback(() => {
+    const toggleHand = async (): Promise<void> => {
+      try {
+        setBusy(true);
+        await toggleRaisedHand();
+        setShowReactionsMenu(false);
+      } catch (ex) {
+        setErrorText(ex instanceof Error ? ex.message : "Unknown error");
+        logger.error("Failed to raise/lower hand", ex);
+      } finally {
+        setBusy(false);
       }
     };
 
-    void raiseHand();
-  }, [
-    client,
-    isHandRaised,
-    memberships,
-    lowerHand,
-    rtcSession.room.roomId,
-    userId,
-  ]);
+    void toggleHand();
+  }, [toggleRaisedHand]);
 
   return (
     <>
@@ -335,14 +228,15 @@ export function ReactionToggleButton({
         title={t("action.pick_reaction")}
         hideHeader
         classNameModal={styles.reactionPopupMenuModal}
+        className={styles.reactionPopupMenuRoot}
         onDismiss={() => setShowReactionsMenu(false)}
       >
         <ReactionPopupMenu
           errorText={errorText}
           isHandRaised={isHandRaised}
-          canReact={canReact}
+          canReact={!busy && canReact}
           sendReaction={(reaction) => void sendRelation(reaction)}
-          toggleRaisedHand={toggleRaisedHand}
+          toggleRaisedHand={wrappedToggleRaisedHand}
         />
       </Modal>
     </>
