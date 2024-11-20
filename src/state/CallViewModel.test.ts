@@ -357,29 +357,29 @@ test("screen sharing activates spotlight layout", () => {
 
 test("participants stay in the same order unless to appear/disappear", () => {
   withTestScheduler(({ hot, schedule, expectObservable }) => {
-    const inputModeMarbles = "     g";
+    const modeMarbles = "     a";
     // First Bob speaks, then Dave, then Alice
-    const inputASpeakingMarbles = "n- 1998ms - 1999ms y";
-    const inputBSpeakingMarbles = "ny 1998ms n 1999ms -";
-    const inputDSpeakingMarbles = "n- 1998ms y 1999ms n";
+    const aSpeakingMarbles = "n- 1998ms - 1999ms y";
+    const bSpeakingMarbles = "ny 1998ms n 1999ms -";
+    const dSpeakingMarbles = "n- 1998ms y 1999ms n";
     // Nothing should change when Bob speaks, because Bob is already on screen.
     // When Dave speaks he should switch with Alice because she's the one who
     // hasn't spoken at all. Then when Alice speaks, she should return to her
     // place at the top.
-    const expectedLayoutMarbles = "a  1999ms b 1999ms a 57999ms c 1999ms a";
+    const layoutMarbles = "   a  1999ms b 1999ms a 57999ms c 1999ms a";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
       of([aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, hot(inputASpeakingMarbles, { y: true, n: false })],
-        [bobParticipant, hot(inputBSpeakingMarbles, { y: true, n: false })],
-        [daveParticipant, hot(inputDSpeakingMarbles, { y: true, n: false })],
+        [aliceParticipant, hot(aSpeakingMarbles, { y: true, n: false })],
+        [bobParticipant, hot(bSpeakingMarbles, { y: true, n: false })],
+        [daveParticipant, hot(dSpeakingMarbles, { y: true, n: false })],
       ]),
       (vm) => {
-        schedule(inputModeMarbles, {
-          g: () => {
+        schedule(modeMarbles, {
+          a: () => {
             // We imagine that only three tiles (the first three) will be visible
             // on screen at a time
             vm.layout.subscribe((layout) => {
@@ -391,26 +391,23 @@ test("participants stay in the same order unless to appear/disappear", () => {
           },
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
-          expectedLayoutMarbles,
-          {
-            a: {
-              type: "grid",
-              spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`, `${daveId}:0`],
-            },
-            b: {
-              type: "grid",
-              spotlight: undefined,
-              grid: ["local:0", `${daveId}:0`, `${bobId}:0`, `${aliceId}:0`],
-            },
-            c: {
-              type: "grid",
-              spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`, `${bobId}:0`],
-            },
+        expectObservable(summarizeLayout(vm.layout)).toBe(layoutMarbles, {
+          a: {
+            type: "grid",
+            spotlight: undefined,
+            grid: ["local:0", `${aliceId}:0`, `${bobId}:0`, `${daveId}:0`],
           },
-        );
+          b: {
+            type: "grid",
+            spotlight: undefined,
+            grid: ["local:0", `${daveId}:0`, `${bobId}:0`, `${aliceId}:0`],
+          },
+          c: {
+            type: "grid",
+            spotlight: undefined,
+            grid: ["local:0", `${aliceId}:0`, `${daveId}:0`, `${bobId}:0`],
+          },
+        });
       },
     );
   });
