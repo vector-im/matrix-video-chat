@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { defineConfig, loadEnv } from "vite";
+import { compression } from "vite-plugin-compression2";
 import svgrPlugin from "vite-plugin-svgr";
 import htmlTemplate from "vite-plugin-html-template";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
@@ -38,6 +39,10 @@ export default defineConfig(({ mode }) => {
       bundleName: "element-call",
       uploadToken: process.env.CODECOV_TOKEN,
     }),
+
+    compression({
+      exclude: [/config.json/],
+    }),
   ];
 
   if (
@@ -60,6 +65,25 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       sourcemap: true,
+      rollupOptions: {
+        output: {
+          assetFileNames: ({ originalFileNames }) => {
+            if (originalFileNames) {
+              for (const name of originalFileNames) {
+                // Custom asset name for locales to include the locale code in the filename
+                const match = name.match(/locales\/([^/]+)\/(.+)\.json$/);
+                if (match) {
+                  const [, locale, filename] = match;
+                  return `assets/${locale}-${filename}-[hash].json`;
+                }
+              }
+            }
+
+            // Default naming fallback
+            return "assets/[name]-[hash][extname]";
+          },
+        },
+      },
     },
     plugins,
     resolve: {
