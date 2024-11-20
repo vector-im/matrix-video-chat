@@ -109,7 +109,7 @@ function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
-export function mockMembership(
+export function mockRtcMembership(
   user: string | RoomMember,
   deviceId: string,
   callId = "",

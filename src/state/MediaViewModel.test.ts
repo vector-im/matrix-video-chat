@@ -8,13 +8,13 @@ Please see LICENSE in the repository root for full details.
 import { expect, test, vi } from "vitest";
 
 import {
-  mockMembership,
+  mockRtcMembership,
   withLocalMedia,
   withRemoteMedia,
   withTestScheduler,
 } from "../utils/test";
 
-const rtcMembership = mockMembership("@alice:example.org", "AAAA");
+const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
 
 test("control a participant's volume", async () => {
   const setVolumeSpy = vi.fn();

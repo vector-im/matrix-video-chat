@@ -34,7 +34,7 @@ import {
   mockRoomMember,
   mockRemoteParticipant,
   withTestScheduler,
-  mockMembership,
+  mockRtcMembership,
   MockRTCSession,
 } from "../utils/test";
 import {
@@ -45,10 +45,10 @@ import { E2eeType } from "../e2ee/e2eeType";
 
 vi.mock("@livekit/components-core");
 
-const localRtcMember = mockMembership("@carol:example.org", "CCCC");
-const aliceRtcMember = mockMembership("@alice:example.org", "AAAA");
-const bobRtcMember = mockMembership("@bob:example.org", "BBBB");
-const daveRtcMember = mockMembership("@dave:example.org", "DDDD");
+const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
+const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
+const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
+const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
 const alice = mockRoomMember(aliceRtcMember);
 const bob = mockRoomMember(bobRtcMember);
