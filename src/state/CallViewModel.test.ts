@@ -229,7 +229,7 @@ function withCallViewModel(
 }
 
 test("participants are retained during a focus switch", () => {
-  withTestScheduler(({ cold, expectObservable }) => {
+  withTestScheduler(({ hot, expectObservable }) => {
     // Participants disappear on frame 2 and come back on frame 3
     const participantMarbles = "a-ba";
     // Start switching focus on frame 1 and reconnect on frame 3
@@ -238,11 +238,11 @@ test("participants are retained during a focus switch", () => {
     const layoutMarbles = "     a";
 
     withCallViewModel(
-      cold(participantMarbles, {
+      hot(participantMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [],
       }),
-      cold(connectionMarbles, {
+      hot(connectionMarbles, {
         c: ConnectionState.Connected,
         s: ECAddonConnectionState.ECSwitchingFocus,
       }),
@@ -261,7 +261,7 @@ test("participants are retained during a focus switch", () => {
 });
 
 test("screen sharing activates spotlight layout", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
     // Start with no screen shares, then have Alice and Bob share their screens,
     // then return to no screen shares, then have just Alice share for a bit
     const participantMarbles = " abcda-ba";
@@ -274,7 +274,7 @@ test("screen sharing activates spotlight layout", () => {
     const layoutMarbles = "      abcdaefeg";
     const showSpeakingMarbles = "y----nyny";
     withCallViewModel(
-      cold(participantMarbles, {
+      hot(participantMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [aliceSharingScreen, bobParticipant],
         c: [aliceSharingScreen, bobSharingScreen],
@@ -335,7 +335,7 @@ test("screen sharing activates spotlight layout", () => {
 });
 
 test("participants stay in the same order unless to appear/disappear", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
     const modeMarbles = "a";
     // First Bob speaks, then Dave, then Alice
     const aSpeakingMarbles = "n- 1998ms - 1999ms y";
@@ -351,9 +351,9 @@ test("participants stay in the same order unless to appear/disappear", () => {
       of([aliceParticipant, bobParticipant, daveParticipant]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, cold(aSpeakingMarbles, { y: true, n: false })],
-        [bobParticipant, cold(bSpeakingMarbles, { y: true, n: false })],
-        [daveParticipant, cold(dSpeakingMarbles, { y: true, n: false })],
+        [aliceParticipant, hot(aSpeakingMarbles, { y: true, n: false })],
+        [bobParticipant, hot(bSpeakingMarbles, { y: true, n: false })],
+        [daveParticipant, hot(dSpeakingMarbles, { y: true, n: false })],
       ]),
       (vm) => {
         schedule(modeMarbles, {
@@ -392,7 +392,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
 });
 
 test("spotlight speakers swap places", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
     // Go immediately into spotlight mode for the test
     const modeMarbles = "     s";
     // First Bob speaks, then Dave, then Alice
@@ -409,9 +409,9 @@ test("spotlight speakers swap places", () => {
       of([aliceParticipant, bobParticipant, daveParticipant]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, cold(aSpeakingMarbles, { y: true, n: false })],
-        [bobParticipant, cold(bSpeakingMarbles, { y: true, n: false })],
-        [daveParticipant, cold(dSpeakingMarbles, { y: true, n: false })],
+        [aliceParticipant, hot(aSpeakingMarbles, { y: true, n: false })],
+        [bobParticipant, hot(bSpeakingMarbles, { y: true, n: false })],
+        [daveParticipant, hot(dSpeakingMarbles, { y: true, n: false })],
       ]),
       (vm) => {
         schedule(modeMarbles, { s: () => vm.setGridMode("spotlight") });
