@@ -14,6 +14,7 @@ import {
   TrackReferencePlaceholder,
 } from "@livekit/components-core";
 import { Track, TrackPublication } from "livekit-client";
+import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
 import { EncryptionStatus } from "../state/MediaViewModel";
@@ -30,61 +31,35 @@ describe("MediaView", () => {
     publication: new TrackPublication(Track.Kind.Video, "id", "name"),
   };
 
+  const baseProps: ComponentProps<typeof MediaView> = {
+    displayName: "some name",
+    videoEnabled: true,
+    videoFit: "contain",
+    targetWidth: 300,
+    targetHeight: 200,
+    encryptionStatus: EncryptionStatus.Connecting,
+    mirror: false,
+    unencryptedWarning: false,
+    video: trackReference,
+    member: undefined,
+  };
+
   test("is accessible", async () => {
-    const { container } = render(
-      <MediaView
-        displayName="Bob"
-        videoEnabled
-        videoFit="contain"
-        targetWidth={300}
-        targetHeight={200}
-        encryptionStatus={EncryptionStatus.Connecting}
-        mirror={false}
-        unencryptedWarning={false}
-        video={trackReference}
-        member={undefined}
-      />,
-    );
+    const { container } = render(<MediaView {...baseProps} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 
   describe("placeholder track", () => {
     test("neither video nor avatar are shown", () => {
-      render(
-        <MediaView
-          displayName="Bob"
-          videoEnabled
-          videoFit="contain"
-          targetWidth={300}
-          targetHeight={200}
-          encryptionStatus={EncryptionStatus.Connecting}
-          mirror={false}
-          unencryptedWarning={false}
-          video={trackReferencePlaceholder}
-          member={undefined}
-        />,
-      );
+      render(<MediaView {...baseProps} video={trackReferencePlaceholder} />);
       expect(screen.queryByTestId("video")).toBeNull();
       expect(screen.getByTestId("avatar")).not.toBeVisible();
     });
   });
 
   describe("name tag", () => {
-    test("is shown", () => {
-      render(
-        <MediaView
-          displayName="Bob"
-          videoEnabled
-          videoFit="contain"
-          targetWidth={300}
-          targetHeight={200}
-          encryptionStatus={EncryptionStatus.Connecting}
-          mirror={false}
-          unencryptedWarning={false}
-          video={trackReference}
-          member={undefined}
-        />,
-      );
+    test("is shown with name", () => {
+      render(<MediaView {...baseProps} displayName="Bob" />);
       expect(screen.getByTestId("name_tag")).toHaveTextContent("Bob");
     });
   });
@@ -93,18 +68,7 @@ describe("MediaView", () => {
     test("is shown and accessible", async () => {
       const { container } = render(
         <TooltipProvider>
-          <MediaView
-            displayName="Bob"
-            videoEnabled
-            videoFit="contain"
-            targetWidth={300}
-            targetHeight={200}
-            encryptionStatus={EncryptionStatus.Connecting}
-            mirror={false}
-            unencryptedWarning={true}
-            video={trackReference}
-            member={undefined}
-          />
+          <MediaView {...baseProps} unencryptedWarning={true} />
         </TooltipProvider>,
       );
       expect(await axe(container)).toHaveNoViolations();
@@ -114,40 +78,18 @@ describe("MediaView", () => {
     test("is not shown", () => {
       render(
         <TooltipProvider>
-          <MediaView
-            displayName="Bob"
-            videoEnabled
-            videoFit="contain"
-            targetWidth={300}
-            targetHeight={200}
-            encryptionStatus={EncryptionStatus.Connecting}
-            mirror={false}
-            unencryptedWarning={false}
-            video={trackReferencePlaceholder}
-            member={undefined}
-          />
+          <MediaView {...baseProps} unencryptedWarning={false} />
         </TooltipProvider>,
       );
       expect(screen.queryByTestId("unencrypted_warning_icon")).toBeNull();
     });
   });
 
-  describe("videoMuted", () => {
+  describe("videoEnabled", () => {
     test("just video is visible", () => {
       render(
         <TooltipProvider>
-          <MediaView
-            displayName="Bob"
-            videoEnabled={true}
-            videoFit="contain"
-            targetWidth={300}
-            targetHeight={200}
-            encryptionStatus={EncryptionStatus.Connecting}
-            mirror={false}
-            unencryptedWarning={true}
-            video={trackReference}
-            member={undefined}
-          />
+          <MediaView {...baseProps} videoEnabled={true} />
         </TooltipProvider>,
       );
       expect(screen.getByTestId("video")).toBeVisible();
@@ -157,18 +99,7 @@ describe("MediaView", () => {
     test("just avatar is visible", () => {
       render(
         <TooltipProvider>
-          <MediaView
-            displayName="Bob"
-            videoEnabled={false}
-            videoFit="contain"
-            targetWidth={300}
-            targetHeight={200}
-            encryptionStatus={EncryptionStatus.Connecting}
-            mirror={false}
-            unencryptedWarning={false}
-            video={trackReference}
-            member={undefined}
-          />
+          <MediaView {...baseProps} videoEnabled={false} />
         </TooltipProvider>,
       );
       expect(screen.getByTestId("avatar")).toBeVisible();
