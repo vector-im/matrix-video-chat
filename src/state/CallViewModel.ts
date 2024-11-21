@@ -326,7 +326,7 @@ class ScreenShare {
     this.vm = new ScreenShareViewModel(
       id,
       member,
-      this.participant,
+      this.participant.asObservable(),
       encryptionSystem,
       liveKitRoom,
       participant.isLocal,
