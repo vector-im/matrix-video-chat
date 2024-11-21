@@ -134,7 +134,7 @@ export function mockRtcMembership(
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
-export function mockRoomMember(
+export function mockMatrixRoomMember(
   rtcMembership: CallMembership,
   member: Partial<RoomMember> = {},
 ): RoomMember {
@@ -192,7 +192,7 @@ export async function withLocalMedia(
   const localParticipant = mockLocalParticipant({});
   const vm = new LocalUserMediaViewModel(
     "local",
-    mockRoomMember(localRtcMember, roomMember),
+    mockMatrixRoomMember(localRtcMember, roomMember),
     of(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -228,7 +228,7 @@ export async function withRemoteMedia(
   const remoteParticipant = mockRemoteParticipant(participant);
   const vm = new RemoteUserMediaViewModel(
     "remote",
-    mockRoomMember(localRtcMember, roomMember),
+    mockMatrixRoomMember(localRtcMember, roomMember),
     of(remoteParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,

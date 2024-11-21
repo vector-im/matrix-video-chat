@@ -31,7 +31,7 @@ import {
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
-  mockRoomMember,
+  mockMatrixRoomMember,
   mockRemoteParticipant,
   withTestScheduler,
   mockRtcMembership,
@@ -50,10 +50,10 @@ const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
 const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
-const alice = mockRoomMember(aliceRtcMember);
-const bob = mockRoomMember(bobRtcMember);
-const carol = mockRoomMember(localRtcMember);
-const dave = mockRoomMember(daveRtcMember);
+const alice = mockMatrixRoomMember(aliceRtcMember);
+const bob = mockMatrixRoomMember(bobRtcMember);
+const carol = mockMatrixRoomMember(localRtcMember);
+const dave = mockMatrixRoomMember(daveRtcMember);
 
 const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
 const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
