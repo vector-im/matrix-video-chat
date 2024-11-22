@@ -21,15 +21,15 @@ import {
 export function observeSpeaker(
   isSpeakingObservable: Observable<boolean>,
 ): Observable<boolean> {
-  return isSpeakingObservable.pipe(
+  const distinct = isSpeakingObservable.pipe(distinctUntilChanged());
+
+  return distinct.pipe(
+    // Either change to the new value after the timer or re-emit the same value if it toggles back
+    // (audit will return the latest (toggled back) value) before the timeout.
     audit((s) =>
-      merge(
-        timer(s ? 1000 : 60000),
-        // If the speaking flag resets to its original value during this time,
-        // end the silencing window to stick with that original value
-        isSpeakingObservable.pipe(filter((s1) => s1 !== s)),
-      ),
+      merge(timer(s ? 1000 : 60000), distinct.pipe(filter((s1) => s1 !== s))),
     ),
+    // Filter the re-emissions (marked as: | ) that happen if we toggle quickly (<1s) from false->true->false|->..
     startWith(false),
     distinctUntilChanged(),
   );
