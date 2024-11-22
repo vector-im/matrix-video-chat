@@ -4,7 +4,15 @@ Copyright 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { Observable, audit, merge, timer, filter, startWith } from "rxjs";
+import {
+  Observable,
+  audit,
+  merge,
+  timer,
+  filter,
+  startWith,
+  distinctUntilChanged,
+} from "rxjs";
 
 /**
  * Require 1 second of continuous speaking to become a speaker, and 60 second of
@@ -23,5 +31,6 @@ export function observeSpeaker(
       ),
     ),
     startWith(false),
+    distinctUntilChanged(),
   );
 }
