@@ -20,6 +20,7 @@ import {
   ConnectionState,
   LocalParticipant,
   Participant,
+  ParticipantEvent,
   RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
@@ -188,11 +189,15 @@ function withCallViewModel(
     );
   const eventsSpy = vi
     .spyOn(ComponentsCore, "observeParticipantEvents")
-    .mockImplementation((p) =>
-      (speaking.get(p) ?? of(false)).pipe(
-        map((s) => ({ ...p, isSpeaking: s }) as Participant),
-      ),
-    );
+    .mockImplementation((p, ...eventTypes) => {
+      if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
+        return (speaking.get(p) ?? of(false)).pipe(
+          map((s) => ({ ...p, isSpeaking: s }) as Participant),
+        );
+      } else {
+        return of(p);
+      }
+    });
 
   const roomEventSelectorSpy = vi
     .spyOn(ComponentsCore, "roomEventSelector")
