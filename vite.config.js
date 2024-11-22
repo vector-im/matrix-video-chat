@@ -82,6 +82,9 @@ export default defineConfig(({ mode }) => {
             // Default naming fallback
             return "assets/[name]-[hash][extname]";
           },
+          manualChunks: {
+            "matrix-sdk-crypto-wasm": ["@matrix-org/matrix-sdk-crypto-wasm"],
+          },
         },
       },
     },
