@@ -19,8 +19,9 @@ const yesNo = {
 describe("observeSpeaker", () => {
   describe("does not activate", () => {
     const expectedOutputMarbles = "n";
-    test("no speaking", () => {
-      const speakingInputMarbles = " n";
+    test("starts correctly", () => {
+      // should default to false when no input is given
+      const speakingInputMarbles = "";
       withTestScheduler(({ hot, expectObservable }) => {
         expectObservable(
           observeSpeaker(hot(speakingInputMarbles, yesNo)).pipe(
@@ -30,8 +31,8 @@ describe("observeSpeaker", () => {
       });
     });
 
-    test("speaking for 1ms", () => {
-      const speakingInputMarbles = " y n";
+    test("after no speaking", () => {
+      const speakingInputMarbles = "n";
       withTestScheduler(({ hot, expectObservable }) => {
         expectObservable(
           observeSpeaker(hot(speakingInputMarbles, yesNo)).pipe(
@@ -41,8 +42,8 @@ describe("observeSpeaker", () => {
       });
     });
 
-    test("speaking for 999ms", () => {
-      const speakingInputMarbles = " y 999ms n";
+    test("with speaking for 1ms", () => {
+      const speakingInputMarbles = "y n";
       withTestScheduler(({ hot, expectObservable }) => {
         expectObservable(
           observeSpeaker(hot(speakingInputMarbles, yesNo)).pipe(
@@ -52,9 +53,31 @@ describe("observeSpeaker", () => {
       });
     });
 
-    test("speaking intermittently", () => {
+    test("with speaking for 999ms", () => {
+      const speakingInputMarbles = "y 999ms n";
+      withTestScheduler(({ hot, expectObservable }) => {
+        expectObservable(
+          observeSpeaker(hot(speakingInputMarbles, yesNo)).pipe(
+            distinctUntilChanged(),
+          ),
+        ).toBe(expectedOutputMarbles, yesNo);
+      });
+    });
+
+    test("with speaking intermittently", () => {
       const speakingInputMarbles =
-        " y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n";
+        "y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n 199ms y 199ms n";
+      withTestScheduler(({ hot, expectObservable }) => {
+        expectObservable(
+          observeSpeaker(hot(speakingInputMarbles, yesNo)).pipe(
+            distinctUntilChanged(),
+          ),
+        ).toBe(expectedOutputMarbles, yesNo);
+      });
+    });
+
+    test("with consecutive speaking then stops speaking", () => {
+      const speakingInputMarbles = "y y y y y y y y y y n";
       withTestScheduler(({ hot, expectObservable }) => {
         expectObservable(
           observeSpeaker(hot(speakingInputMarbles, yesNo)).pipe(
@@ -66,6 +89,19 @@ describe("observeSpeaker", () => {
   });
 
   describe("activates", () => {
+    test("after 1s", () => {
+      // this will active after 1s as no `n` follows it:
+      const speakingInputMarbles = " y";
+      const expectedOutputMarbles = "n 999ms y";
+      withTestScheduler(({ hot, expectObservable }) => {
+        expectObservable(
+          observeSpeaker(hot(speakingInputMarbles, yesNo)).pipe(
+            distinctUntilChanged(),
+          ),
+        ).toBe(expectedOutputMarbles, yesNo);
+      });
+    });
+
     test("speaking for 1001ms activates for 60s", () => {
       const speakingInputMarbles = " y 1s    n      ";
       const expectedOutputMarbles = "n 999ms y 60s n";
