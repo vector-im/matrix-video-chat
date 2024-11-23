@@ -1801,9 +1801,9 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.6.8"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.8.tgz#faa60410aef0f5d426afcc6f9b577686983c6b7b"
-  integrity sha512-G6P+mrOyBiAnHjbmBTG28CxA6AT7wXT6/5dqu7M7uZAlvOCDKhPjhOs65awDQvaFlTxd/JlND75fa9d+oSbvIA==
+  version "2.6.9"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.9.tgz#2ff4691dc2cae6ed4c4b2e586a255d00e494bf9c"
+  integrity sha512-j43i/Dm8dlI2jxv5wv0s+69QPVqVEjg0y2tyznfs/7RDcaIZsIIzNijPu1kLditerzvzQdRsOgFQ3UWONcTkGA==
   dependencies:
     "@livekit/components-core" "0.11.10"
     clsx "2.1.1"
@@ -3320,9 +3320,9 @@
     prettier "^3.3.3"
 
 "@vector-im/compound-web@^7.2.0":
-  version "7.3.0"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-web/-/compound-web-7.3.0.tgz#9594113ac50bff4794715104a30a60c52d15517d"
-  integrity sha512-gDppQUtpk5LvNHUg+Zlv9qzo1iBAag0s3g8Ec0qS5q4zGBKG6ruXXrNUKg1aK8rpbo2hYQsGaHM6dD8NqLoq3Q==
+  version "7.4.0"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-web/-/compound-web-7.4.0.tgz#a5af8af6346f8ff6c14c70f5d4eb2eab7357a7cc"
+  integrity sha512-ZRBUeEGNmj/fTkIRa8zGnyVN7ytowpfOtHChqNm+m/+OTJN3o/lOMuQHDV8jeSEW2YwPJqGvPuG/dRr89IcQkA==
   dependencies:
     "@floating-ui/react" "^0.26.24"
     "@radix-ui/react-context-menu" "^2.2.1"
@@ -6067,9 +6067,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.5.7:
-  version "2.6.2"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.6.2.tgz#7821cac8d293b7685a4272b8aa269685f0ae75a8"
-  integrity sha512-SqXNHLgk2ZZOZyeHLXFAVAl+FVdSI+NK39LvIYstqS5X6IE5aCPlK4FqXY4l3aHpSft/BC/TR1CFGOq20ONkMA==
+  version "2.6.3"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.6.3.tgz#0c7e16bcd8b30f61e867ba287257b60db69c7801"
+  integrity sha512-sUFjdERYdazGmYUCkxV46qKrL8Pg4Aw+9fs/DxV0EC/YtVd7zQh2QObip7IkyT8Ipj4gXhH8CkSinisZ1KpsJQ==
   dependencies:
     "@livekit/mutex" "1.0.0"
     "@livekit/protocol" "1.24.0"
