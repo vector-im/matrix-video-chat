@@ -11,14 +11,13 @@ import { beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-import { Config } from "../config/Config";
-import { DEFAULT_CONFIG } from "../config/ConfigOptions";
 import { useMuteStates } from "./MuteStates";
 import {
   MediaDevice,
   MediaDevices,
   MediaDevicesContext,
 } from "../livekit/MediaDevicesContext";
+import { mockConfig } from "../utils/test";
 
 function TestComponent(): ReactNode {
   const muteStates = useMuteStates();
@@ -106,9 +105,7 @@ describe("useMuteStates", () => {
   });
 
   it("disabled when no input devices", () => {
-    vi.spyOn(Config, "get").mockReturnValue({
-      ...DEFAULT_CONFIG,
-    });
+    mockConfig();
 
     render(
       <MemoryRouter>
@@ -127,9 +124,7 @@ describe("useMuteStates", () => {
   });
 
   it("should be enabled by default", () => {
-    vi.spyOn(Config, "get").mockReturnValue({
-      ...DEFAULT_CONFIG,
-    });
+    mockConfig();
 
     render(
       <MemoryRouter>
@@ -143,8 +138,7 @@ describe("useMuteStates", () => {
   });
 
   it("uses defaults from config", () => {
-    vi.spyOn(Config, "get").mockReturnValue({
-      ...DEFAULT_CONFIG,
+    mockConfig({
       media_devices: {
         enable_audio: false,
         enable_video: false,
@@ -163,9 +157,7 @@ describe("useMuteStates", () => {
   });
 
   it("skipLobby mutes inputs", () => {
-    vi.spyOn(Config, "get").mockReturnValue({
-      ...DEFAULT_CONFIG,
-    });
+    mockConfig();
 
     render(
       <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
