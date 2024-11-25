@@ -90,7 +90,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             size={avatarSize}
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
-            style={{ display: videoEnabled ? "none" : "initial" }}
+            style={{ display: video && videoEnabled ? "none" : "initial" }}
           />
           {video?.publication !== undefined && (
             <VideoTrack
@@ -98,13 +98,13 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               // There's no reason for this to be focusable
               tabIndex={-1}
               disablePictureInPicture
-              style={{ display: videoEnabled ? "block" : "none" }}
+              style={{ display: video && videoEnabled ? "block" : "none" }}
               data-testid="video"
             />
           )}
         </div>
         <div className={styles.fg}>
-          <div style={{ display: "flex", gap: "var(--cpd-space-1x)" }}>
+          <div className={styles.reactions}>
             <RaisedHandIndicator
               raisedHandTime={raisedHandTime}
               miniature={avatarSize < 96}
@@ -118,6 +118,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               />
             )}
           </div>
+          {!video && (
+            <div className={styles.status}>
+              {t("video_tile.waiting_for_media")}
+            </div>
+          )}
           {/* TODO: Bring this back once encryption status is less broken */}
           {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>
