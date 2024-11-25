@@ -42,6 +42,7 @@ describe("MediaView", () => {
     unencryptedWarning: false,
     video: trackReference,
     member: undefined,
+    localParticipant: false,
   };
 
   test("is accessible", async () => {
@@ -60,8 +61,19 @@ describe("MediaView", () => {
   });
 
   describe("with no participant", () => {
-    it("shows avatar", () => {
-      render(<MediaView {...baseProps} video={undefined} />);
+    it("shows avatar for local user", () => {
+      render(
+        <MediaView {...baseProps} video={undefined} localParticipant={true} />,
+      );
+      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(screen.queryAllByText("video_tile.waiting_for_media").length).toBe(
+        0,
+      );
+    });
+    it("shows avatar and label for remote user", () => {
+      render(
+        <MediaView {...baseProps} video={undefined} localParticipant={false} />,
+      );
       expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
       expect(screen.getByText("video_tile.waiting_for_media")).toBeVisible();
     });

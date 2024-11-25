@@ -55,6 +55,7 @@ interface SpotlightItemBaseProps {
   encryptionStatus: EncryptionStatus;
   displayName: string;
   "aria-hidden"?: boolean;
+  localParticipant: boolean;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
@@ -163,6 +164,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       displayName,
       encryptionStatus,
       "aria-hidden": ariaHidden,
+      localParticipant: vm.local,
     };
 
     return vm instanceof ScreenShareViewModel ? (

@@ -41,6 +41,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
   raisedHandOnClick?: () => void;
+  localParticipant: boolean;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -63,6 +64,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       raisedHandTime,
       currentReaction,
       raisedHandOnClick,
+      localParticipant,
       ...props
     },
     ref,
@@ -118,7 +120,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               />
             )}
           </div>
-          {!video && (
+          {!video && !localParticipant && (
             <div className={styles.status}>
               {t("video_tile.waiting_for_media")}
             </div>
