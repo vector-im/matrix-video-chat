@@ -53,7 +53,9 @@ describe("MediaView", () => {
     test("neither video nor avatar are shown", () => {
       render(<MediaView {...baseProps} video={trackReferencePlaceholder} />);
       expect(screen.queryByTestId("video")).toBeNull();
-      expect(screen.getByTestId("avatar")).not.toBeVisible();
+      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
+        0,
+      );
     });
   });
 
@@ -72,7 +74,9 @@ describe("MediaView", () => {
         </TooltipProvider>,
       );
       expect(await axe(container)).toHaveNoViolations();
-      expect(screen.getByTestId("unencrypted_warning_icon")).toBeTruthy();
+      expect(
+        screen.getByRole("img", { name: "common.unencrypted" }),
+      ).toBeTruthy();
     });
 
     test("is not shown", () => {
@@ -81,7 +85,9 @@ describe("MediaView", () => {
           <MediaView {...baseProps} unencryptedWarning={false} />
         </TooltipProvider>,
       );
-      expect(screen.queryByTestId("unencrypted_warning_icon")).toBeNull();
+      expect(
+        screen.queryAllByRole("img", { name: "common.unencrypted" }).length,
+      ).toBe(0);
     });
   });
 
@@ -93,7 +99,9 @@ describe("MediaView", () => {
         </TooltipProvider>,
       );
       expect(screen.getByTestId("video")).toBeVisible();
-      expect(screen.getByTestId("avatar")).not.toBeVisible();
+      expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
+        0,
+      );
     });
 
     test("just avatar is visible", () => {
@@ -102,7 +110,7 @@ describe("MediaView", () => {
           <MediaView {...baseProps} videoEnabled={false} />
         </TooltipProvider>,
       );
-      expect(screen.getByTestId("avatar")).toBeVisible();
+      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
       expect(screen.getByTestId("video")).not.toBeVisible();
     });
   });

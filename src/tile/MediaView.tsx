@@ -91,7 +91,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
             style={{ display: videoEnabled ? "none" : "initial" }}
-            data-testid="avatar"
           />
           {video.publication !== undefined && (
             <VideoTrack
@@ -155,7 +154,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
                   width={20}
                   height={20}
                   className={styles.errorIcon}
-                  data-testid="unencrypted_warning_icon"
+                  role="img"
+                  aria-label={t("common.unencrypted")}
                 />
               </Tooltip>
             )}
