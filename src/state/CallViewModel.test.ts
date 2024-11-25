@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished } from "vitest";
+import { test, vi, onTestFinished, it } from "vitest";
 import {
   combineLatest,
   debounceTime,
@@ -628,6 +628,55 @@ test("participants must have a MatrixRTCSession to be visible", () => {
               type: "grid",
               spotlight: undefined,
               grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+            },
+          },
+        );
+      },
+    );
+  });
+});
+
+it("should show at least one tile per MatrixRTCSession", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    // iterate through some combinations of MatrixRTC memberships
+    const scenarioInputMarbles = " abcd";
+    // There should always be one tile for each MatrixRTCSession
+    const expectedLayoutMarbles = "abcd";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [aliceRtcMember],
+        c: [aliceRtcMember, daveRtcMember],
+        d: [daveRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        vm.setGridMode("grid");
+        expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0"],
+            },
+            b: {
+              type: "one-on-one",
+              local: "local:0",
+              remote: `${aliceId}:0`,
+            },
+            c: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+            },
+            d: {
+              type: "one-on-one",
+              local: "local:0",
+              remote: `${daveId}:0`,
             },
           },
         );
