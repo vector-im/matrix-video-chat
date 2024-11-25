@@ -131,6 +131,7 @@ export const GroupCallView: FC<Props> = ({
   const latestDevices = useRef<MediaDevices>();
   latestDevices.current = deviceContext;
 
+  // TODO: why do we use a ref here instead of using muteStates directly?
   const latestMuteStates = useRef<MuteStates>();
   latestMuteStates.current = muteStates;
 
