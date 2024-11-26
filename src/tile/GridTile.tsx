@@ -42,6 +42,7 @@ import {
   useDisplayName,
   LocalUserMediaViewModel,
   RemoteUserMediaViewModel,
+  EncryptionStatus,
 } from "../state/MediaViewModel";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
@@ -145,6 +146,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         className={classNames(className, styles.tile, {
           [styles.speaking]: showSpeaking,
           [styles.handRaised]: !showSpeaking && !!handRaised,
+          [styles.loading]:
+            encryptionStatus === EncryptionStatus.Connecting && !vm.local,
         })}
         nameTagLeadingIcon={
           <AudioIcon

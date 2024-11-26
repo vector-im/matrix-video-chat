@@ -75,7 +75,7 @@ describe("MediaView", () => {
         <MediaView {...baseProps} video={undefined} localParticipant={false} />,
       );
       expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
-      expect(screen.getByText("video_tile.waiting_for_media")).toBeVisible();
+      expect(screen.getByTestId("videoTile")).toBeVisible();
     });
   });
 

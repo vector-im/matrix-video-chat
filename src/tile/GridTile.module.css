@@ -18,7 +18,9 @@ borders don't support gradients */
   position: absolute;
   z-index: -1; /* Put it below the outline */
   opacity: 0; /* Hidden unless speaking */
-  transition: opacity ease 0.15s;
+  /* this only animates in one direction. In the other direction,
+  the background will disappear and the opacity has no effect.*/
+  transition: opacity ease 0.5s;
   inset: calc(-1 * var(--cpd-border-width-4));
   border-radius: var(--cpd-space-5x);
   background-blend-mode: overlay, normal;
@@ -48,6 +50,11 @@ borders don't support gradients */
   outline: var(--cpd-border-width-2) solid var(--cpd-color-bg-canvas-default) !important;
 }
 
+.tile.loading {
+  /* !important because loading border should take priority over hover */
+  outline: var(--cpd-border-width-2) solid var(--cpd-color-bg-canvas-default) !important;
+}
+
 .tile.handRaised::before {
   background: linear-gradient(
       119deg,
@@ -60,6 +67,31 @@ borders don't support gradients */
       var(--cpd-color-yellow-900) 100%
     );
   opacity: 1;
+}
+
+.tile.loading::before {
+  background: linear-gradient(
+    var(--angle),
+    var(--cpd-color-green-900) 0%,
+    var(--cpd-color-blue-200) 100%
+  );
+  opacity: 1;
+  animation: rotate-gradient linear 2s infinite;
+}
+
+@property --angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotate-gradient {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 360deg;
+  }
 }
 
 @media (hover: hover) {
