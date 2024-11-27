@@ -17,5 +17,10 @@
   },
   "rageshake": {
     "submit_url": "https://element.io/bugreports/submit"
+  },
+  "matrix_rtc_session": {
+    "key_rotation_on_leave_delay": 15000,
+    "membership_keep_alive_period": 5000,
+    "membership_server_side_expiry_timeout": 15000
   }
 }
