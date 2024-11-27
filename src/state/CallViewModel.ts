@@ -435,7 +435,9 @@ export class CallViewModel extends ViewModel {
     this.remoteParticipants,
     observeParticipantMedia(this.livekitRoom.localParticipant),
     duplicateTiles.value,
-    // Also react to changes in the MatrixRTC session list:
+    // Also react to changes in the MatrixRTC session list.
+    // The session list will also be update if a room membership changes.
+    // No additional RoomState event listener needs to be set up.
     fromEvent(
       this.matrixRTCSession,
       MatrixRTCSessionEvent.MembershipsChanged,
