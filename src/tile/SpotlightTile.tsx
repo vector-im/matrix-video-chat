@@ -213,7 +213,7 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     const maximised = useObservableEagerState(vm.maximised);
     const media = useObservableEagerState(vm.media);
     const [visibleId, setVisibleId] = useState<string | undefined>(
-      media.length > 0 ? media[0].id : undefined,
+      media[0]?.id,
     );
     const latestMedia = useLatest(media);
     const latestVisibleId = useLatest(visibleId);
