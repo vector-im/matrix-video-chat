@@ -74,13 +74,14 @@ export function useMuteStates(): MuteStates {
   const devices = useMediaDevices();
 
   const { skipLobby } = useUrlParams();
-
+  // In SPA without lobby we need to protect from unmuted joins (Privacy).
+  const allowStartUnmuted = !skipLobby || widget !== null;
   const audio = useMuteState(devices.audioInput, () => {
-    return Config.get().media_devices.enable_audio && !skipLobby;
+    return Config.get().media_devices.enable_audio && allowStartUnmuted;
   });
   const video = useMuteState(
     devices.videoInput,
-    () => Config.get().media_devices.enable_video && !skipLobby,
+    () => Config.get().media_devices.enable_video && allowStartUnmuted,
   );
 
   useEffect(() => {

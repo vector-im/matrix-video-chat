@@ -156,8 +156,14 @@ describe("useMuteStates", () => {
     expect(screen.getByTestId("video-enabled").textContent).toBe("false");
   });
 
-  it("skipLobby mutes inputs", () => {
+  it("skipLobby mutes inputs on SPA", () => {
     mockConfig();
+    vi.mock("../widget", () => {
+      return {
+        widget: null,
+        ElementWidgetActions: {},
+      };
+    });
 
     render(
       <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
@@ -168,5 +174,32 @@ describe("useMuteStates", () => {
     );
     expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
     expect(screen.getByTestId("video-enabled").textContent).toBe("false");
+  });
+
+  it("skipLobby does not mute inputs in widget mode", () => {
+    mockConfig();
+    vi.mock("../widget", () => {
+      return {
+        widget: {
+          api: {
+            transport: {
+              send: async (): Promise<void> => new Promise((r) => r()),
+            },
+          },
+          lazyActions: { on: vi.fn(), off: vi.fn() },
+        },
+        ElementWidgetActions: {},
+      };
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
+        <MediaDevicesContext.Provider value={mockMediaDevices()}>
+          <TestComponent />
+        </MediaDevicesContext.Provider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("audio-enabled").textContent).toBe("true");
+    expect(screen.getByTestId("video-enabled").textContent).toBe("true");
   });
 });
