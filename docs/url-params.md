@@ -25,11 +25,10 @@ There are two formats for Element Call urls.
   ```
 
   With this format the livekit alias that will be used is the `<room_name>`.
-  All ppl connecting to this url will end up in the same unencrypted room.
+  All people connecting to this URL will end up in the same unencrypted room.
   This does not scale, is super unsecure
-  (ppl could end up in the same room by accident) and it also is not really
+  (people could end up in the same room by accident) and it also is not really
   possible to support encryption.
-  The url parameters are spit into two categories: **general** and **widget related**.
 
 ## Parameters
 
