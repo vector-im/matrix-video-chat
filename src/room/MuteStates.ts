@@ -19,7 +19,6 @@ import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";
-import { useUrlParams } from "../UrlParams";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -73,14 +72,12 @@ function useMuteState(
 export function useMuteStates(): MuteStates {
   const devices = useMediaDevices();
 
-  const { skipLobby } = useUrlParams();
-
   const audio = useMuteState(devices.audioInput, () => {
-    return Config.get().media_devices.enable_audio && !skipLobby;
+    return Config.get().media_devices.enable_audio;
   });
   const video = useMuteState(
     devices.videoInput,
-    () => Config.get().media_devices.enable_video && !skipLobby,
+    () => Config.get().media_devices.enable_video,
   );
 
   useEffect(() => {
