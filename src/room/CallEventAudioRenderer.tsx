@@ -64,7 +64,7 @@ export function CallEventAudioRenderer({
         }
       });
 
-    return () => {
+    return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
     };

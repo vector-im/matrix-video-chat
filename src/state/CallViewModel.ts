@@ -482,11 +482,6 @@ export class CallViewModel extends ViewModel {
         (prev, ids) => {
           const left = prev.ids.filter((id) => !ids.includes(id));
           const joined = ids.filter((id) => !prev.ids.includes(id));
-          console.log("memberChanges", {
-            ids,
-            old: prev,
-            new: { left, joined },
-          });
           return { ids, joined, left };
         },
         { ids: [], joined: [], left: [] },
