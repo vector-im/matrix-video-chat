@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useDeferredValue, useEffect, useRef } from "react";
-import { useObservableEagerState } from "observable-hooks";
+import { ReactNode, useEffect, useRef } from "react";
+import { filter } from "rxjs";
 
 import {
   playReactionsSound,
@@ -30,31 +30,56 @@ export function CallEventAudioRenderer({
 }): ReactNode {
   const [shouldPlay] = useSetting(playReactionsSound);
   const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
-  const memberIds = useObservableEagerState(vm.userMediaIds);
-  const previousMembers = useDeferredValue(memberIds);
   const callEntered = useRef<HTMLAudioElement>(null);
   const callLeft = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (memberIds.length > MAX_PARTICIPANT_COUNT_FOR_SOUND) {
+    if (!shouldPlay) {
       return;
     }
 
-    const memberLeft = !!previousMembers.filter((m) => !memberIds.includes(m))
-      .length;
-    const memberJoined = !!memberIds.filter((m) => !previousMembers.includes(m))
-      .length;
+    const joinSub = vm.memberChanges
+      .pipe(
+        filter(
+          ({ joined, ids }) =>
+            ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && joined.length > 0,
+        ),
+      )
+      .subscribe(() => {
+        if (callEntered.current?.paused) {
+          void callEntered.current.play();
+        }
+      });
 
-    if (callEntered.current && callEntered.current?.paused && memberJoined) {
+    const leftSub = vm.memberChanges
+      .pipe(
+        filter(
+          ({ ids, left }) =>
+            ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && left.length > 0,
+        ),
+      )
+      .subscribe(() => {
+        if (callLeft.current?.paused) {
+          void callLeft.current.play();
+        }
+      });
+
+    return () => {
+      joinSub.unsubscribe();
+      leftSub.unsubscribe();
+    };
+  }, [shouldPlay, callEntered, callLeft, vm]);
+
+  // Set volume.
+  useEffect(() => {
+    if (callEntered.current) {
       callEntered.current.volume = effectSoundVolume;
-      void callEntered.current.play();
     }
 
-    if (callLeft.current && callLeft.current?.paused && memberLeft) {
+    if (callLeft.current) {
       callLeft.current.volume = effectSoundVolume;
-      void callLeft.current.play();
     }
-  }, [callEntered, callLeft, memberIds, previousMembers, effectSoundVolume]);
+  }, [callEntered, callLeft, effectSoundVolume]);
 
   // Do not render any audio elements if playback is disabled. Will save
   // audio file fetches.
