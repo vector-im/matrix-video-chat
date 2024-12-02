@@ -9,7 +9,6 @@ import { ReactNode, useEffect, useRef } from "react";
 import { filter } from "rxjs";
 
 import {
-  playReactionsSound,
   soundEffectVolumeSetting as effectSoundVolumeSetting,
   useSetting,
 } from "../settings/settings";
@@ -35,7 +34,7 @@ export function CallEventAudioRenderer({
   useEffect(() => {
     if (effectSoundVolume === 0) {
       return;
-    } 
+    }
     const joinSub = vm.memberChanges
       .pipe(
         filter(
@@ -44,7 +43,6 @@ export function CallEventAudioRenderer({
         ),
       )
       .subscribe(({ joined }) => {
-        console.log("Join", joined);
         if (callEntered.current?.paused) {
           void callEntered.current.play();
         }

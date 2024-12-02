@@ -16,6 +16,7 @@ import {
   Room as LivekitRoom,
   RoomEvent,
 } from "livekit-client";
+import { EventEmitter } from "stream";
 
 import {
   LocalUserMediaViewModel,
@@ -24,7 +25,6 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import { DEFAULT_CONFIG, ResolvedConfigOptions } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
-import { EventEmitter } from "stream";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -111,22 +111,28 @@ export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
   return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
 }
 
-export class MockLivekitRoom extends EventEmitter {
+/**
+ * A mock of a Livekit Room that can emit events.
+ */
+export class EmittableMockLivekitRoom extends EventEmitter {
   public localParticipant?: LocalParticipant;
   public remoteParticipants: Map<string, RemoteParticipant>;
 
-  constructor(room: {localParticipant?: LocalParticipant, remoteParticipants: Map<string, RemoteParticipant>}) {
+  public constructor(room: {
+    localParticipant?: LocalParticipant;
+    remoteParticipants: Map<string, RemoteParticipant>;
+  }) {
     super();
     this.localParticipant = room.localParticipant;
     this.remoteParticipants = room.remoteParticipants ?? new Map();
   }
 
-  public addParticipant(remoteParticipant: RemoteParticipant) {
+  public addParticipant(remoteParticipant: RemoteParticipant): void {
     this.remoteParticipants.set(remoteParticipant.identity, remoteParticipant);
     this.emit(RoomEvent.ParticipantConnected, remoteParticipant);
   }
 
-  public removeParticipant(remoteParticipant: RemoteParticipant) {
+  public removeParticipant(remoteParticipant: RemoteParticipant): void {
     this.remoteParticipants.delete(remoteParticipant.identity);
     this.emit(RoomEvent.ParticipantDisconnected, remoteParticipant);
   }
@@ -230,7 +236,7 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
   });
 }
 
-export function mockMediaPlay() {
+export function mockMediaPlay(): string[] {
   const audioIsPlaying: string[] = [];
   window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
     audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
