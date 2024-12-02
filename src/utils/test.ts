@@ -34,6 +34,8 @@ import {
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
+import { DEFAULT_CONFIG, ResolvedConfigOptions } from "../config/ConfigOptions";
+import { Config } from "../config/Config";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -240,6 +242,13 @@ export async function withRemoteMedia(
   } finally {
     vm.destroy();
   }
+}
+
+export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
+  vi.spyOn(Config, "get").mockReturnValue({
+    ...DEFAULT_CONFIG,
+    ...config,
+  });
 }
 
 export class MockRTCSession extends TypedEventEmitter<
