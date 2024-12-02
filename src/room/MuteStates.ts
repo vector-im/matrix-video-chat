@@ -23,7 +23,7 @@ import { useUrlParams } from "../UrlParams";
 
 /**
  * If there already are this many participants in the call, we automatically mute
- * the user.
+ * the user when they join a call.
  */
 export const MUTE_PARTICIPANT_COUNT = 8;
 
@@ -74,7 +74,7 @@ export function useMuteStates(): MuteStates {
   const devices = useMediaDevices();
 
   const { skipLobby } = useUrlParams();
-  // In SPA without lobby we need to protect from unmuted joins (Privacy).
+  // In SPA without lobby we need to protect from unmuted joins for privacy.
   const allowStartUnmuted = !skipLobby || !!widget;
   const audio = useMuteState(devices.audioInput, () => {
     return Config.get().media_devices.enable_audio && allowStartUnmuted;
