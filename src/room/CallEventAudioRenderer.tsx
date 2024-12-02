@@ -21,6 +21,7 @@ import leftCallSoundOgg from "../sound/left_call.ogg";
 // Do not play any sounds if the participant count has exceeded this
 // number.
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
+export const CONCURRENT_AUDIO_CHANNELS = 2;
 
 export function CallEventAudioRenderer({
   vm,
@@ -28,8 +29,8 @@ export function CallEventAudioRenderer({
   vm: CallViewModel;
 }): ReactNode {
   const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
-  const callEntered = useRef<HTMLAudioElement>(null);
-  const callLeft = useRef<HTMLAudioElement>(null);
+  const callEntered = useRef<(HTMLAudioElement|null)[]>([]);
+  const callLeft = useRef<(HTMLAudioElement|null)[]>([]);
 
   useEffect(() => {
     if (effectSoundVolume === 0) {
@@ -43,9 +44,8 @@ export function CallEventAudioRenderer({
         ),
       )
       .subscribe(({ joined }) => {
-        if (callEntered.current?.paused) {
-          void callEntered.current.play();
-        }
+        const availablePlayer = callEntered.current.find(v => v?.paused);
+        void availablePlayer?.play();
       });
 
     const leftSub = vm.memberChanges
@@ -56,9 +56,8 @@ export function CallEventAudioRenderer({
         ),
       )
       .subscribe(() => {
-        if (callLeft.current?.paused) {
-          void callLeft.current.play();
-        }
+        const availablePlayer = callLeft.current.find(v => v?.paused);
+        void availablePlayer?.play();
       });
 
     return (): void => {
@@ -69,13 +68,8 @@ export function CallEventAudioRenderer({
 
   // Set volume.
   useEffect(() => {
-    if (callEntered.current) {
-      callEntered.current.volume = effectSoundVolume;
-    }
-
-    if (callLeft.current) {
-      callLeft.current.volume = effectSoundVolume;
-    }
+    callEntered.current.forEach(a => {if (a) {a.volume = effectSoundVolume}});
+    callLeft.current.forEach(a => {if (a) {a.volume = effectSoundVolume}});
   }, [callEntered, callLeft, effectSoundVolume]);
 
   // Do not render any audio elements if playback is disabled. Will save
@@ -88,14 +82,14 @@ export function CallEventAudioRenderer({
     // Will play as soon as it's mounted, which is what we want as this will
     // play when the call is entered.
     <>
-      <audio ref={callEntered} preload="auto" hidden>
+      {Array.from({length: CONCURRENT_AUDIO_CHANNELS}).map((_, index) => <audio key={index} ref={(r) => callEntered.current[index] = r} preload="auto" hidden>
         <source src={enterCallSoundOgg} type="audio/ogg; codecs=vorbis" />
         <source src={enterCallSoundMp3} type="audio/mpeg" />
-      </audio>
-      <audio ref={callLeft} preload="auto" hidden>
+      </audio>)}
+      {Array.from({length: CONCURRENT_AUDIO_CHANNELS}).map((_, index) => <audio key={index} ref={(r) => callLeft.current[index] = r} preload="auto" hidden>
         <source src={leftCallSoundOgg} type="audio/ogg; codecs=vorbis" />
         <source src={leftCallSoundMp3} type="audio/mpeg" />
-      </audio>
+      </audio>)}
     </>
   );
 }
