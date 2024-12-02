@@ -1812,6 +1812,14 @@
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
+"@livekit/track-processors@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@livekit/track-processors/-/track-processors-0.3.2.tgz#eaff6a48b556c25e85f5dd2c4daf6dcf1bc3b143"
+  integrity sha512-4JUCzb7yIKoVsTo8J6FTzLZJHcI6DihfX/pGRDg0SOGaxprcDPrt8jaDBBTsnGBSXHeMxl2ugN+xQjdCWzLKEA==
+  dependencies:
+    "@mediapipe/holistic" "0.5.1675471629"
+    "@mediapipe/tasks-vision" "0.10.9"
+
 "@matrix-org/matrix-sdk-crypto-wasm@^9.0.0":
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-9.1.0.tgz#f889653eb4fafaad2a963654d586bd34de62acd5"
@@ -1821,6 +1829,16 @@
   version "3.2.15"
   resolved "https://registry.yarnpkg.com/@matrix-org/olm/-/olm-3.2.15.tgz#55f3c1b70a21bbee3f9195cecd6846b1083451ec"
   integrity sha512-S7lOrndAK9/8qOtaTq/WhttJC/o4GAzdfK0MUPpo8ApzsJEC0QjtwrkC3KBXdFP1cD1MXi/mlKR7aaoVMKgs6Q==
+
+"@mediapipe/holistic@0.5.1675471629":
+  version "0.5.1675471629"
+  resolved "https://registry.yarnpkg.com/@mediapipe/holistic/-/holistic-0.5.1675471629.tgz#f1127d43161ff27e8889d5d39aaea164f9730980"
+  integrity sha512-qY+cxtDeSOvVtevrLgnodiwXYaAtPi7dHZtNv/bUCGEjFicAOYtMmrZSqMmbPkTB2+4jLnPF1vgshkAqQRSYAw==
+
+"@mediapipe/tasks-vision@0.10.9":
+  version "0.10.9"
+  resolved "https://registry.yarnpkg.com/@mediapipe/tasks-vision/-/tasks-vision-0.10.9.tgz#fbd669f50ac2e888b2c64c9c9863927c111da02f"
+  integrity sha512-/gFguyJm1ng4Qr7VVH2vKO+zZcQd8wc3YafUfvBuYFX0Y5+CvrV+VNPEVkl5W/gUZF5KNKNZAiaHPULGPCIjyQ==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -2980,6 +2998,18 @@
   version "1.1.8"
   resolved "https://registry.yarnpkg.com/@types/content-type/-/content-type-1.1.8.tgz#319644d07ee6b4bfc734483008393b89b99f0219"
   integrity sha512-1tBhmVUeso3+ahfyaKluXe38p+94lovUZdoVfQ3OnJo9uJC42JT7CBoN3k9HYhAae+GwiBYmHu+N9FZhOG+2Pg==
+
+"@types/dom-mediacapture-transform@^0.1.10":
+  version "0.1.10"
+  resolved "https://registry.yarnpkg.com/@types/dom-mediacapture-transform/-/dom-mediacapture-transform-0.1.10.tgz#93e2c04284c95dd2faa2992216417599ee9d27a6"
+  integrity sha512-zUxMN2iShu7p3Fz5sqfvLp93qW/3sLs+RwXWWOkMb969hsuoVqUUokqrENjXqTMNmEEcVXKoHuMMbIGcWyrVVA==
+  dependencies:
+    "@types/dom-webcodecs" "*"
+
+"@types/dom-webcodecs@*":
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/@types/dom-webcodecs/-/dom-webcodecs-0.1.13.tgz#d8be5da4f01b20721307b08ad2cca903ccf4f47f"
+  integrity sha512-O5hkiFIcjjszPIYyUSyvScyvrBoV3NOEEZx/pMlsu44TKzWNkLVBBxnxJz42in5n3QIolYOcBYFCPZZ0h8SkwQ==
 
 "@types/estree@1.0.6", "@types/estree@^1.0.0":
   version "1.0.6"
