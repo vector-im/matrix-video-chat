@@ -17,7 +17,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 
 import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
-import { ElementWidgetActions, widget } from "../widget";
+import { ElementWidgetActions, isRunningAsWidget, widget } from "../widget";
 import { Config } from "../config/Config";
 import { useUrlParams } from "../UrlParams";
 
@@ -75,7 +75,7 @@ export function useMuteStates(): MuteStates {
 
   const { skipLobby } = useUrlParams();
   // In SPA without lobby we need to protect from unmuted joins for privacy.
-  const allowStartUnmuted = !skipLobby || !!widget;
+  const allowStartUnmuted = !skipLobby || isRunningAsWidget;
   const audio = useMuteState(devices.audioInput, () => {
     return Config.get().media_devices.enable_audio && allowStartUnmuted;
   });

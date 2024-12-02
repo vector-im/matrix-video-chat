@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import React, { ReactNode } from "react";
 import { beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -18,6 +18,7 @@ import {
   MediaDevicesContext,
 } from "../livekit/MediaDevicesContext";
 import { mockConfig } from "../utils/test";
+import * as widget from "../widget";
 
 function TestComponent(): ReactNode {
   const muteStates = useMuteStates();
@@ -98,10 +99,7 @@ describe("useMuteStates", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    vi.clearAllMocks();
+    vi.unmock("../widget");
   });
 
   it("disabled when no input devices", () => {
@@ -172,19 +170,7 @@ describe("useMuteStates", () => {
 
   it("skipLobby does not mute inputs in widget mode", () => {
     mockConfig();
-    vi.mock("../widget", () => {
-      return {
-        widget: {
-          api: {
-            transport: {
-              send: async (): Promise<void> => new Promise((r) => r()),
-            },
-          },
-          lazyActions: { on: vi.fn(), off: vi.fn() },
-        },
-        ElementWidgetActions: {},
-      };
-    });
+    vi.spyOn(widget, "isRunningAsWidget", "get").mockImplementation(() => true);
 
     render(
       <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>

@@ -10,7 +10,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Buffer } from "buffer";
 
-import { widget } from "../widget";
+import { isRunningAsWidget } from "../widget";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -269,7 +269,7 @@ export class PosthogAnalytics {
   private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
     let accountAnalyticsId;
-    if (widget) {
+    if (isRunningAsWidget) {
       accountAnalyticsId = getUrlParams().analyticsID;
     } else {
       const accountData = await client.getAccountDataFromServer(
