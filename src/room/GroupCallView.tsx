@@ -42,6 +42,9 @@ import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 
+import leftCallSoundMp3 from "../sound/left_call.mp3";
+import leftCallSoundOgg from "../sound/left_call.ogg";
+
 declare global {
   interface Window {
     rtcSession?: MatrixRTCSession;
@@ -71,6 +74,22 @@ export const GroupCallView: FC<Props> = ({
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
+
+  // Only used in widget mode.
+  const leaveSound = useRef<HTMLAudioElement|null>(null);
+  const playLeaveSound = useCallback(async () => {
+    if (!leaveSound.current) {
+      return;
+    }
+    const ended = new Promise<void>(r => {
+      leaveSound.current?.addEventListener("ended", () => r());
+    });
+    console.log('Playing');
+    await leaveSound.current.play();
+    console.log('started playing');
+    await ended;
+    console.log('ended');
+  }, [leaveSound]);
 
   // This should use `useEffectEvent` (only available in experimental versions)
   useEffect(() => {
@@ -214,12 +233,11 @@ export const GroupCallView: FC<Props> = ({
 
   const onLeave = useCallback(
     (leaveError?: Error): void => {
-      setLeaveError(leaveError);
-      setLeft(true);
-
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
+      console.log('hangup!', sendInstantly);
+      setLeaveError(leaveError);
       PosthogAnalytics.instance.eventCallEnded.track(
         rtcSession.room.roomId,
         rtcSession.memberships.length,
@@ -227,20 +245,22 @@ export const GroupCallView: FC<Props> = ({
         rtcSession,
       );
 
+      // Wait for the sound in widget mode (it's not long)
+      leaveRTCSession(rtcSession, sendInstantly ? playLeaveSound() : undefined)
       // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-      leaveRTCSession(rtcSession)
-        .then(() => {
-          if (
-            !isPasswordlessUser &&
-            !confineToRoom &&
-            !PosthogAnalytics.instance.isEnabled()
-          ) {
-            history.push("/");
-          }
-        })
-        .catch((e) => {
-          logger.error("Error leaving RTC session", e);
-        });
+      .then(() => {
+        setLeft(true);
+        if (
+          !isPasswordlessUser &&
+          !confineToRoom &&
+          !PosthogAnalytics.instance.isEnabled()
+        ) {
+          history.push("/");
+        }
+      })
+      .catch((e) => {
+        logger.error("Error leaving RTC session", e);
+      });
     },
     [rtcSession, isPasswordlessUser, confineToRoom, history],
   );
@@ -308,6 +328,14 @@ export const GroupCallView: FC<Props> = ({
       onDismiss={onDismissInviteModal}
     />
   );
+  const callEndedAudio = <audio
+    ref={leaveSound}
+    preload="auto"
+    hidden
+  >
+    <source src={leftCallSoundOgg} type="audio/ogg; codecs=vorbis" />
+    <source src={leftCallSoundMp3} type="audio/mpeg" />
+  </audio>;
   const lobbyView = (
     <>
       {shareModal}
@@ -321,6 +349,7 @@ export const GroupCallView: FC<Props> = ({
         participantCount={participantCount}
         onShareClick={onShareClick}
       />
+      {callEndedAudio}
     </>
   );
 
@@ -340,6 +369,7 @@ export const GroupCallView: FC<Props> = ({
           //otelGroupCallMembership={otelGroupCallMembership}
           onShareClick={onShareClick}
         />
+        {callEndedAudio}
       </>
     );
   } else if (left && widget === null) {
@@ -357,14 +387,22 @@ export const GroupCallView: FC<Props> = ({
       leaveError
     ) {
       return (
-        <CallEndedView
-          endedCallId={rtcSession.room.roomId}
-          client={client}
-          isPasswordlessUser={isPasswordlessUser}
-          confineToRoom={confineToRoom}
-          leaveError={leaveError}
-          reconnect={onReconnect}
-        />
+        <>
+          <CallEndedView
+            endedCallId={rtcSession.room.roomId}
+            client={client}
+            isPasswordlessUser={isPasswordlessUser}
+            confineToRoom={confineToRoom}
+            leaveError={leaveError}
+            reconnect={onReconnect}
+          /><audio
+            autoPlay
+            hidden
+          >
+          <source src={leftCallSoundOgg} type="audio/ogg; codecs=vorbis" />
+          <source src={leftCallSoundMp3} type="audio/mpeg" />
+        </audio>;
+        </>
       );
     } else {
       // If the user is a regular user, we'll have sent them back to the homepage,
@@ -375,7 +413,7 @@ export const GroupCallView: FC<Props> = ({
   } else if (left && widget !== null) {
     // Left in widget mode:
     if (!returnToLobby) {
-      return null;
+      return callEndedAudio;
     }
   } else if (preload || skipLobby) {
     return null;
