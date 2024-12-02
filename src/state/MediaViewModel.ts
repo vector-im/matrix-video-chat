@@ -217,6 +217,11 @@ abstract class BaseMediaViewModel extends ViewModel {
 
   public readonly encryptionStatus: Observable<EncryptionStatus>;
 
+  /**
+   * Whether this media corresponds to the local participant.
+   */
+  public abstract readonly local: boolean;
+
   public constructor(
     /**
      * An opaque identifier for this media.
@@ -392,13 +397,16 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   public toggleFitContain(): void {
     this._cropVideo.next(!this._cropVideo.value);
   }
+
+  public get local(): boolean {
+    return this instanceof LocalUserMediaViewModel;
+  }
 }
 
 /**
  * The local participant's user media.
  */
 export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
-  public readonly local = true;
   /**
    * Whether the video should be mirrored.
    */
@@ -438,8 +446,6 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
  * A remote participant's user media.
  */
 export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
-  public readonly local = false;
-
   private readonly locallyMutedToggle = new Subject<void>();
   private readonly localVolumeAdjustment = new Subject<number>();
   private readonly localVolumeCommit = new Subject<void>();
