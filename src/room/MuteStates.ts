@@ -12,9 +12,9 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
 
+import type { IWidgetApiRequest } from "matrix-widget-api";
 import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, isRunningAsWidget, widget } from "../widget";
