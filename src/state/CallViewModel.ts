@@ -27,7 +27,6 @@ import {
   EMPTY,
   Observable,
   Subject,
-  audit,
   combineLatest,
   concat,
   distinctUntilChanged,
@@ -76,6 +75,7 @@ import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
 import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { observeSpeaker } from "./observeSpeaker";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -248,23 +248,7 @@ class UserMedia {
           livekitRoom,
         );
 
-    this.speaker = this.vm.speaking.pipe(
-      // Require 1 s of continuous speaking to become a speaker, and 60 s of
-      // continuous silence to stop being considered a speaker
-      audit((s) =>
-        merge(
-          timer(s ? 1000 : 60000),
-          // If the speaking flag resets to its original value during this time,
-          // end the silencing window to stick with that original value
-          this.vm.speaking.pipe(filter((s1) => s1 !== s)),
-        ),
-      ),
-      startWith(false),
-      distinctUntilChanged(),
-      // Make this Observable hot so that the timers don't reset when you
-      // resubscribe
-      this.scope.state(),
-    );
+    this.speaker = observeSpeaker(this.vm.speaking).pipe(this.scope.state());
 
     this.presenter = observeParticipantEvents(
       participant,
@@ -307,7 +291,7 @@ class ScreenShare {
 
 type MediaItem = UserMedia | ScreenShare;
 
-function findMatrixMember(
+function findMatrixRoomMember(
   room: MatrixRoom,
   id: string,
 ): RoomMember | undefined {
@@ -342,12 +326,16 @@ export class CallViewModel extends ViewModel {
       }),
     );
 
-  private readonly rawRemoteParticipants = connectedParticipantsObserver(
-    this.livekitRoom,
-  ).pipe(this.scope.state());
+  /**
+   * The raw list of RemoteParticipants as reported by LiveKit
+   */
+  private readonly rawRemoteParticipants: Observable<RemoteParticipant[]> =
+    connectedParticipantsObserver(this.livekitRoom).pipe(this.scope.state());
 
-  // Lists of participants to "hold" on display, even if LiveKit claims that
-  // they've left
+  /**
+   * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
+   * they've left
+   */
   private readonly remoteParticipantHolds: Observable<RemoteParticipant[][]> =
     this.connectionState.pipe(
       withLatestFrom(this.rawRemoteParticipants),
@@ -382,6 +370,9 @@ export class CallViewModel extends ViewModel {
       ),
     );
 
+  /**
+   * The RemoteParticipants including those that are being "held" on the screen
+   */
   private readonly remoteParticipants: Observable<RemoteParticipant[]> =
     combineLatest(
       [this.rawRemoteParticipants, this.remoteParticipantHolds],
@@ -403,6 +394,9 @@ export class CallViewModel extends ViewModel {
       },
     );
 
+  /**
+   * List of MediaItems that we want to display
+   */
   private readonly mediaItems: Observable<MediaItem[]> = combineLatest([
     this.remoteParticipants,
     observeParticipantMedia(this.livekitRoom.localParticipant),
@@ -419,7 +413,7 @@ export class CallViewModel extends ViewModel {
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
             for (const p of [localParticipant, ...remoteParticipants]) {
               const id = p === localParticipant ? "local" : p.identity;
-              const member = findMatrixMember(this.matrixRoom, id);
+              const member = findMatrixRoomMember(this.matrixRoom, id);
               if (member === undefined)
                 logger.warn(
                   `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
@@ -472,6 +466,9 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  /**
+   * List of MediaItems that we want to display, that are of type UserMedia
+   */
   private readonly userMedia: Observable<UserMedia[]> = this.mediaItems.pipe(
     map((mediaItems) =>
       mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
@@ -487,6 +484,9 @@ export class CallViewModel extends ViewModel {
       map((ms) => ms.find((m) => m.vm.local)!.vm as LocalUserMediaViewModel),
     );
 
+  /**
+   * List of MediaItems that we want to display, that are of type ScreenShare
+   */
   private readonly screenShares: Observable<ScreenShare[]> =
     this.mediaItems.pipe(
       map((mediaItems) =>
@@ -945,7 +945,7 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  public readonly showFooter = this.windowMode.pipe(
+  public readonly showFooter: Observable<boolean> = this.windowMode.pipe(
     switchMap((mode) => {
       switch (mode) {
         case "pip":

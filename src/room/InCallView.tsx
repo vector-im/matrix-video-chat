@@ -184,7 +184,8 @@ export const InCallView: FC<InCallViewProps> = ({
   onShareClick,
 }) => {
   const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
-  const { supportsReactions, raisedHands } = useReactions();
+  const { supportsReactions, raisedHands, sendReaction, toggleRaisedHand } =
+    useReactions();
   const raisedHandCount = useMemo(
     () => Object.keys(raisedHands).length,
     [raisedHands],
@@ -228,6 +229,8 @@ export const InCallView: FC<InCallViewProps> = ({
     toggleMicrophone,
     toggleCamera,
     (muted) => muteStates.audio.setEnabled?.(!muted),
+    (reaction) => void sendReaction(reaction),
+    () => void toggleRaisedHand(),
   );
 
   const windowMode = useObservableEagerState(vm.windowMode);
@@ -573,8 +576,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <ReactionToggleButton
         key="raise_hand"
         className={styles.raiseHand}
-        client={client}
-        rtcSession={rtcSession}
+        userId={client.getUserId()!}
         onTouchEnd={onControlsTouchEnd}
       />,
     );

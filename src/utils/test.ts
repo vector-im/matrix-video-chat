@@ -4,7 +4,7 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { map, Observable, of } from "rxjs";
+import { map, Observable, of, SchedulerLike } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi } from "vitest";
 import { RoomMember, Room as MatrixRoom } from "matrix-js-sdk/src/matrix";
@@ -21,6 +21,8 @@ import {
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
+import { DEFAULT_CONFIG, ResolvedConfigOptions } from "../config/ConfigOptions";
+import { Config } from "../config/Config";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -39,15 +41,23 @@ export interface OurRunHelpers extends RunHelpers {
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
 }
 
+interface TestRunnerGlobal {
+  rxjsTestScheduler?: SchedulerLike;
+}
+
 /**
  * Run Observables with a scheduler that virtualizes time, for testing purposes.
  */
 export function withTestScheduler(
   continuation: (helpers: OurRunHelpers) => void,
 ): void {
-  new TestScheduler((actual, expected) => {
+  const scheduler = new TestScheduler((actual, expected) => {
     expect(actual).deep.equals(expected);
-  }).run((helpers) =>
+  });
+  // we set the test scheduler as a global so that you can watch it in a debugger
+  // and get the frame number. e.g. `rxjsTestScheduler?.now()`
+  (global as unknown as TestRunnerGlobal).rxjsTestScheduler = scheduler;
+  scheduler.run((helpers) =>
     continuation({
       ...helpers,
       schedule(marbles, actions) {
@@ -91,7 +101,7 @@ function mockEmitter<T>(): EmitterMock<T> {
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
-export function mockMember(member: Partial<RoomMember>): RoomMember {
+export function mockMatrixRoomMember(member: Partial<RoomMember>): RoomMember {
   return { ...mockEmitter(), ...member } as RoomMember;
 }
 
@@ -141,7 +151,7 @@ export async function withLocalMedia(
   const localParticipant = mockLocalParticipant({});
   const vm = new LocalUserMediaViewModel(
     "local",
-    mockMember(member),
+    mockMatrixRoomMember(member),
     localParticipant,
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -176,7 +186,7 @@ export async function withRemoteMedia(
   const remoteParticipant = mockRemoteParticipant(participant);
   const vm = new RemoteUserMediaViewModel(
     "remote",
-    mockMember(member),
+    mockMatrixRoomMember(member),
     remoteParticipant,
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -188,4 +198,11 @@ export async function withRemoteMedia(
   } finally {
     vm.destroy();
   }
+}
+
+export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
+  vi.spyOn(Config, "get").mockReturnValue({
+    ...DEFAULT_CONFIG,
+    ...config,
+  });
 }
