@@ -7,9 +7,9 @@ Please see LICENSE in the repository root for full details.
 
 import { useMemo, FC, CSSProperties, useState, useEffect } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
+import { MatrixClient } from "matrix-js-sdk/src/client";
 
 import { useClient } from "./ClientContext";
-import { MatrixClient } from "matrix-js-sdk/src/client";
 
 export enum Size {
   XS = "xs",
@@ -38,14 +38,24 @@ interface Props {
 
 export function getAvatarUrl(
   client: MatrixClient,
-  mxcUrl: string|null,
+  mxcUrl: string | null,
   avatarSize = 96,
-): string|null {
+): string | null {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);
   // scale is more suitable for larger sizes
   const resizeMethod = avatarSize <= 96 ? "crop" : "scale";
-  return mxcUrl ? client.mxcUrlToHttp(mxcUrl, width, height, resizeMethod, false, true, true) : null;
+  return mxcUrl
+    ? client.mxcUrlToHttp(
+        mxcUrl,
+        width,
+        height,
+        resizeMethod,
+        false,
+        true,
+        true,
+      )
+    : null;
 }
 
 export const Avatar: FC<Props> = ({
@@ -67,12 +77,12 @@ export const Avatar: FC<Props> = ({
     [size],
   );
 
-  const [avatarUrl, setAvatarUrl] = useState<string|undefined>(undefined);
-  
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+
   useEffect(() => {
     if (!client || !src || !sizePx) {
       return;
-    };
+    }
     const token = client.getAccessToken();
     if (!token) {
       return;
@@ -83,20 +93,27 @@ export const Avatar: FC<Props> = ({
       return;
     }
 
-    let objectUrl: string|undefined;
+    let objectUrl: string | undefined;
     fetch(resolveSrc, {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    }).then((req) => req.blob()).then((res) => {
-      objectUrl = URL.createObjectURL(res);
-      setAvatarUrl(objectUrl);
-    }).catch((ex) => {
-      console.warn("Failed to get avatar URL", ex);
-      setAvatarUrl(undefined);
-    });
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(async (req) => req.blob())
+      .then((res) => {
+        objectUrl = URL.createObjectURL(res);
+        setAvatarUrl(objectUrl);
+      })
+      .catch(() => {
+        // Error will likely be evident from browser logs.
+        setAvatarUrl(undefined);
+      });
 
-    () => objectUrl && URL.revokeObjectURL(objectUrl);
+    return (): void => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
   }, [client, src, sizePx]);
 
   return (
