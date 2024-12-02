@@ -632,49 +632,59 @@ export class CallViewModel extends ViewModel {
 
   private readonly spotlight: Observable<MediaViewModel[]> =
     this.screenShares.pipe(
-      switchMap((screenShares) =>
-        screenShares.length > 0
-          ? of(screenShares.map((m) => m.vm))
-          : this.spotlightSpeaker.pipe(
-              map((speaker) => (speaker ? [speaker] : [])),
-            ),
-      ),
+      switchMap((screenShares) => {
+        if (screenShares.length > 0) {
+          return of(screenShares.map((m) => m.vm));
+        }
+
+        return this.spotlightSpeaker.pipe(
+          map((speaker) => (speaker ? [speaker] : [])),
+        );
+      }),
       this.scope.state(),
     );
 
   private readonly pip: Observable<UserMediaViewModel | null> =
     this.screenShares.pipe(
-      switchMap((screenShares) =>
-        screenShares.length > 0
-          ? this.spotlightSpeaker
-          : this.spotlightSpeaker.pipe(
-              switchMap((speaker) =>
-                speaker
-                  ? speaker.local
-                    ? of(null)
-                    : this.mediaItems.pipe(
-                        switchMap((mediaItems) => {
-                          const localUserMedia = mediaItems.find(
-                            (m) => m.vm instanceof LocalUserMediaViewModel,
-                          ) as UserMedia | undefined;
-                          return (
-                            (
-                              localUserMedia?.vm as LocalUserMediaViewModel
-                            ).alwaysShow.pipe(
-                              map(
-                                (alwaysShow) =>
-                                  (alwaysShow
-                                    ? localUserMedia?.vm
-                                    : undefined) ?? null,
-                              ),
-                            ) ?? of(null)
-                          );
-                        }),
-                      )
-                  : of(null),
-              ),
-            ),
-      ),
+      switchMap((screenShares) => {
+        if (screenShares.length > 0) {
+          return this.spotlightSpeaker;
+        }
+
+        return this.spotlightSpeaker.pipe(
+          switchMap((speaker) => {
+            if (!speaker || speaker.local) {
+              return of(null);
+            }
+
+            return this.mediaItems.pipe(
+              switchMap((mediaItems) => {
+                const localUserMedia = mediaItems.find(
+                  (m) => m.vm instanceof LocalUserMediaViewModel,
+                ) as UserMedia | undefined;
+
+                const localUserMediaViewModel = localUserMedia?.vm as
+                  | LocalUserMediaViewModel
+                  | undefined;
+
+                if (!localUserMediaViewModel) {
+                  return of(null);
+                }
+
+                return localUserMediaViewModel.alwaysShow.pipe(
+                  map((alwaysShow) => {
+                    if (alwaysShow) {
+                      return localUserMediaViewModel;
+                    }
+
+                    return null;
+                  }),
+                );
+              }),
+            );
+          }),
+        );
+      }),
       this.scope.state(),
     );
 
