@@ -14,10 +14,9 @@ import { ClientContextProvider } from "./ClientContext";
 import { Avatar } from "./Avatar";
 import { mockMatrixRoomMember } from "./utils/test";
 
-const TestComponent: FC<PropsWithChildren<{ client: MatrixClient }>> = ({
-  client,
-  children,
-}) => {
+const TestComponent: FC<
+  PropsWithChildren<{ client: MatrixClient; supportsThumbnails?: boolean }>
+> = ({ client, children, supportsThumbnails }) => {
   return (
     <ClientContextProvider
       value={{
@@ -25,6 +24,7 @@ const TestComponent: FC<PropsWithChildren<{ client: MatrixClient }>> = ({
         disconnected: false,
         supportedFeatures: {
           reactions: true,
+          thumbnails: supportsThumbnails ?? true,
         },
         setClient: vi.fn(),
         authenticated: {
@@ -70,6 +70,34 @@ test("should just render a placeholder when the user has no avatar", () => {
   expect(element.tagName).toEqual("SPAN");
   expect(client.mxcUrlToHttp).toBeCalledTimes(0);
 });
+
+test("should just render a placeholder when thumbnaisl are not supported", () => {
+  const client = vi.mocked<MatrixClient>({
+    getAccessToken: () => "my-access-token",
+    mxcUrlToHttp: () => vi.fn(),
+  } as unknown as MatrixClient);
+
+  vi.spyOn(client, "mxcUrlToHttp");
+  const member = mockMatrixRoomMember({
+    userId: "@alice:example.org",
+    getMxcAvatarUrl: () => "mxc://example.org/alice-avatar",
+  });
+  const displayName = "Alice";
+  render(
+    <TestComponent client={client} supportsThumbnails={false}>
+      <Avatar
+        id={member.userId}
+        name={displayName}
+        size={96}
+        src={member?.getMxcAvatarUrl()}
+      />
+    </TestComponent>,
+  );
+  const element = screen.getByRole("img", { name: "@alice:example.org" });
+  expect(element.tagName).toEqual("SPAN");
+  expect(client.mxcUrlToHttp).toBeCalledTimes(0);
+});
+
 test("should attempt to fetch authenticated media", async () => {
   const expectedAuthUrl = "http://example.org/media/alice-avatar";
   const expectedObjectURL = "my-object-url";

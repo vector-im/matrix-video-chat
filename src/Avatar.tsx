@@ -9,7 +9,7 @@ import { useMemo, FC, CSSProperties, useState, useEffect } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 
-import { useClient } from "./ClientContext";
+import { useClientState } from "./ClientContext";
 
 export enum Size {
   XS = "xs",
@@ -67,7 +67,7 @@ export const Avatar: FC<Props> = ({
   style,
   ...props
 }) => {
-  const { client } = useClient();
+  const clientState = useClientState();
 
   const sizePx = useMemo(
     () =>
@@ -80,9 +80,16 @@ export const Avatar: FC<Props> = ({
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (!client || !src || !sizePx) {
+    if (clientState?.state !== "valid") {
       return;
     }
+    const { authenticated, supportedFeatures } = clientState;
+    const client = authenticated?.client;
+
+    if (!client || !src || !sizePx || !supportedFeatures.thumbnails) {
+      return;
+    }
+
     const token = client.getAccessToken();
     if (!token) {
       return;
@@ -113,7 +120,7 @@ export const Avatar: FC<Props> = ({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [client, src, sizePx]);
+  }, [clientState, src, sizePx]);
 
   return (
     <CompoundAvatar
