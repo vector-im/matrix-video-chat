@@ -184,7 +184,7 @@ export const widget = ((): WidgetHelpers | null => {
 
 /**
  * Whether or not we are running as a widget.
- * 
+ *
  * @returns true if widget, false if SPA
  */
 export const isRunningAsWidget: boolean = !!widget;
