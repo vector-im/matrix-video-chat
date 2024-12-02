@@ -28,16 +28,14 @@ export function CallEventAudioRenderer({
 }: {
   vm: CallViewModel;
 }): ReactNode {
-  const [shouldPlay] = useSetting(playReactionsSound);
   const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
   const callEntered = useRef<HTMLAudioElement>(null);
   const callLeft = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (!shouldPlay) {
+    if (effectSoundVolume === 0) {
       return;
-    }
-
+    } 
     const joinSub = vm.memberChanges
       .pipe(
         filter(
@@ -45,7 +43,8 @@ export function CallEventAudioRenderer({
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && joined.length > 0,
         ),
       )
-      .subscribe(() => {
+      .subscribe(({ joined }) => {
+        console.log("Join", joined);
         if (callEntered.current?.paused) {
           void callEntered.current.play();
         }
@@ -68,7 +67,7 @@ export function CallEventAudioRenderer({
       joinSub.unsubscribe();
       leftSub.unsubscribe();
     };
-  }, [shouldPlay, callEntered, callLeft, vm]);
+  }, [effectSoundVolume, callEntered, callLeft, vm]);
 
   // Set volume.
   useEffect(() => {
@@ -83,7 +82,7 @@ export function CallEventAudioRenderer({
 
   // Do not render any audio elements if playback is disabled. Will save
   // audio file fetches.
-  if (!shouldPlay) {
+  if (effectSoundVolume === 0) {
     return null;
   }
 
