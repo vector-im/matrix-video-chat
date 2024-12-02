@@ -5,10 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC, useCallback } from "react";
+import { ChangeEvent, FC, ReactNode, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Root as Form, Text } from "@vector-im/compound-web";
+import { Root as Form, Separator, Text } from "@vector-im/compound-web";
+import { BackgroundBlur } from "@livekit/track-processors";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -26,6 +28,7 @@ import {
   useSetting,
   developerSettingsTab as developerSettingsTabSetting,
   duplicateTiles as duplicateTilesSetting,
+  backgroundBlur as backgroundBlurSetting,
   useOptInAnalytics,
   soundEffectVolumeSetting,
 } from "./settings";
@@ -69,6 +72,42 @@ export const SettingsModal: FC<Props> = ({
     developerSettingsTabSetting,
   );
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
+
+  // Generate a `Checkbox` input to turn blur on or off.
+  const BlurCheckbox: React.FC = (): ReactNode => {
+    const [blur, setBlur] = useSetting(backgroundBlurSetting);
+    let canBlur = true;
+    try {
+      // eslint-disable-next-line new-cap
+      BackgroundBlur(15);
+    } catch (e) {
+      logger.debug(
+        "Cannot blur, so we do not show the option in settings. error: ",
+        e,
+      );
+      canBlur = false;
+      setBlur(false);
+    }
+    return (
+      <>
+        <h4>{t("settings.background_blur_header")}</h4>
+
+        <FieldRow>
+          <InputField
+            id="activateBackgroundBlur"
+            label={t("settings.background_blur_label")}
+            description={
+              canBlur ? "" : t("settings.blur_not_supported_by_browser")
+            }
+            type="checkbox"
+            checked={blur}
+            onChange={(b): void => setBlur(b.target.checked)}
+            disabled={!canBlur}
+          />
+        </FieldRow>
+      </>
+    );
+  };
 
   const optInDescription = (
     <Text size="sm">
@@ -123,12 +162,16 @@ export const SettingsModal: FC<Props> = ({
     key: "video",
     name: t("common.video"),
     content: (
-      <Form>
-        <DeviceSelection
-          devices={devices.videoInput}
-          caption={t("common.camera")}
-        />
-      </Form>
+      <>
+        <Form>
+          <DeviceSelection
+            devices={devices.videoInput}
+            caption={t("common.camera")}
+          />
+        </Form>
+        <Separator />
+        <BlurCheckbox />
+      </>
     ),
   };
 
