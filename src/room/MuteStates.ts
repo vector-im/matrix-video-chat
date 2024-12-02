@@ -91,7 +91,7 @@ export function useMuteStates(): MuteStates {
         video_enabled: video.enabled,
       })
       .catch((e) =>
-        logger.warn("Could not send DeviceMute action to widget", e),
+        logger.warn("Could not send DeviceMute action to widget host", e),
       );
   }, [audio, video]);
 
