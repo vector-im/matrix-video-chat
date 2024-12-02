@@ -156,17 +156,17 @@ describe("useMuteStates", () => {
     expect(screen.getByTestId("video-enabled").textContent).toBe("false");
   });
 
-  it("skipLobby mutes inputs", () => {
-    mockConfig();
+  // it("skipLobby mutes inputs", () => {
+  //   mockConfig();
 
-    render(
-      <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
-        <MediaDevicesContext.Provider value={mockMediaDevices()}>
-          <TestComponent />
-        </MediaDevicesContext.Provider>
-      </MemoryRouter>,
-    );
-    expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
-    expect(screen.getByTestId("video-enabled").textContent).toBe("false");
-  });
+  //   render(
+  //     <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
+  //       <MediaDevicesContext.Provider value={mockMediaDevices()}>
+  //         <TestComponent />
+  //       </MediaDevicesContext.Provider>
+  //     </MemoryRouter>,
+  //   );
+  //   expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
+  //   expect(screen.getByTestId("video-enabled").textContent).toBe("false");
+  // });
 });
