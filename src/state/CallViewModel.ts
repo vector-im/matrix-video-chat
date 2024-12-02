@@ -545,6 +545,19 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
+  public readonly memberChanges = this.userMedia
+    .pipe(map((mediaItems) => mediaItems.map((m) => m.id)))
+    .pipe(
+      scan<string[], { ids: string[]; joined: string[]; left: string[] }>(
+        (prev, ids) => {
+          const left = prev.ids.filter((id) => !ids.includes(id));
+          const joined = ids.filter((id) => !prev.ids.includes(id));
+          return { ids, joined, left };
+        },
+        { ids: [], joined: [], left: [] },
+      ),
+    );
+
   /**
    * List of MediaItems that we want to display, that are of type ScreenShare
    */
