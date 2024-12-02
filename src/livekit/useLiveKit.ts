@@ -149,7 +149,7 @@ export function useLiveKit(
   >(undefined);
 
   useEffect(() => {
-    // Don't even try if we cannot blur on this platform
+    // Don't even try if we cannot blur on this platform.
     if (!blur) return;
     if (!room || videoTrackPromise.current) return;
     const update = async (): Promise<void> => {
