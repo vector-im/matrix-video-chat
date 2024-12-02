@@ -100,12 +100,11 @@ export const Avatar: FC<Props> = ({
       },
     })
       .then(async (req) => req.blob())
-      .then((res) => {
-        objectUrl = URL.createObjectURL(res);
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
         setAvatarUrl(objectUrl);
       })
-      .catch(() => {
-        // Error will likely be evident from browser logs.
+      .catch((ex) => {
         setAvatarUrl(undefined);
       });
 

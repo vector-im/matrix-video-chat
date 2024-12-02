@@ -71,6 +71,8 @@ export type SetClientParams = {
 
 const ClientContext = createContext<ClientState | undefined>(undefined);
 
+export const ClientContextProvider = ClientContext.Provider;
+
 export const useClientState = (): ClientState | undefined =>
   useContext(ClientContext);
 
