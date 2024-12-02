@@ -630,17 +630,21 @@ export class CallViewModel extends ViewModel {
     }),
   );
 
-  private readonly spotlightAndPip: Observable<
-    [Observable<MediaViewModel[]>, Observable<UserMediaViewModel | null>]
-  > = this.screenShares.pipe(
+  private readonly spotlightAndPip: Observable<{
+    spotlight: Observable<MediaViewModel[]>;
+    pip: Observable<UserMediaViewModel | null>;
+  }> = this.screenShares.pipe(
     map((screenShares) =>
       screenShares.length > 0
-        ? ([of(screenShares.map((m) => m.vm)), this.spotlightSpeaker] as const)
-        : ([
-            this.spotlightSpeaker.pipe(
+        ? {
+            spotlight: of(screenShares.map((m) => m.vm)),
+            pip: this.spotlightSpeaker,
+          }
+        : {
+            spotlight: this.spotlightSpeaker.pipe(
               map((speaker) => (speaker ? [speaker] : [])),
             ),
-            this.spotlightSpeaker.pipe(
+            pip: this.spotlightSpeaker.pipe(
               switchMap((speaker) =>
                 speaker
                   ? speaker.local
@@ -667,13 +671,13 @@ export class CallViewModel extends ViewModel {
                   : of(null),
               ),
             ),
-          ] as const),
+          },
     ),
   );
 
   private readonly spotlight: Observable<MediaViewModel[]> =
     this.spotlightAndPip.pipe(
-      switchMap(([spotlight]) => spotlight),
+      switchMap(({ spotlight }) => spotlight),
       this.scope.state(),
     );
 
@@ -686,7 +690,7 @@ export class CallViewModel extends ViewModel {
     );
 
   private readonly pip: Observable<UserMediaViewModel | null> =
-    this.spotlightAndPip.pipe(switchMap(([, pip]) => pip));
+    this.spotlightAndPip.pipe(switchMap(({ pip }) => pip));
 
   private readonly pipEnabled: Observable<boolean> = setPipEnabled.pipe(
     startWith(false),
