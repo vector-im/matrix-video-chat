@@ -91,7 +91,7 @@ export function CallEventAudioRenderer({
     // Will play as soon as it's mounted, which is what we want as this will
     // play when the call is entered.
     <>
-      <audio autoPlay ref={callEntered} preload="auto" hidden>
+      <audio ref={callEntered} preload="auto" hidden>
         <source src={enterCallSoundOgg} type="audio/ogg; codecs=vorbis" />
         <source src={enterCallSoundMp3} type="audio/mpeg" />
       </audio>
