@@ -158,12 +158,6 @@ describe("useMuteStates", () => {
 
   it("skipLobby mutes inputs on SPA", () => {
     mockConfig();
-    vi.mock("../widget", () => {
-      return {
-        widget: null,
-        ElementWidgetActions: {},
-      };
-    });
 
     render(
       <MemoryRouter initialEntries={["/room/?skipLobby=true"]}>
