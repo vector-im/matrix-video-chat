@@ -120,6 +120,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               />
             )}
           </div>
+          {!video && !localParticipant && (
+            <div className={styles.status}>
+              {t("video_tile.waiting_for_media")}
+            </div>
+          )}
           {/* TODO: Bring this back once encryption status is less broken */}
           {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>
