@@ -203,4 +203,8 @@ export class MockRoom extends EventEmitter {
     });
     return evt.getId()!;
   }
+
+  public getMember() {
+    return undefined;
+  }
 }

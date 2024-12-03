@@ -235,12 +235,3 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
     ...config,
   });
 }
-
-export function mockMediaPlay(): string[] {
-  const audioIsPlaying: string[] = [];
-  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
-    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
-    return Promise.resolve();
-  };
-  return audioIsPlaying;
-}

@@ -11,6 +11,7 @@ import { useReactions } from "../useReactions";
 import { playReactionsSound, useSetting } from "../settings/settings";
 import { ReactionSet } from "../reactions";
 import { prefetchSounds, useAudioContext } from "../useAudioContext";
+import { useLatest } from "../useLatest";
 
 const SoundMap = Object.fromEntries(
   ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
@@ -28,14 +29,11 @@ export function ReactionsAudioRenderer(): ReactNode {
     sounds: Sounds,
     latencyHint: "interactive",
   });
+  const audioEngineRef = useLatest(audioEngineCtx);
   const oldReactions = useDeferredValue(reactions);
 
   useEffect(() => {
-    if (!audioEngineCtx) {
-      return;
-    }
-
-    if (!shouldPlay) {
+    if (!shouldPlay || !audioEngineRef.current) {
       return;
     }
     const oldReactionSet = new Set(
@@ -48,13 +46,14 @@ export function ReactionsAudioRenderer(): ReactNode {
         // Don't replay old reactions
         return;
       }
+      console.log("playing sound", reactionName);
       if (SoundMap[reactionName]) {
-        audioEngineCtx.playSound(reactionName);
+        audioEngineRef.current.playSound(reactionName);
       } else {
         // Fallback sounds.
-        audioEngineCtx.playSound("generic");
+        audioEngineRef.current.playSound("generic");
       }
     }
-  }, [shouldPlay, oldReactions, reactions]);
+  }, [audioEngineRef, shouldPlay, oldReactions, reactions]);
   return <></>;
 }

@@ -5,6 +5,7 @@ import {
   useSetting,
 } from "./settings/settings";
 import { useMediaDevices } from "./livekit/MediaDevicesContext";
+import { useInitial } from "./useInitial";
 
 type SoundDefinition = { mp3?: string; ogg: string };
 
@@ -43,7 +44,7 @@ function getPreferredAudioFormat() {
   return "mp3";
 }
 
-type PrefetchedSounds<S extends string> = Promise<Record<string, ArrayBuffer>>;
+type PrefetchedSounds<S extends string> = Promise<Record<S, ArrayBuffer>>;
 
 // We prefer to load these sounds ahead of time, so there
 // is no delay on call join.
@@ -82,6 +83,12 @@ interface UseAudioContext<S> {
   playSound(soundName: S): void;
 }
 
+/**
+ * Add an audio context which can be used to play
+ * a set of preloaded sounds.
+ * @param props
+ * @returns Either an instance that can be used to play sounds, or null if not ready.
+ */
 export function useAudioContext<S extends string>(
   props: Props<S>,
 ): UseAudioContext<S> | null {
@@ -89,6 +96,7 @@ export function useAudioContext<S extends string>(
   const devices = useMediaDevices();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
+  const soundCache = useInitial(() => props.sounds);
 
   useEffect(() => {
     const ctx = new AudioContext({
@@ -101,13 +109,15 @@ export function useAudioContext<S extends string>(
     (async () => {
       const buffers: Record<string, AudioBuffer> = {};
       controller.signal.throwIfAborted();
-      for (const [name, buffer] of Object.entries(await props.sounds)) {
+      for (const [name, buffer] of Object.entries(await soundCache)) {
         controller.signal.throwIfAborted();
-        const audioBuffer = await ctx.decodeAudioData(buffer.slice(0));
+        // Type quirk, this is *definitely* a ArrayBuffer.
+        const audioBuffer = await ctx.decodeAudioData(
+          (buffer as ArrayBuffer).slice(0),
+        );
         buffers[name] = audioBuffer;
-        // Store as we go.
-        setAudioBuffers(buffers as Record<S, AudioBuffer>);
       }
+      setAudioBuffers(buffers as Record<S, AudioBuffer>);
     })().catch((ex) => {
       logger.debug("Failed to setup audio context", ex);
     });
@@ -120,7 +130,7 @@ export function useAudioContext<S extends string>(
       });
       setAudioContext(undefined);
     };
-  }, []);
+  }, [soundCache, props.latencyHint]);
 
   // Update the sink ID whenever we change devices.
   useEffect(() => {

@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { ReactNode, useDeferredValue, useEffect, useMemo } from "react";
-import { debounce, filter, interval, throttle } from "rxjs";
+import { debounce, filter, interval, tap, throttle } from "rxjs";
 import { CallViewModel } from "../state/CallViewModel";
 import joinCallSoundMp3 from "../sound/join_call.mp3";
 import joinCallSoundOgg from "../sound/join_call.ogg";
@@ -16,12 +16,12 @@ import handSoundOgg from "../sound/raise_hand.ogg?url";
 import handSoundMp3 from "../sound/raise_hand.mp3?url";
 import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import { useReactions } from "../useReactions";
+import { useLatest } from "../useLatest";
 
 // Do not play any sounds if the participant count has exceeded this
 // number.
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
 export const THROTTLE_SOUND_EFFECT_MS = 500;
-export const DEBOUNCE_SOUND_EFFECT_MS = 150;
 
 const Sounds = prefetchSounds({
   join: {
@@ -47,6 +47,7 @@ export function CallEventAudioRenderer({
     sounds: Sounds,
     latencyHint: "interactive",
   });
+  const audioEngineRef = useLatest(audioEngineCtx);
 
   const { raisedHands } = useReactions();
   const raisedHandCount = useMemo(
@@ -56,16 +57,12 @@ export function CallEventAudioRenderer({
   const previousRaisedHandCount = useDeferredValue(raisedHandCount);
 
   useEffect(() => {
-    if (audioEngineCtx && previousRaisedHandCount < raisedHandCount) {
-      audioEngineCtx.playSound("raiseHand");
+    if (audioEngineRef.current && previousRaisedHandCount < raisedHandCount) {
+      audioEngineRef.current.playSound("raiseHand");
     }
-  }, [audioEngineCtx, previousRaisedHandCount, raisedHandCount]);
+  }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
 
   useEffect(() => {
-    if (!audioEngineCtx) {
-      return;
-    }
-
     const joinSub = vm.memberChanges
       .pipe(
         filter(
@@ -73,11 +70,9 @@ export function CallEventAudioRenderer({
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && joined.length > 0,
         ),
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
-        debounce(() => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
-      .subscribe((prev) => {
-        console.log("Playing join sound for", ...prev.joined, "|", prev);
-        audioEngineCtx.playSound("join");
+      .subscribe(() => {
+        audioEngineRef.current?.playSound("join");
       });
 
     const leftSub = vm.memberChanges
@@ -87,17 +82,16 @@ export function CallEventAudioRenderer({
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && left.length > 0,
         ),
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
-        debounce(() => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        audioEngineCtx.playSound("left");
+        audioEngineRef.current?.playSound("left");
       });
 
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
     };
-  }, [audioEngineCtx, vm]);
+  }, [audioEngineRef, vm]);
 
   return <></>;
 }
