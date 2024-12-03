@@ -51,7 +51,14 @@ afterEach(() => {
   window.HTMLMediaElement.prototype.play = originalPlayFn;
 });
 
-test("plays a sound when entering a call", () => {
+/**
+ * We don't want to play a sound when loading the call state
+ * because typically this occurs in two stages. We first join
+ * the call as a local participant and *then* the remote
+ * participants join from our perspective. We don't want to make
+ * a noise every time.
+ */
+test("does NOT play a sound when entering a call", () => {
   const audioIsPlaying: string[] = mockMediaPlay();
   const members = new Map([alice, bob].map((p) => [p.userId, p]));
   const remoteParticipants = of([aliceParticipant]);
@@ -75,10 +82,7 @@ test("plays a sound when entering a call", () => {
   );
 
   render(<CallEventAudioRenderer vm={vm} />);
-  expect(audioIsPlaying).toEqual([
-    // Joining the call
-    enterSound,
-  ]);
+  expect(audioIsPlaying).toHaveLength(0);
 });
 
 test("plays no sound when muted", () => {
@@ -141,8 +145,6 @@ test("plays a sound when a user joins", () => {
   });
   // Play a sound when joining a call.
   expect(audioIsPlaying).toEqual([
-    // Joining the call
-    enterSound,
     // Bob leaves
     enterSound,
   ]);
@@ -178,14 +180,12 @@ test("plays a sound when a user leaves", () => {
     liveKitRoom.removeParticipant(aliceParticipant);
   });
   expect(audioIsPlaying).toEqual([
-    // Joining the call
-    enterSound,
     // Alice leaves
     leaveSound,
   ]);
 });
 
-test("plays no sound when the participant list", () => {
+test("plays no sound when the participant list is more than the maximum size", () => {
   const audioIsPlaying: string[] = mockMediaPlay();
   const members = new Map([alice].map((p) => [p.userId, p]));
   const remoteParticipants = new Map<string, RemoteParticipant>([
