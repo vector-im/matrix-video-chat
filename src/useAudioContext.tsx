@@ -6,7 +6,7 @@ import {
 } from "./settings/settings";
 import { useMediaDevices } from "./livekit/MediaDevicesContext";
 
-type SoundDefinition = { mp3: string; ogg: string };
+type SoundDefinition = { mp3?: string; ogg: string };
 
 async function fetchBuffer(filename: string) {
   // Load an audio file
@@ -64,7 +64,10 @@ export async function prefetchSounds<S extends string>(
   await Promise.all(
     Object.entries(sounds).map(async ([name, file]) => {
       const { mp3, ogg } = file as SoundDefinition;
-      buffers[name] = await fetchBuffer(PreferredFormat === "ogg" ? ogg : mp3);
+      // Use preferred format, fallback to ogg if no mp3 is provided.
+      buffers[name] = await fetchBuffer(
+        PreferredFormat === "ogg" ? ogg : (mp3 ?? ogg),
+      );
     }),
   );
   return buffers as Record<S, ArrayBuffer>;
