@@ -71,26 +71,11 @@ export function CallEventAudioRenderer({
   const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
   const devices = useMediaDevices();
   const audioSourceElement = useRef<HTMLAudioElement>(null);
-  const audioFormatPreference = useMemo(() => {
-    const a = document.createElement("audio");
-    if (a.canPlayType("audio/ogg")) {
-      return "ogg";
-    }
-
-    if (a.canPlayType("audio/mpeg")) {
-      return "mp3";
-    }
-    return null;
-  }, []);
-
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [joinCallBuffer, setJoinSoundNode] = useState<AudioBuffer>();
   const [leaveCallBuffer, setLeaveSoundNode] = useState<AudioBuffer>();
 
   useEffect(() => {
-    if (!audioFormatPreference) {
-      return;
-    }
     const ctx = new AudioContext({
       latencyHint: "interactive",
       // XXX: Types don't include this yet.
@@ -128,7 +113,7 @@ export function CallEventAudioRenderer({
       });
       setAudioContext(undefined);
     };
-  }, [!audioFormatPreference, devices.audioOutput]);
+  }, [devices.audioOutput]);
 
   useEffect(() => {
     const joinSub = vm.memberChanges
