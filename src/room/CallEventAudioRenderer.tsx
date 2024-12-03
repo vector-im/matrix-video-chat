@@ -72,8 +72,8 @@ export function CallEventAudioRenderer({
           ({ joined, ids }) =>
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && joined.length > 0,
         ),
-        throttle((_) => interval(THROTTLE_SOUND_EFFECT_MS)),
-        debounce((_) => interval(DEBOUNCE_SOUND_EFFECT_MS)),
+        throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
+        debounce(() => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
       .subscribe((prev) => {
         console.log("Playing join sound for", ...prev.joined, "|", prev);
@@ -86,8 +86,8 @@ export function CallEventAudioRenderer({
           ({ ids, left }) =>
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && left.length > 0,
         ),
-        throttle((_) => interval(THROTTLE_SOUND_EFFECT_MS)),
-        debounce((_) => interval(DEBOUNCE_SOUND_EFFECT_MS)),
+        throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
+        debounce(() => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
         audioEngineCtx.playSound("left");
