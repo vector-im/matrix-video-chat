@@ -5,23 +5,63 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useEffect, useRef } from "react";
-import { filter } from "rxjs";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { filter, interval, throttle } from "rxjs";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import {
   soundEffectVolumeSetting as effectSoundVolumeSetting,
   useSetting,
 } from "../settings/settings";
 import { CallViewModel } from "../state/CallViewModel";
-import enterCallSoundMp3 from "../sound/join_call.mp3";
-import enterCallSoundOgg from "../sound/join_call.ogg";
+import joinCallSoundMp3 from "../sound/join_call.mp3";
+import joinCallSoundOgg from "../sound/join_call.ogg";
 import leftCallSoundMp3 from "../sound/left_call.mp3";
 import leftCallSoundOgg from "../sound/left_call.ogg";
+import { useMediaDevices } from "../livekit/MediaDevicesContext";
 
 // Do not play any sounds if the participant count has exceeded this
 // number.
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
-export const CONCURRENT_AUDIO_CHANNELS = 2;
+export const DEBOUNCE_SOUND_EFFECT_MS = 500;
+
+async function loadAudioBuffer(filename: string) {
+  // Load an audio file
+  const response = await fetch(filename);
+  if (!response.ok) {
+    throw Error("Could not load sound, resposne was not okay");
+  }
+  // Decode it
+  return await await response.arrayBuffer();
+}
+
+function playSound(ctx?: AudioContext, buffer?: AudioBuffer): void {
+  if (!ctx || !buffer) {
+    return;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+  src.start();
+}
+
+function getPreferredAudioFormat() {
+  const a = document.createElement("audio");
+  if (a.canPlayType("audio/ogg") === "maybe") {
+    return "ogg";
+  }
+  // Otherwise just assume MP3, as that's a
+  return "mp3";
+}
+
+const preferredFormat = getPreferredAudioFormat();
+// Preload sound effects
+const JoinSoundBufferPromise = loadAudioBuffer(
+  preferredFormat === "ogg" ? joinCallSoundOgg : joinCallSoundMp3,
+);
+const LeftSoundBufferPromise = loadAudioBuffer(
+  preferredFormat === "ogg" ? leftCallSoundOgg : leftCallSoundMp3,
+);
 
 export function CallEventAudioRenderer({
   vm,
@@ -29,23 +69,81 @@ export function CallEventAudioRenderer({
   vm: CallViewModel;
 }): ReactNode {
   const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
-  const callEntered = useRef<(HTMLAudioElement | null)[]>([]);
-  const callLeft = useRef<(HTMLAudioElement | null)[]>([]);
+  const devices = useMediaDevices();
+  const audioSourceElement = useRef<HTMLAudioElement>(null);
+  const audioFormatPreference = useMemo(() => {
+    const a = document.createElement("audio");
+    if (a.canPlayType("audio/ogg")) {
+      return "ogg";
+    }
+
+    if (a.canPlayType("audio/mpeg")) {
+      return "mp3";
+    }
+    return null;
+  }, []);
+
+  const [audioContext, setAudioContext] = useState<AudioContext>();
+  const [joinCallBuffer, setJoinSoundNode] = useState<AudioBuffer>();
+  const [leaveCallBuffer, setLeaveSoundNode] = useState<AudioBuffer>();
 
   useEffect(() => {
-    if (effectSoundVolume === 0) {
+    if (!audioFormatPreference) {
       return;
     }
+    const ctx = new AudioContext({
+      latencyHint: "interactive",
+      // XXX: Types don't include this yet.
+      ...{ sinkId: devices.audioOutput.selectedId },
+    });
+    const controller = new AbortController();
+    (async () => {
+      if (controller.signal.aborted) {
+        return;
+      }
+      const enterCall = await ctx.decodeAudioData(
+        (await JoinSoundBufferPromise).slice(0),
+      );
+      if (controller.signal.aborted) {
+        return;
+      }
+      const leaveCall = await ctx.decodeAudioData(
+        (await LeftSoundBufferPromise).slice(0),
+      );
+      if (controller.signal.aborted) {
+        return;
+      }
+      setJoinSoundNode(enterCall);
+      setLeaveSoundNode(leaveCall);
+      if (controller.signal.aborted) {
+        return;
+      }
+    })();
+
+    setAudioContext(ctx);
+    return () => {
+      controller.abort("Closing");
+      void ctx.close().catch((ex) => {
+        logger.warn("Failed to close audio engine", ex);
+      });
+      setAudioContext(undefined);
+    };
+  }, [!audioFormatPreference, devices.audioOutput]);
+
+  useEffect(() => {
     const joinSub = vm.memberChanges
       .pipe(
         filter(
           ({ joined, ids }) =>
-            ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && joined.length > 0,
+            // Only play when more than one person is in the room.
+            ids.length > 1 &&
+            ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND &&
+            joined.length > 0,
         ),
+        throttle((_) => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
-      .subscribe(({ joined }) => {
-        const availablePlayer = callEntered.current.find((v) => v?.paused);
-        void availablePlayer?.play();
+      .subscribe(() => {
+        playSound(audioContext, joinCallBuffer);
       });
 
     const leftSub = vm.memberChanges
@@ -54,64 +152,24 @@ export function CallEventAudioRenderer({
           ({ ids, left }) =>
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && left.length > 0,
         ),
+        throttle((_) => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        const availablePlayer = callLeft.current.find((v) => v?.paused);
-        void availablePlayer?.play();
+        playSound(audioContext, leaveCallBuffer);
       });
 
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
     };
-  }, [effectSoundVolume, callEntered, callLeft, vm]);
+  }, [joinCallBuffer, leaveCallBuffer, vm]);
 
   // Set volume.
   useEffect(() => {
-    callEntered.current.forEach((a) => {
-      if (a) {
-        a.volume = effectSoundVolume;
-      }
-    });
-    callLeft.current.forEach((a) => {
-      if (a) {
-        a.volume = effectSoundVolume;
-      }
-    });
-  }, [callEntered, callLeft, effectSoundVolume]);
+    if (audioSourceElement.current) {
+      audioSourceElement.current.volume = effectSoundVolume;
+    }
+  }, [effectSoundVolume]);
 
-  // Do not render any audio elements if playback is disabled. Will save
-  // audio file fetches.
-  if (effectSoundVolume === 0) {
-    return null;
-  }
-
-  return (
-    // Will play as soon as it's mounted, which is what we want as this will
-    // play when the call is entered.
-    <>
-      {Array.from({ length: CONCURRENT_AUDIO_CHANNELS }).map((_, index) => (
-        <audio
-          key={index}
-          ref={(r) => (callEntered.current[index] = r)}
-          preload="auto"
-          hidden
-        >
-          <source src={enterCallSoundOgg} type="audio/ogg; codecs=vorbis" />
-          <source src={enterCallSoundMp3} type="audio/mpeg" />
-        </audio>
-      ))}
-      {Array.from({ length: CONCURRENT_AUDIO_CHANNELS }).map((_, index) => (
-        <audio
-          key={index}
-          ref={(r) => (callLeft.current[index] = r)}
-          preload="auto"
-          hidden
-        >
-          <source src={leftCallSoundOgg} type="audio/ogg; codecs=vorbis" />
-          <source src={leftCallSoundMp3} type="audio/mpeg" />
-        </audio>
-      ))}
-    </>
-  );
+  return <audio ref={audioSourceElement} hidden />;
 }
