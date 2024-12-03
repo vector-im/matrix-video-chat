@@ -38,13 +38,18 @@ export function ReactionsAudioRenderer(): ReactNode {
     if (!shouldPlay) {
       return;
     }
-    for (const [sender, reaction] of Object.entries(reactions)) {
-      if (oldReactions[sender]) {
+    const oldReactionSet = new Set(
+      Object.values(oldReactions).map((r) => r.name),
+    );
+    for (const reactionName of new Set(
+      Object.values(reactions).map((r) => r.name),
+    )) {
+      if (oldReactionSet.has(reactionName)) {
         // Don't replay old reactions
         return;
       }
-      if (SoundMap[reaction.name]) {
-        audioEngineCtx.playSound(reaction.name);
+      if (SoundMap[reactionName]) {
+        audioEngineCtx.playSound(reactionName);
       } else {
         // Fallback sounds.
         audioEngineCtx.playSound("generic");
