@@ -16,6 +16,9 @@ interface Props {
   className?: string;
   label: string;
   value: number;
+  /**
+   * Event handler called when the value changes during an interaction.
+   */
   onValueChange: (value: number) => void;
   /**
    * Event handler called when the value changes at the end of an interaction.
@@ -45,7 +48,7 @@ export const Slider: FC<Props> = ({
   disabled,
 }) => {
   const onValueChange = useCallback(
-    ([v]: number[]) => onValueChangeProp(v),
+    ([v]: number[]) => onValueChangeProp?.(v),
     [onValueChangeProp],
   );
   const onValueCommit = useCallback(

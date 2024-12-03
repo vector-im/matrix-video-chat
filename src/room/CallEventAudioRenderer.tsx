@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { filter, interval, throttle } from "rxjs";
+import { filter, interval, skip, throttle } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import {
@@ -19,6 +19,7 @@ import joinCallSoundOgg from "../sound/join_call.ogg";
 import leftCallSoundMp3 from "../sound/left_call.mp3";
 import leftCallSoundOgg from "../sound/left_call.ogg";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useLatest } from "../useLatest";
 
 // Do not play any sounds if the participant count has exceeded this
 // number.
@@ -35,13 +36,19 @@ async function loadAudioBuffer(filename: string) {
   return await await response.arrayBuffer();
 }
 
-function playSound(ctx?: AudioContext, buffer?: AudioBuffer): void {
+function playSound(
+  volume: number,
+  ctx?: AudioContext,
+  buffer?: AudioBuffer,
+): void {
   if (!ctx || !buffer) {
     return;
   }
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(volume, 0);
   const src = ctx.createBufferSource();
   src.buffer = buffer;
-  src.connect(ctx.destination);
+  src.connect(gain).connect(ctx.destination);
   src.start();
 }
 
@@ -50,12 +57,13 @@ function getPreferredAudioFormat() {
   if (a.canPlayType("audio/ogg") === "maybe") {
     return "ogg";
   }
-  // Otherwise just assume MP3, as that's a
+  // Otherwise just assume MP3, as that has a chance of being more widely supported.
   return "mp3";
 }
 
+// We prefer to load these sounds ahead of time, so there
+// is no delay on call join.
 const preferredFormat = getPreferredAudioFormat();
-// Preload sound effects
 const JoinSoundBufferPromise = loadAudioBuffer(
   preferredFormat === "ogg" ? joinCallSoundOgg : joinCallSoundMp3,
 );
@@ -77,43 +85,52 @@ export function CallEventAudioRenderer({
 
   useEffect(() => {
     const ctx = new AudioContext({
+      // We want low latency for these effects.
       latencyHint: "interactive",
       // XXX: Types don't include this yet.
       ...{ sinkId: devices.audioOutput.selectedId },
     });
     const controller = new AbortController();
     (async () => {
-      if (controller.signal.aborted) {
-        return;
-      }
+      controller.signal.throwIfAborted();
       const enterCall = await ctx.decodeAudioData(
         (await JoinSoundBufferPromise).slice(0),
       );
-      if (controller.signal.aborted) {
-        return;
-      }
+      controller.signal.throwIfAborted();
       const leaveCall = await ctx.decodeAudioData(
         (await LeftSoundBufferPromise).slice(0),
       );
-      if (controller.signal.aborted) {
-        return;
-      }
+      controller.signal.throwIfAborted();
       setJoinSoundNode(enterCall);
       setLeaveSoundNode(leaveCall);
-      if (controller.signal.aborted) {
-        return;
-      }
-    })();
+    })().catch((ex) => {
+      logger.debug("Failed to setup audio context", ex);
+    });
 
     setAudioContext(ctx);
     return () => {
       controller.abort("Closing");
       void ctx.close().catch((ex) => {
-        logger.warn("Failed to close audio engine", ex);
+        logger.debug("Failed to close audio engine", ex);
       });
       setAudioContext(undefined);
     };
-  }, [devices.audioOutput]);
+  }, []);
+
+  // Update the sink ID whenever we change devices.
+  useEffect(() => {
+    if (audioContext && "setSinkId" in audioContext) {
+      // setSinkId doesn't exist in types but does exist for some browsers.
+      // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
+      // @ts-ignore
+      audioContext.setSinkId(devices.audioOutput.selectedId).catch((ex) => {
+        logger.warn("Unable to change sink for audio context", ex);
+      });
+    }
+  }, [audioContext, devices]);
+
+  // Prevent a rerender when t he
+  const soundVolume = useLatest(effectSoundVolume);
 
   useEffect(() => {
     const joinSub = vm.memberChanges
@@ -128,7 +145,7 @@ export function CallEventAudioRenderer({
         throttle((_) => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        playSound(audioContext, joinCallBuffer);
+        playSound(soundVolume.current, audioContext, joinCallBuffer);
       });
 
     const leftSub = vm.memberChanges
@@ -140,21 +157,14 @@ export function CallEventAudioRenderer({
         throttle((_) => interval(DEBOUNCE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        playSound(audioContext, leaveCallBuffer);
+        playSound(soundVolume.current, audioContext, leaveCallBuffer);
       });
 
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
     };
-  }, [joinCallBuffer, leaveCallBuffer, vm]);
-
-  // Set volume.
-  useEffect(() => {
-    if (audioSourceElement.current) {
-      audioSourceElement.current.volume = effectSoundVolume;
-    }
-  }, [effectSoundVolume]);
+  }, [joinCallBuffer, leaveCallBuffer, soundVolume, vm]);
 
   return <audio ref={audioSourceElement} hidden />;
 }
