@@ -655,16 +655,16 @@ export class CallViewModel extends ViewModel {
       this.scope.state(),
     );
 
-    private readonly pip: Observable<UserMediaViewModel | null> = combineLatest([
+  private readonly pip: Observable<UserMediaViewModel | null> = combineLatest([
     this.screenShares,
     this.spotlightSpeaker,
     this.mediaItems,
   ]).pipe(
-    switchMap(([screenShares, spoltlight, mediaItems]) => {
+    switchMap(([screenShares, spotlight, mediaItems]) => {
       if (screenShares.length > 0) {
         return this.spotlightSpeaker;
       }
-      if (!spoltlight || spoltlight.local) {
+      if (!spotlight || spotlight.local) {
         return of(null);
       }
 
