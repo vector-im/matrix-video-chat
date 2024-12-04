@@ -803,15 +803,16 @@ export class CallViewModel extends ViewModel {
     this.mediaItems.pipe(
       map((mediaItems) => {
         if (mediaItems.length !== 2) return null;
-        const local = mediaItems.find((vm) => vm.vm.local)!
-          .vm as LocalUserMediaViewModel;
+        const local = mediaItems.find((vm) => vm.vm.local)?.vm as
+          | LocalUserMediaViewModel
+          | undefined;
         const remote = mediaItems.find((vm) => !vm.vm.local)?.vm as
           | RemoteUserMediaViewModel
           | undefined;
         // There might not be a remote tile if there are screen shares, or if
         // only the local user is in the call and they're using the duplicate
         // tiles option
-        if (remote === undefined) return null;
+        if (!remote || !local) return null;
 
         return { type: "one-on-one", local, remote };
       }),
