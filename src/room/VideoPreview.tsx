@@ -9,6 +9,7 @@ import { useEffect, useRef, FC, ReactNode } from "react";
 import useMeasure from "react-use-measure";
 import { facingModeFromLocalTrack, LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
@@ -39,6 +40,7 @@ export const VideoPreview: FC<Props> = ({
   videoTrack,
   children,
 }) => {
+  const { t } = useTranslation();
   const [previewRef, previewBounds] = useMeasure();
 
   const videoEl = useRef<HTMLVideoElement | null>(null);
@@ -69,6 +71,11 @@ export const VideoPreview: FC<Props> = ({
         tabIndex={-1}
         disablePictureInPicture
       />
+      {muteStates.video.enabled && (!videoTrack || !videoEl.current) && (
+        <div className={styles.cameraStarting}>
+          {t("video_tile.camera_starting")}
+        </div>
+      )}
       {!muteStates.video.enabled && (
         <div className={styles.avatarContainer}>
           <Avatar
