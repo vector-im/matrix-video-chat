@@ -47,7 +47,8 @@ layer(compound);
   --background-gradient: url("graphics/backgroundGradient.svg");
 }
 
-:root, [class*="cpd-theme-"] {
+:root,
+[class*="cpd-theme-"] {
   --video-tile-background: var(--cpd-color-bg-subtle-secondary);
 }
 
