@@ -655,49 +655,42 @@ export class CallViewModel extends ViewModel {
       this.scope.state(),
     );
 
-  private readonly pip: Observable<UserMediaViewModel | null> =
-    this.screenShares.pipe(
-      switchMap((screenShares) => {
-        if (screenShares.length > 0) {
-          return this.spotlightSpeaker;
-        }
+    private readonly pip: Observable<UserMediaViewModel | null> = combineLatest([
+    this.screenShares,
+    this.spotlightSpeaker,
+    this.mediaItems,
+  ]).pipe(
+    switchMap(([screenShares, spoltlight, mediaItems]) => {
+      if (screenShares.length > 0) {
+        return this.spotlightSpeaker;
+      }
+      if (!spoltlight || spoltlight.local) {
+        return of(null);
+      }
 
-        return this.spotlightSpeaker.pipe(
-          switchMap((speaker) => {
-            if (!speaker || speaker.local) {
-              return of(null);
-            }
+      const localUserMedia = mediaItems.find(
+        (m) => m.vm instanceof LocalUserMediaViewModel,
+      ) as UserMedia | undefined;
 
-            return this.mediaItems.pipe(
-              switchMap((mediaItems) => {
-                const localUserMedia = mediaItems.find(
-                  (m) => m.vm instanceof LocalUserMediaViewModel,
-                ) as UserMedia | undefined;
+      const localUserMediaViewModel = localUserMedia?.vm as
+        | LocalUserMediaViewModel
+        | undefined;
 
-                const localUserMediaViewModel = localUserMedia?.vm as
-                  | LocalUserMediaViewModel
-                  | undefined;
+      if (!localUserMediaViewModel) {
+        return of(null);
+      }
+      return localUserMediaViewModel.alwaysShow.pipe(
+        map((alwaysShow) => {
+          if (alwaysShow) {
+            return localUserMediaViewModel;
+          }
 
-                if (!localUserMediaViewModel) {
-                  return of(null);
-                }
-
-                return localUserMediaViewModel.alwaysShow.pipe(
-                  map((alwaysShow) => {
-                    if (alwaysShow) {
-                      return localUserMediaViewModel;
-                    }
-
-                    return null;
-                  }),
-                );
-              }),
-            );
-          }),
-        );
-      }),
-      this.scope.state(),
-    );
+          return null;
+        }),
+      );
+    }),
+    this.scope.state(),
+  );
 
   private readonly hasRemoteScreenShares: Observable<boolean> =
     this.spotlight.pipe(
