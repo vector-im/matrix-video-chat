@@ -9,16 +9,17 @@ import { ReactNode, useDeferredValue, useEffect } from "react";
 
 import { useReactions } from "../useReactions";
 import { playReactionsSound, useSetting } from "../settings/settings";
-import { ReactionSet } from "../reactions";
+import { GenericReaction, ReactionSet } from "../reactions";
 import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import { useLatest } from "../useLatest";
 
-const SoundMap = Object.fromEntries(
-  ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
+const SoundMap = Object.fromEntries([
+  ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
     v.name,
     v.sound!,
   ]),
-);
+  [GenericReaction.name, GenericReaction.sound],
+]);
 
 const Sounds = prefetchSounds(SoundMap);
 
@@ -50,6 +51,7 @@ export function ReactionsAudioRenderer(): ReactNode {
         audioEngineRef.current.playSound(reactionName);
       } else {
         // Fallback sounds.
+        console.log("Playing fallback sound");
         audioEngineRef.current.playSound("generic");
       }
     }
