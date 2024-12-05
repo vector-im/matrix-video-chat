@@ -27,9 +27,9 @@ const TestComponent: FC = () => {
   }
   return (
     <>
-      <button onClick={() => audioCtx.playSound("aSound")}>Valid sound</button>
+      <button onClick={async () => audioCtx.playSound("aSound")}>Valid sound</button>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-      <button onClick={() => audioCtx.playSound("not-valid" as any)}>
+      <button onClick={async () => audioCtx.playSound("not-valid" as any)}>
         Invalid sound
       </button>
     </>

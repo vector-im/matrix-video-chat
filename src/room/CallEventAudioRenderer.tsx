@@ -59,7 +59,7 @@ export function CallEventAudioRenderer({
 
   useEffect(() => {
     if (audioEngineRef.current && previousRaisedHandCount < raisedHandCount) {
-      audioEngineRef.current.playSound("raiseHand");
+      void audioEngineRef.current.playSound("raiseHand");
     }
   }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
 
@@ -73,7 +73,7 @@ export function CallEventAudioRenderer({
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        audioEngineRef.current?.playSound("join");
+        void audioEngineRef.current?.playSound("join");
       });
 
     const leftSub = vm.memberChanges
@@ -85,7 +85,7 @@ export function CallEventAudioRenderer({
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        audioEngineRef.current?.playSound("left");
+        void audioEngineRef.current?.playSound("left");
       });
 
     return (): void => {
