@@ -13,6 +13,7 @@ import { afterEach } from "node:test";
 import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
 import { useAudioContext } from "./useAudioContext";
 import { soundEffectVolumeSetting } from "./settings/settings";
+import userEvent from "@testing-library/user-event";
 
 const TestComponent: FC = () => {
   const audioCtx = useAudioContext({
@@ -69,17 +70,19 @@ afterEach(() => {
 });
 
 test("can play a single sound", async () => {
+  const user = userEvent.setup();
   vitest.stubGlobal("AudioContext", MockAudioContext);
   const { findByText } = render(<TestComponent />);
-  (await findByText("Valid sound")).click();
+  await user.click(await findByText("Valid sound"));
   expect(
     MockAudioContext.testContext.createBufferSource,
   ).toHaveBeenCalledOnce();
 });
 test("will ignore sounds that are not registered", async () => {
+  const user = userEvent.setup();
   vitest.stubGlobal("AudioContext", MockAudioContext);
   const { findByText } = render(<TestComponent />);
-  (await findByText("Invalid sound")).click();
+  await user.click(await findByText("Invalid sound"));
   expect(
     MockAudioContext.testContext.createBufferSource,
   ).not.toHaveBeenCalled();
@@ -112,11 +115,12 @@ test("will use the correct device", () => {
   );
 });
 
-test("will use the correct volume", async () => {
+test("will use the correct volume level", async () => {
+  const user = userEvent.setup();
   vitest.stubGlobal("AudioContext", MockAudioContext);
   soundEffectVolumeSetting.setValue(0.33);
   const { findByText } = render(<TestComponent />);
-  (await findByText("Valid sound")).click();
+  await user.click(await findByText("Valid sound"));
   expect(
     MockAudioContext.testContext.gain.gain.setValueAtTime,
   ).toHaveBeenCalledWith(0.33, 0);
