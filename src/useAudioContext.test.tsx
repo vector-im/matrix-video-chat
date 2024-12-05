@@ -9,11 +9,11 @@ import { expect, test, vitest } from "vitest";
 import { FC } from "react";
 import { render } from "@testing-library/react";
 import { afterEach } from "node:test";
+import userEvent from "@testing-library/user-event";
 
 import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
 import { useAudioContext } from "./useAudioContext";
 import { soundEffectVolumeSetting } from "./settings/settings";
-import userEvent from "@testing-library/user-event";
 
 const TestComponent: FC = () => {
   const audioCtx = useAudioContext({
