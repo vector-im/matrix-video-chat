@@ -24,21 +24,18 @@ type SoundDefinition = { mp3?: string; ogg: string };
  * @param volume The volume to play at.
  * @param ctx The context to play through.
  * @param buffer The buffer to play.
- * @returns A promise that resolves when the sound has stopped playing.
  */
-async function playSound(
+function playSound(
   ctx: AudioContext,
   buffer: AudioBuffer,
   volume: number,
-): Promise<void> {
-  logger.debug("Playing back sound");
+): void {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(volume, 0);
   const src = ctx.createBufferSource();
   src.buffer = buffer;
   src.connect(gain).connect(ctx.destination);
   src.start();
-  return new Promise<void>((r) => src.addEventListener("ended", () => r()));
 }
 
 /**
@@ -167,7 +164,11 @@ export function useAudioContext<S extends string>(
   }
   return {
     playSound: (name): void => {
-      playSound(audioContext, audioBuffers[name], effectSoundVolume);
+      if (!audioBuffers[name]) {
+        logger.debug(`Tried to play a sound that wasn't buffered (${name})`);
+        return;
+      }
+      return playSound(audioContext, audioBuffers[name], effectSoundVolume);
     },
   };
 }
