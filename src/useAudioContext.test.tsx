@@ -1,22 +1,23 @@
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
+*/
+
 import { expect, test, vitest } from "vitest";
-import { useAudioContext } from "./useAudioContext";
 import { FC } from "react";
 import { render } from "@testing-library/react";
-import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
 import { afterEach } from "node:test";
-import { soundEffectVolumeSetting } from "./settings/settings";
 
-/**
- * Test explanation.
- * This test suite checks that the useReactions hook appropriately reacts
- * to new reactions, redactions and membership changesin the room. There is
- * a large amount of test structure used to construct a mock environment.
- */
+import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
+import { useAudioContext } from "./useAudioContext";
+import { soundEffectVolumeSetting } from "./settings/settings";
 
 const TestComponent: FC = () => {
   const audioCtx = useAudioContext({
     sounds: Promise.resolve({
-      aSound: new ArrayBuffer(32),
+      aSound: new ArrayBuffer(0),
     }),
     latencyHint: "balanced",
   });
@@ -25,13 +26,9 @@ const TestComponent: FC = () => {
   }
   return (
     <>
-      <button role="button" onClick={() => audioCtx.playSound("aSound")}>
-        Valid sound
-      </button>
-      <button
-        role="button"
-        onClick={() => audioCtx.playSound("not-valid" as any)}
-      >
+      <button onClick={() => audioCtx.playSound("aSound")}>Valid sound</button>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
+      <button onClick={() => audioCtx.playSound("not-valid" as any)}>
         Invalid sound
       </button>
     </>
@@ -39,9 +36,9 @@ const TestComponent: FC = () => {
 };
 
 class MockAudioContext {
-  static testContext: MockAudioContext;
+  public static testContext: MockAudioContext;
 
-  constructor() {
+  public constructor() {
     MockAudioContext.testContext = this;
   }
 
@@ -88,7 +85,7 @@ test("will ignore sounds that are not registered", async () => {
   ).not.toHaveBeenCalled();
 });
 
-test("will use the correct device", async () => {
+test("will use the correct device", () => {
   vitest.stubGlobal("AudioContext", MockAudioContext);
   render(
     <MediaDevicesContext.Provider

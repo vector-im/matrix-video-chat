@@ -6,7 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { ReactNode, useDeferredValue, useEffect, useMemo } from "react";
-import { debounce, filter, interval, tap, throttle } from "rxjs";
+import { filter, interval, throttle } from "rxjs";
+
 import { CallViewModel } from "../state/CallViewModel";
 import joinCallSoundMp3 from "../sound/join_call.mp3";
 import joinCallSoundOgg from "../sound/join_call.ogg";

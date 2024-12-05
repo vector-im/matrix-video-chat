@@ -204,7 +204,11 @@ export class MockRoom extends EventEmitter {
     return evt.getId()!;
   }
 
-  public getMember() {
-    return undefined;
+  public getMember(): void {
+    return;
+  }
+
+  public testGetAsMatrixRoom(): Room {
+    return this as unknown as Room;
   }
 }

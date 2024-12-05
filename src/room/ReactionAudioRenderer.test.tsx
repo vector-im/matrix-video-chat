@@ -6,9 +6,18 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { afterAll, expect, test, vitest } from "vitest";
+import {
+  afterAll,
+  beforeEach,
+  expect,
+  test,
+  vitest,
+  MockedFunction,
+  Mock,
+} from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { act, ReactNode } from "react";
+import { afterEach } from "node:test";
 
 import {
   MockRoom,
@@ -20,14 +29,8 @@ import {
   playReactionsSound,
   soundEffectVolumeSetting,
 } from "../settings/settings";
-import {
-  prefetchSounds,
-  // We're using this from our mock, but it doesn't exist in the actual module.
-  //@ts-ignore
-  playSound,
-} from "../useAudioContext";
+import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import { GenericReaction, ReactionSet } from "../reactions";
-import { afterEach } from "node:test";
 
 const memberUserIdAlice = "@alice:example.org";
 const memberUserIdBob = "@bob:example.org";
@@ -56,27 +59,30 @@ function TestComponent({
   );
 }
 
-vitest.mock("../useAudioContext", async () => {
-  const playSound = vitest.fn();
-  return {
-    prefetchSounds: vitest.fn().mockReturnValueOnce({
-      sound: new ArrayBuffer(0),
-    }),
-    playSound,
-    useAudioContext: () => ({
-      playSound,
-    }),
-  };
-});
+vitest.mock("../useAudioContext");
 
 afterEach(() => {
-  vitest.clearAllMocks();
+  vitest.resetAllMocks();
   playReactionsSound.setValue(playReactionsSound.defaultValue);
   soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
 });
 
 afterAll(() => {
   vitest.restoreAllMocks();
+});
+
+let playSound: Mock<
+  NonNullable<ReturnType<typeof useAudioContext>>["playSound"]
+>;
+
+beforeEach(() => {
+  (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
+    sound: new ArrayBuffer(0),
+  });
+  playSound = vitest.fn();
+  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
+    playSound,
+  });
 });
 
 test("preloads all audio elements", () => {

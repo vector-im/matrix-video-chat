@@ -46,7 +46,6 @@ export function ReactionsAudioRenderer(): ReactNode {
         // Don't replay old reactions
         return;
       }
-      console.log("playing sound", reactionName);
       if (SoundMap[reactionName]) {
         audioEngineRef.current.playSound(reactionName);
       } else {

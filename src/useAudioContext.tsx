@@ -1,5 +1,13 @@
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
+*/
+
 import { logger } from "matrix-js-sdk/src/logger";
 import { useState, useEffect } from "react";
+
 import {
   soundEffectVolumeSetting as effectSoundVolumeSetting,
   useSetting,
@@ -9,20 +17,18 @@ import { useInitial } from "./useInitial";
 
 type SoundDefinition = { mp3?: string; ogg: string };
 
-async function fetchBuffer(filename: string) {
-  // Load an audio file
-  const response = await fetch(filename);
-  if (!response.ok) {
-    throw Error("Could not load sound, resposne was not okay");
-  }
-  // Decode it
-  return await await response.arrayBuffer();
-}
-
+/**
+ * Play a sound though a given AudioContext. Will take
+ * care of connecting the correct buffer and gating
+ * through gain.
+ * @param volume The volume to play at.
+ * @param ctx The context to play through.
+ * @param buffer The buffer to play.
+ */
 function playSound(
+  ctx: AudioContext,
+  buffer: AudioBuffer,
   volume: number,
-  ctx?: AudioContext,
-  buffer?: AudioBuffer,
 ): void {
   if (!ctx || !buffer) {
     return;
@@ -35,7 +41,13 @@ function playSound(
   src.start();
 }
 
-function getPreferredAudioFormat() {
+/**
+ * Determine the best format we can use to play our sounds
+ * through. We prefer ogg support if possible, but will fall
+ * back to MP3.
+ * @returns "ogg" if the browser is likely to support it, or "mp3" otherwise.
+ */
+function getPreferredAudioFormat(): "ogg" | "mp3" {
   const a = document.createElement("audio");
   if (a.canPlayType("audio/ogg") === "maybe") {
     return "ogg";
@@ -60,15 +72,23 @@ const PreferredFormat = getPreferredAudioFormat();
 export async function prefetchSounds<S extends string>(
   sounds: Record<S, SoundDefinition>,
 ): PrefetchedSounds<S> {
-  logger.debug(`Loading sounds`);
   const buffers: Record<string, ArrayBuffer> = {};
   await Promise.all(
     Object.entries(sounds).map(async ([name, file]) => {
       const { mp3, ogg } = file as SoundDefinition;
       // Use preferred format, fallback to ogg if no mp3 is provided.
-      buffers[name] = await fetchBuffer(
+      // Load an audio file
+      const response = await fetch(
         PreferredFormat === "ogg" ? ogg : (mp3 ?? ogg),
       );
+      if (!response.ok) {
+        // If the sound doesn't load, it's not the end of the world. We won't play
+        // the sound when requested, but it's better than failing the whole application.
+        logger.warn(`Could not load sound ${name}, resposne was not okay`);
+        return;
+      }
+      // Decode it
+      buffers[name] = await response.arrayBuffer();
     }),
   );
   return buffers as Record<S, ArrayBuffer>;
@@ -96,23 +116,22 @@ export function useAudioContext<S extends string>(
   const devices = useMediaDevices();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
-  const soundCache = useInitial(() => props.sounds);
+  const soundCache = useInitial(async () => props.sounds);
 
   useEffect(() => {
     const ctx = new AudioContext({
       // We want low latency for these effects.
       latencyHint: props.latencyHint,
-      // XXX: Types don't include this yet.
-      ...{ sinkId: devices.audioOutput.selectedId },
     });
-    const controller = new AbortController();
-    (async () => {
+
+    // We want to clone the content of our preloaded
+    // sound buffers into this context. The context may
+    // close during this process, so it's okay if it throws.
+    (async (): Promise<void> => {
       const buffers: Record<string, AudioBuffer> = {};
-      controller.signal.throwIfAborted();
       for (const [name, buffer] of Object.entries(await soundCache)) {
-        controller.signal.throwIfAborted();
-        // Type quirk, this is *definitely* a ArrayBuffer.
         const audioBuffer = await ctx.decodeAudioData(
+          // Type quirk, this is *definitely* a ArrayBuffer.
           (buffer as ArrayBuffer).slice(0),
         );
         buffers[name] = audioBuffer;
@@ -123,8 +142,7 @@ export function useAudioContext<S extends string>(
     });
 
     setAudioContext(ctx);
-    return () => {
-      controller.abort("Closing");
+    return (): void => {
       void ctx.close().catch((ex) => {
         logger.debug("Failed to close audio engine", ex);
       });
@@ -135,22 +153,22 @@ export function useAudioContext<S extends string>(
   // Update the sink ID whenever we change devices.
   useEffect(() => {
     if (audioContext && "setSinkId" in audioContext) {
-      // setSinkId doesn't exist in types but does exist for some browsers.
       // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/setSinkId
-      // @ts-ignore
+      // @ts-expect-error - setSinkId doesn't exist yet in types, maybe because it's not supported everywhere.
       audioContext.setSinkId(devices.audioOutput.selectedId).catch((ex) => {
         logger.warn("Unable to change sink for audio context", ex);
       });
     }
   }, [audioContext, devices]);
 
+  // Don't return a function until we're ready.
   if (!audioContext || !audioBuffers) {
     logger.debug("Audio not ready yet");
     return null;
   }
   return {
-    playSound: (name) => {
-      playSound(effectSoundVolume, audioContext, audioBuffers[name]);
+    playSound: (name): void => {
+      playSound(audioContext, audioBuffers[name], effectSoundVolume);
     },
   };
 }

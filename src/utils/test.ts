@@ -136,6 +136,10 @@ export class EmittableMockLivekitRoom extends EventEmitter {
     this.remoteParticipants.delete(remoteParticipant.identity);
     this.emit(RoomEvent.ParticipantDisconnected, remoteParticipant);
   }
+
+  public getAsLivekitRoom(): LivekitRoom {
+    return this as unknown as LivekitRoom;
+  }
 }
 
 export function mockLivekitRoom(

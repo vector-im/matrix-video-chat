@@ -6,18 +6,23 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { beforeEach, expect, test, vitest } from "vitest";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  expect,
+  Mock,
+  MockedFunction,
+  test,
+  vitest,
+} from "vitest";
 import { ConnectionState, RemoteParticipant, Room } from "livekit-client";
 import { of } from "rxjs";
 import { act, ReactNode } from "react";
 
-import { soundEffectVolumeSetting } from "../settings/settings";
 import {
   EmittableMockLivekitRoom,
-  mockLivekitRoom,
   mockLocalParticipant,
-  mockMatrixRoom,
   mockMatrixRoomMember,
   mockRemoteParticipant,
 } from "../utils/test";
@@ -27,12 +32,7 @@ import {
   CallEventAudioRenderer,
   MAX_PARTICIPANT_COUNT_FOR_SOUND,
 } from "./CallEventAudioRenderer";
-import {
-  prefetchSounds,
-  // We're using this from our mock, but it doesn't exist in the actual module.
-  //@ts-ignore
-  playSound,
-} from "../useAudioContext";
+import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import {
   MockRoom,
   MockRTCSession,
@@ -46,23 +46,29 @@ const bobId = `${bob.userId}:BBBB`;
 const localParticipant = mockLocalParticipant({ identity: "" });
 const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
 const bobParticipant = mockRemoteParticipant({ identity: bobId });
-const leaveSound = "http://localhost:3000/src/sound/left_call.ogg";
 
-beforeEach(() => {
-  soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
+vitest.mock("../useAudioContext");
+
+afterEach(() => {
+  vitest.resetAllMocks();
 });
 
-vitest.mock("../useAudioContext", async () => {
-  const playSound = vitest.fn();
-  return {
-    prefetchSounds: vitest.fn().mockReturnValueOnce({
-      sound: new ArrayBuffer(0),
-    }),
+afterAll(() => {
+  vitest.restoreAllMocks();
+});
+
+let playSound: Mock<
+  NonNullable<ReturnType<typeof useAudioContext>>["playSound"]
+>;
+
+beforeEach(() => {
+  (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
+    sound: new ArrayBuffer(0),
+  });
+  playSound = vitest.fn();
+  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
-    useAudioContext: () => ({
-      playSound,
-    }),
-  };
+  });
 });
 
 function TestComponent({
@@ -86,49 +92,29 @@ function TestComponent({
  * participants join from our perspective. We don't want to make
  * a noise every time.
  */
-test("does NOT play a sound when entering a call", () => {
-  const members = new Map([alice, bob].map((p) => [p.userId, p]));
-  const remoteParticipants = of([aliceParticipant]);
-  const liveKitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants },
-  );
+test("plays one sound when entering a call", () => {
+  const liveKitRoom = new EmittableMockLivekitRoom({
+    localParticipant,
+    remoteParticipants: new Map(),
+  });
+
   const room = new MockRoom(alice.userId);
   const vm = new CallViewModel(
-    room as any,
-    liveKitRoom,
+    room.testGetAsMatrixRoom(),
+    liveKitRoom.getAsLivekitRoom(),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
     of(ConnectionState.Connected),
   );
 
-  render(<TestComponent room={room} vm={vm} />);
-  expect(playSound).not.toBeCalled();
-});
-
-test("plays no sound when muted", () => {
-  soundEffectVolumeSetting.setValue(0);
-  const members = new Map([alice, bob].map((p) => [p.userId, p]));
-  const remoteParticipants = of([aliceParticipant, bobParticipant]);
-  const liveKitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants },
-  );
-
-  const room = new MockRoom(alice.userId);
-  const vm = new CallViewModel(
-    room as any,
-    liveKitRoom,
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    of(ConnectionState.Connected),
-  );
+  // Joining a call usually means remote participants are added later.
+  act(() => {
+    liveKitRoom.addParticipant(bobParticipant);
+  });
 
   render(<TestComponent room={room} vm={vm} />);
-  // Play a sound when joining a call.
-  expect(playSound).not.toBeCalled();
+  expect(playSound).toBeCalled();
 });
 
 test("plays a sound when a user joins", () => {
@@ -142,7 +128,7 @@ test("plays a sound when a user joins", () => {
 
   const room = new MockRoom(alice.userId);
   const vm = new CallViewModel(
-    room as any,
+    room.testGetAsMatrixRoom(),
     liveKitRoom as unknown as Room,
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -169,8 +155,8 @@ test("plays a sound when a user leaves", () => {
   const room = new MockRoom(alice.userId);
 
   const vm = new CallViewModel(
-    room as any,
-    liveKitRoom as unknown as Room,
+    room.testGetAsMatrixRoom(),
+    liveKitRoom.getAsLivekitRoom(),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -181,36 +167,44 @@ test("plays a sound when a user leaves", () => {
   act(() => {
     liveKitRoom.removeParticipant(aliceParticipant);
   });
-  expect(playSound).toBeCalledWith("leave");
+  expect(playSound).toBeCalledWith("left");
 });
 
 test("plays no sound when the participant list is more than the maximum size", () => {
+  expect(playSound).not.toBeCalled();
   const remoteParticipants = new Map<string, RemoteParticipant>([
     [aliceParticipant.identity, aliceParticipant],
+    // You + other participants to hit the max.
     ...Array.from({ length: MAX_PARTICIPANT_COUNT_FOR_SOUND - 1 }).map<
       [string, RemoteParticipant]
     >((_, index) => {
-      const p = mockRemoteParticipant({ identity: `user${index}` });
+      const p = mockRemoteParticipant({
+        identity: `@user${index}:example.com:DEV${index}`,
+      });
       return [p.identity, p];
     }),
   ]);
+
+  // Preload the call with the maximum members, assume that
+  // we're already in the call by this point rather than
+  // joining.
   const liveKitRoom = new EmittableMockLivekitRoom({
     localParticipant,
     remoteParticipants,
   });
   const room = new MockRoom(alice.userId);
   const vm = new CallViewModel(
-    room as any,
-    liveKitRoom as unknown as Room,
+    room.testGetAsMatrixRoom(),
+    liveKitRoom.getAsLivekitRoom(),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
     of(ConnectionState.Connected),
   );
   render(<TestComponent room={room} vm={vm} />);
-  // When the count drops
+  // When the count drops, play a leave sound.
   act(() => {
     liveKitRoom.removeParticipant(aliceParticipant);
   });
-  expect(playSound).not.toBeCalled();
+  expect(playSound).toBeCalledWith("left");
 });
