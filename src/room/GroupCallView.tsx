@@ -226,7 +226,6 @@ export const GroupCallView: FC<Props> = ({
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
-      console.log("hangup!", sendInstantly);
       setLeaveError(leaveError);
       PosthogAnalytics.instance.eventCallEnded.track(
         rtcSession.room.roomId,

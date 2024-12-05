@@ -24,18 +24,21 @@ type SoundDefinition = { mp3?: string; ogg: string };
  * @param volume The volume to play at.
  * @param ctx The context to play through.
  * @param buffer The buffer to play.
+ * @returns A promise that resolves when the sound has finished playing.
  */
 function playSound(
   ctx: AudioContext,
   buffer: AudioBuffer,
   volume: number,
-): void {
+): Promise<void> {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(volume, 0);
   const src = ctx.createBufferSource();
   src.buffer = buffer;
   src.connect(gain).connect(ctx.destination);
+  const p = new Promise<void>((r) => src.addEventListener("ended", () => r()));
   src.start();
+  return p;
 }
 
 /**
@@ -163,7 +166,7 @@ export function useAudioContext<S extends string>(
     return null;
   }
   return {
-    playSound: (name): void => {
+    playSound: (name): Promise<void> => {
       if (!audioBuffers[name]) {
         logger.debug(`Tried to play a sound that wasn't buffered (${name})`);
         return;
