@@ -51,7 +51,6 @@ export function ReactionsAudioRenderer(): ReactNode {
         audioEngineRef.current.playSound(reactionName);
       } else {
         // Fallback sounds.
-        console.log("Playing fallback sound");
         audioEngineRef.current.playSound("generic");
       }
     }
