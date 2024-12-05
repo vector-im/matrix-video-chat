@@ -26,7 +26,7 @@ type SoundDefinition = { mp3?: string; ogg: string };
  * @param buffer The buffer to play.
  * @returns A promise that resolves when the sound has finished playing.
  */
-function playSound(
+async function playSound(
   ctx: AudioContext,
   buffer: AudioBuffer,
   volume: number,
@@ -100,7 +100,7 @@ interface Props<S extends string> {
 }
 
 interface UseAudioContext<S> {
-  playSound(soundName: S): void;
+  playSound(soundName: S): Promise<void>;
 }
 
 /**
@@ -166,7 +166,7 @@ export function useAudioContext<S extends string>(
     return null;
   }
   return {
-    playSound: (name): Promise<void> => {
+    playSound: async (name): Promise<void> => {
       if (!audioBuffers[name]) {
         logger.debug(`Tried to play a sound that wasn't buffered (${name})`);
         return;
