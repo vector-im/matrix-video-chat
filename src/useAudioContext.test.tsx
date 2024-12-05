@@ -27,9 +27,11 @@ const TestComponent: FC = () => {
   }
   return (
     <>
-      <button onClick={async () => audioCtx.playSound("aSound")}>Valid sound</button>
+      <button onClick={() => void audioCtx.playSound("aSound")}>
+        Valid sound
+      </button>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-      <button onClick={async () => audioCtx.playSound("not-valid" as any)}>
+      <button onClick={() => void audioCtx.playSound("not-valid" as any)}>
         Invalid sound
       </button>
     </>
@@ -59,6 +61,7 @@ class MockAudioContext {
     vitest.mocked({
       connect: (v: unknown) => v,
       start: () => {},
+      addEventListener: (_eventType: string, cb: () => void) => cb(),
     }),
   );
   public createGain = vitest.fn().mockReturnValue(this.gain);
