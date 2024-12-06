@@ -13,7 +13,6 @@ import {
 
 import { getAvatarUrl } from "./utils/matrix";
 import { useClient } from "./ClientContext";
-
 import styles from "./Avatar.module.css";
 
 export enum Size {
