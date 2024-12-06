@@ -71,7 +71,7 @@ test("should just render a placeholder when the user has no avatar", () => {
   expect(client.mxcUrlToHttp).toBeCalledTimes(0);
 });
 
-test("should just render a placeholder when thumbnaisl are not supported", () => {
+test("should just render a placeholder when thumbnails are not supported", () => {
   const client = vi.mocked<MatrixClient>({
     getAccessToken: () => "my-access-token",
     mxcUrlToHttp: () => vi.fn(),
