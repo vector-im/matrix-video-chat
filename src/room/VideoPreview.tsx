@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useEffect, useRef, FC, ReactNode } from "react";
+import { useEffect, useRef, FC, ReactNode, useMemo } from "react";
 import useMeasure from "react-use-measure";
 import { facingModeFromLocalTrack, LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
@@ -55,6 +55,11 @@ export const VideoPreview: FC<Props> = ({
     };
   }, [videoTrack]);
 
+  const cameraIsStarting = useMemo(
+    () => muteStates.video.enabled && (!videoTrack || !videoEl.current),
+    [muteStates.video.enabled, videoTrack, videoEl],
+  );
+
   return (
     <div className={classNames(styles.preview)} ref={previewRef}>
       <video
@@ -71,10 +76,10 @@ export const VideoPreview: FC<Props> = ({
         tabIndex={-1}
         disablePictureInPicture
       />
-      {(!muteStates.video.enabled || !videoTrack || !videoEl.current) && (
+      {(!muteStates.video.enabled || cameraIsStarting) && (
         <>
           <div className={styles.avatarContainer}>
-            {muteStates.video.enabled && (!videoTrack || !videoEl.current) && (
+            {cameraIsStarting && (
               <div className={styles.cameraStarting}>
                 {t("video_tile.camera_starting")}
               </div>
@@ -84,9 +89,7 @@ export const VideoPreview: FC<Props> = ({
               name={matrixInfo.displayName}
               size={Math.min(previewBounds.width, previewBounds.height) / 2}
               src={matrixInfo.avatarUrl}
-              loading={
-                muteStates.video.enabled && (!videoTrack || !videoEl.current)
-              }
+              loading={cameraIsStarting}
             />
           </div>
         </>
