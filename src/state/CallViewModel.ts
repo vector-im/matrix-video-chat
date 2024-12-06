@@ -723,49 +723,42 @@ export class CallViewModel extends ViewModel {
       this.scope.state(),
     );
 
-  private readonly pip: Observable<UserMediaViewModel | null> =
-    this.screenShares.pipe(
-      switchMap((screenShares) => {
-        if (screenShares.length > 0) {
-          return this.spotlightSpeaker;
-        }
+  private readonly pip: Observable<UserMediaViewModel | null> = combineLatest([
+    this.screenShares,
+    this.spotlightSpeaker,
+    this.mediaItems,
+  ]).pipe(
+    switchMap(([screenShares, spotlight, mediaItems]) => {
+      if (screenShares.length > 0) {
+        return this.spotlightSpeaker;
+      }
+      if (!spotlight || spotlight.local) {
+        return of(null);
+      }
 
-        return this.spotlightSpeaker.pipe(
-          switchMap((speaker) => {
-            if (!speaker || speaker.local) {
-              return of(null);
-            }
+      const localUserMedia = mediaItems.find(
+        (m) => m.vm instanceof LocalUserMediaViewModel,
+      ) as UserMedia | undefined;
 
-            return this.mediaItems.pipe(
-              switchMap((mediaItems) => {
-                const localUserMedia = mediaItems.find(
-                  (m) => m.vm instanceof LocalUserMediaViewModel,
-                ) as UserMedia | undefined;
+      const localUserMediaViewModel = localUserMedia?.vm as
+        | LocalUserMediaViewModel
+        | undefined;
 
-                const localUserMediaViewModel = localUserMedia?.vm as
-                  | LocalUserMediaViewModel
-                  | undefined;
+      if (!localUserMediaViewModel) {
+        return of(null);
+      }
+      return localUserMediaViewModel.alwaysShow.pipe(
+        map((alwaysShow) => {
+          if (alwaysShow) {
+            return localUserMediaViewModel;
+          }
 
-                if (!localUserMediaViewModel) {
-                  return of(null);
-                }
-
-                return localUserMediaViewModel.alwaysShow.pipe(
-                  map((alwaysShow) => {
-                    if (alwaysShow) {
-                      return localUserMediaViewModel;
-                    }
-
-                    return null;
-                  }),
-                );
-              }),
-            );
-          }),
-        );
-      }),
-      this.scope.state(),
-    );
+          return null;
+        }),
+      );
+    }),
+    this.scope.state(),
+  );
 
   private readonly hasRemoteScreenShares: Observable<boolean> =
     this.spotlight.pipe(
@@ -878,15 +871,16 @@ export class CallViewModel extends ViewModel {
     this.mediaItems.pipe(
       map((mediaItems) => {
         if (mediaItems.length !== 2) return null;
-        const local = mediaItems.find((vm) => vm.vm.local)!
-          .vm as LocalUserMediaViewModel;
+        const local = mediaItems.find((vm) => vm.vm.local)?.vm as
+          | LocalUserMediaViewModel
+          | undefined;
         const remote = mediaItems.find((vm) => !vm.vm.local)?.vm as
           | RemoteUserMediaViewModel
           | undefined;
         // There might not be a remote tile if there are screen shares, or if
         // only the local user is in the call and they're using the duplicate
         // tiles option
-        if (remote === undefined) return null;
+        if (!remote || !local) return null;
 
         return { type: "one-on-one", local, remote };
       }),
