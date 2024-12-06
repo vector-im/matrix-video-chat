@@ -62,7 +62,7 @@ test("should just render a placeholder when the user has no avatar", () => {
         id={member.userId}
         name={displayName}
         size={96}
-        src={member?.getMxcAvatarUrl()}
+        src={member.getMxcAvatarUrl()}
       />
     </TestComponent>,
   );
@@ -89,7 +89,7 @@ test("should just render a placeholder when thumbnails are not supported", () =>
         id={member.userId}
         name={displayName}
         size={96}
-        src={member?.getMxcAvatarUrl()}
+        src={member.getMxcAvatarUrl()}
       />
     </TestComponent>,
   );
@@ -133,7 +133,7 @@ test("should attempt to fetch authenticated media", async () => {
         id={member.userId}
         name={displayName}
         size={96}
-        src={member?.getMxcAvatarUrl()}
+        src={member.getMxcAvatarUrl()}
       />
     </TestComponent>,
   );
