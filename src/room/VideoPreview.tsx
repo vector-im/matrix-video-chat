@@ -71,20 +71,22 @@ export const VideoPreview: FC<Props> = ({
         tabIndex={-1}
         disablePictureInPicture
       />
-      {muteStates.video.enabled && (!videoTrack || !videoEl.current) && (
-        <div className={styles.cameraStarting}>
-          {t("video_tile.camera_starting")}
-        </div>
-      )}
-      {!muteStates.video.enabled && (
-        <div className={styles.avatarContainer}>
-          <Avatar
-            id={matrixInfo.userId}
-            name={matrixInfo.displayName}
-            size={Math.min(previewBounds.width, previewBounds.height) / 2}
-            src={matrixInfo.avatarUrl}
-          />
-        </div>
+      {(!muteStates.video.enabled || !videoTrack || !videoEl.current) && (
+        <>
+          <div className={styles.avatarContainer}>
+            {muteStates.video.enabled && (!videoTrack || !videoEl.current) && (
+              <div className={styles.cameraStarting}>
+                {t("video_tile.camera_starting")}
+              </div>
+            )}
+            <Avatar
+              id={matrixInfo.userId}
+              name={matrixInfo.displayName}
+              size={Math.min(previewBounds.width, previewBounds.height) / 2}
+              src={matrixInfo.avatarUrl}
+            />
+          </div>
+        </>
       )}
       <div className={styles.buttonBar}>{children}</div>
     </div>

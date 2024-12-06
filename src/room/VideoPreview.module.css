@@ -28,13 +28,13 @@ video.mirror {
 
 .preview .cameraStarting {
   position: absolute;
-  top: 0;
+  top: var(--cpd-space-10x);
   left: 0;
   right: 0;
   bottom: 0;
   display: flex;
   justify-content: center;
-  align-items: center;
+  color: var(--cpd-color-text-secondary);
 }
 
 .avatarContainer {
