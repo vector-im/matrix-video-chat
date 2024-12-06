@@ -23,6 +23,7 @@ import {
   CallMembership,
   type MatrixRTCSession,
 } from "matrix-js-sdk/src/matrixrtc";
+import { RoomMember } from "matrix-js-sdk/src/matrix";
 
 import {
   mockLivekitRoom,
@@ -41,7 +42,6 @@ import {
 } from "./CallEventAudioRenderer";
 import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import { TestReactionsWrapper } from "../utils/testReactions";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
 const local = mockMatrixRoomMember(localRtcMember);

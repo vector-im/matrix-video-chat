@@ -16,7 +16,10 @@ import {
   EventTimelineSet,
   Room,
 } from "matrix-js-sdk/src/matrix";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import {
+  MatrixRTCSession,
+  MatrixRTCSessionEvent,
+} from "matrix-js-sdk/src/matrixrtc";
 
 import { ReactionsProvider } from "../useReactions";
 import {
@@ -24,7 +27,6 @@ import {
   ElementCallReactionEventType,
   ReactionOption,
 } from "../reactions";
-import { MockRTCSession } from "./test";
 
 export const TestReactionsWrapper = ({
   rtcSession,
@@ -38,6 +40,40 @@ export const TestReactionsWrapper = ({
     </ReactionsProvider>
   );
 };
+
+export class MockRTCSession extends EventEmitter {
+  public memberships: {
+    sender: string;
+    eventId: string;
+    createdTs: () => Date;
+  }[];
+
+  public constructor(
+    public readonly room: MockRoom,
+    membership: Record<string, string>,
+  ) {
+    super();
+    this.memberships = Object.entries(membership).map(([eventId, sender]) => ({
+      sender,
+      eventId,
+      createdTs: (): Date => new Date(),
+    }));
+  }
+
+  public testRemoveMember(userId: string): void {
+    this.memberships = this.memberships.filter((u) => u.sender !== userId);
+    this.emit(MatrixRTCSessionEvent.MembershipsChanged);
+  }
+
+  public testAddMember(sender: string): void {
+    this.memberships.push({
+      sender,
+      eventId: `!fake-${randomUUID()}:event`,
+      createdTs: (): Date => new Date(),
+    });
+    this.emit(MatrixRTCSessionEvent.MembershipsChanged);
+  }
+}
 
 export function createHandRaisedReaction(
   parentMemberEvent: string,

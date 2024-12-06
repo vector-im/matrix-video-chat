@@ -27,9 +27,7 @@ import {
   RemoteParticipant,
   RemoteTrackPublication,
   Room as LivekitRoom,
-  RoomEvent,
 } from "livekit-client";
-import { EventEmitter } from "stream";
 
 import {
   LocalUserMediaViewModel,
