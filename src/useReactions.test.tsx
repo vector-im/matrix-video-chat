@@ -60,9 +60,7 @@ describe("useReactions", () => {
       membership,
     );
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
@@ -72,9 +70,7 @@ describe("useReactions", () => {
     const room = new MockRoom(memberUserIdAlice);
     const rtcSession = new MockRTCSession(room, membership);
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
@@ -87,9 +83,7 @@ describe("useReactions", () => {
     const room = new MockRoom(memberUserIdAlice);
     const rtcSession = new MockRTCSession(room, membership);
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
@@ -113,9 +107,7 @@ describe("useReactions", () => {
     ]);
     const rtcSession = new MockRTCSession(room, membership);
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
@@ -129,9 +121,7 @@ describe("useReactions", () => {
     ]);
     const rtcSession = new MockRTCSession(room, membership);
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
@@ -145,9 +135,7 @@ describe("useReactions", () => {
     ]);
     const rtcSession = new MockRTCSession(room, membership);
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
@@ -165,9 +153,7 @@ describe("useReactions", () => {
     ]);
     const rtcSession = new MockRTCSession(room, membership);
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
@@ -177,9 +163,7 @@ describe("useReactions", () => {
     const room = new MockRoom(memberUserIdAlice);
     const rtcSession = new MockRTCSession(room, membership);
     const { queryByRole } = render(
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );

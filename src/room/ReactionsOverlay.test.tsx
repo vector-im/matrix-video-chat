@@ -40,9 +40,7 @@ function TestComponent({
 }): ReactNode {
   return (
     <TooltipProvider>
-      <TestReactionsWrapper
-        rtcSession={rtcSession as unknown as MatrixRTCSession}
-      >
+      <TestReactionsWrapper rtcSession={rtcSession}>
         <ReactionsOverlay />
       </TestReactionsWrapper>
     </TooltipProvider>
@@ -59,9 +57,7 @@ test("defaults to showing no reactions", () => {
     new MockRoom(memberUserIdAlice),
     membership,
   );
-  const { container } = render(
-    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
-  );
+  const { container } = render(<TestComponent rtcSession={rtcSession} />);
   expect(container.getElementsByTagName("span")).toHaveLength(0);
 });
 
@@ -70,9 +66,7 @@ test("shows a reaction when sent", () => {
   const reaction = ReactionSet[0];
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
-  const { getByRole } = render(
-    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
-  );
+  const { getByRole } = render(<TestComponent rtcSession={rtcSession} />);
   act(() => {
     room.testSendReaction(memberEventAlice, reaction, membership);
   });
@@ -86,9 +80,7 @@ test("shows two of the same reaction when sent", () => {
   const reaction = ReactionSet[0];
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
-  const { getAllByRole } = render(
-    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
-  );
+  const { getAllByRole } = render(<TestComponent rtcSession={rtcSession} />);
   act(() => {
     room.testSendReaction(memberEventAlice, reaction, membership);
   });
@@ -103,9 +95,7 @@ test("shows two different reactions when sent", () => {
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
   const [reactionA, reactionB] = ReactionSet;
-  const { getAllByRole } = render(
-    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
-  );
+  const { getAllByRole } = render(<TestComponent rtcSession={rtcSession} />);
   act(() => {
     room.testSendReaction(memberEventAlice, reactionA, membership);
   });
@@ -125,8 +115,6 @@ test("hides reactions when reaction animations are disabled", () => {
   act(() => {
     room.testSendReaction(memberEventAlice, reaction, membership);
   });
-  const { container } = render(
-    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
-  );
+  const { container } = render(<TestComponent rtcSession={rtcSession} />);
   expect(container.getElementsByTagName("span")).toHaveLength(0);
 });
