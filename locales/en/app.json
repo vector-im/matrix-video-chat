@@ -157,7 +157,6 @@
     "feedback_tab_send_logs_label": "Include debug logs",
     "feedback_tab_thank_you": "Thanks, we received your feedback!",
     "feedback_tab_title": "Feedback",
-    "more_tab_title": "More",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
     "preferences_tab": {
       "developer_mode_label": "Developer Mode",
