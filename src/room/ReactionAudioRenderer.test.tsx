@@ -31,6 +31,7 @@ import {
 } from "../settings/settings";
 import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import { GenericReaction, ReactionSet } from "../reactions";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 
 const memberUserIdAlice = "@alice:example.org";
 const memberUserIdBob = "@bob:example.org";
@@ -48,7 +49,7 @@ const membership: Record<string, string> = {
 function TestComponent({
   rtcSession,
 }: {
-  rtcSession: MockRTCSession;
+  rtcSession: MatrixRTCSession;
 }): ReactNode {
   return (
     <TooltipProvider>
@@ -91,7 +92,9 @@ test("preloads all audio elements", () => {
     new MockRoom(memberUserIdAlice),
     membership,
   );
-  render(<TestComponent rtcSession={rtcSession} />);
+  render(
+    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
+  );
   expect(prefetchSounds).toHaveBeenCalledOnce();
 });
 
@@ -99,7 +102,9 @@ test("will play an audio sound when there is a reaction", () => {
   playReactionsSound.setValue(true);
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
-  render(<TestComponent rtcSession={rtcSession} />);
+  render(
+    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
+  );
 
   // Find the first reaction with a sound effect
   const chosenReaction = ReactionSet.find((r) => !!r.sound);
@@ -118,7 +123,9 @@ test("will play the generic audio sound when there is soundless reaction", () =>
   playReactionsSound.setValue(true);
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
-  render(<TestComponent rtcSession={rtcSession} />);
+  render(
+    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
+  );
 
   // Find the first reaction with a sound effect
   const chosenReaction = ReactionSet.find((r) => !r.sound);
@@ -138,7 +145,9 @@ test("will play multiple audio sounds when there are multiple different reaction
 
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
-  render(<TestComponent rtcSession={rtcSession} />);
+  render(
+    <TestComponent rtcSession={rtcSession as unknown as MatrixRTCSession} />,
+  );
 
   // Find the first reaction with a sound effect
   const [reaction1, reaction2] = ReactionSet.filter((r) => !!r.sound);

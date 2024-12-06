@@ -32,7 +32,7 @@ export const TestReactionsWrapper = ({
   rtcSession,
   children,
 }: PropsWithChildren<{
-  rtcSession: MockRTCSession;
+  rtcSession: MatrixRTCSession;
 }>): ReactNode => {
   return (
     <ReactionsProvider rtcSession={rtcSession as unknown as MatrixRTCSession}>

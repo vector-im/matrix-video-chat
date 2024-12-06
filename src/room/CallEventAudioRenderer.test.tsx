@@ -84,7 +84,9 @@ function TestComponent({
   vm: CallViewModel;
 }): ReactNode {
   return (
-    <TestReactionsWrapper rtcSession={rtcSession}>
+    <TestReactionsWrapper
+      rtcSession={rtcSession as unknown as MatrixRTCSession}
+    >
       <CallEventAudioRenderer vm={vm} />
     </TestReactionsWrapper>
   );
