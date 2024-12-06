@@ -43,7 +43,6 @@ import {
   ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
-import { showNonMemberTiles } from "../settings/settings";
 
 vi.mock("@livekit/components-core");
 
@@ -629,49 +628,6 @@ test("participants must have a MatrixRTCSession to be visible", () => {
               type: "grid",
               spotlight: undefined,
               grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
-            },
-          },
-        );
-      },
-    );
-  });
-});
-
-test("shows participants without MatrixRTCSession when enabled in settings", () => {
-  // enable the setting:
-  showNonMemberTiles.setValue(true);
-  withTestScheduler(({ hot, expectObservable }) => {
-    const scenarioInputMarbles = " abc";
-    const expectedLayoutMarbles = "abc";
-
-    withCallViewModel(
-      hot(scenarioInputMarbles, {
-        a: [],
-        b: [aliceParticipant],
-        c: [aliceParticipant, bobParticipant],
-      }),
-      of([]),
-      of(ConnectionState.Connected),
-      new Map(),
-      (vm) => {
-        vm.setGridMode("grid");
-        expectObservable(summarizeLayout(vm.layout)).toBe(
-          expectedLayoutMarbles,
-          {
-            a: {
-              type: "grid",
-              spotlight: undefined,
-              grid: ["local:0"],
-            },
-            b: {
-              type: "one-on-one",
-              local: "local:0",
-              remote: `${aliceId}:0`,
-            },
-            c: {
-              type: "grid",
-              spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
             },
           },
         );

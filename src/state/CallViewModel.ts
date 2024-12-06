@@ -66,7 +66,7 @@ import {
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
-import { duplicateTiles, showNonMemberTiles } from "../settings/settings";
+import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
@@ -427,8 +427,6 @@ export class CallViewModel extends ViewModel {
       },
     );
 
-  private readonly nonMemberItemCount = new BehaviorSubject<number>(0);
-
   /**
    * List of MediaItems that we want to display
    */
@@ -443,7 +441,6 @@ export class CallViewModel extends ViewModel {
       this.matrixRTCSession,
       MatrixRTCSessionEvent.MembershipsChanged,
     ).pipe(startWith(null)),
-    showNonMemberTiles.value,
   ]).pipe(
     scan(
       (
@@ -453,7 +450,6 @@ export class CallViewModel extends ViewModel {
           { participant: localParticipant },
           duplicateTiles,
           _membershipsChanged,
-          showNonMemberTiles,
         ],
       ) => {
         const newItems = new Map(
@@ -491,17 +487,9 @@ export class CallViewModel extends ViewModel {
               }
               for (let i = 0; i < 1 + duplicateTiles; i++) {
                 const indexedMediaId = `${livekitParticipantId}:${i}`;
-                let prevMedia = prevItems.get(indexedMediaId);
+                const prevMedia = prevItems.get(indexedMediaId);
                 if (prevMedia && prevMedia instanceof UserMedia) {
                   prevMedia.updateParticipant(participant);
-                  if (prevMedia.vm.member === undefined) {
-                    // We have a previous media created because of the `debugShowNonMember` flag.
-                    // In this case we actually replace the media item.
-                    // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
-                    // option and if we always find a room member for each rtc member (which also
-                    // only fails if we have a fundamental problem)
-                    prevMedia = undefined;
-                  }
                 }
                 yield [
                   indexedMediaId,
@@ -537,63 +525,7 @@ export class CallViewModel extends ViewModel {
           }.bind(this)(),
         );
 
-        // Generate non member items (items without a corresponding MatrixRTC member)
-        // Those items should not be rendered, they are participants in livekit that do not have a corresponding
-        // matrix rtc members. This cannot be any good:
-        //  - A malicious user impersonates someone
-        //  - Someone injects abusive content
-        //  - The user cannot have encryption keys so it makes no sense to participate
-        // We can only trust users that have a matrixRTC member event.
-        //
-        // This is still available as a debug option. This can be useful
-        //  - If one wants to test scalability using the livekit cli.
-        //  - If an experimental project does not yet do the matrixRTC bits.
-        //  - If someone wants to debug if the LK connection works but matrixRTC room state failed to arrive.
-        const newNonMemberItems = showNonMemberTiles
-          ? new Map(
-              function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-                for (const participant of remoteParticipants) {
-                  for (let i = 0; i < 1 + duplicateTiles; i++) {
-                    const maybeNonMemberParticipantId =
-                      participant.identity + ":" + i;
-                    if (!newItems.has(maybeNonMemberParticipantId)) {
-                      const nonMemberId = maybeNonMemberParticipantId;
-                      yield [
-                        nonMemberId,
-                        // We create UserMedia with or without a participant.
-                        // This will be the initial value of a BehaviourSubject.
-                        // Once a participant appears we will update the BehaviourSubject. (see above)
-                        prevItems.get(nonMemberId) ??
-                          new UserMedia(
-                            nonMemberId,
-                            undefined,
-                            participant,
-                            this.encryptionSystem,
-                            this.livekitRoom,
-                          ),
-                      ];
-                    }
-                  }
-                }
-              }.bind(this)(),
-            )
-          : new Map();
-        if (newNonMemberItems.size > 0) {
-          logger.debug("Added NonMember items: ", newNonMemberItems);
-        }
-
-        const newNonMemberItemCount =
-          newNonMemberItems.size / (1 + duplicateTiles);
-        if (this.nonMemberItemCount.value !== newNonMemberItemCount)
-          this.nonMemberItemCount.next(newNonMemberItemCount);
-
-        const combinedNew = new Map([
-          ...newNonMemberItems.entries(),
-          ...newItems.entries(),
-        ]);
-
-        for (const [id, t] of prevItems) if (!combinedNew.has(id)) t.destroy();
-        return combinedNew;
+        return newItems;
       },
       new Map<string, MediaItem>(),
     ),
@@ -723,49 +655,42 @@ export class CallViewModel extends ViewModel {
       this.scope.state(),
     );
 
-  private readonly pip: Observable<UserMediaViewModel | null> =
-    this.screenShares.pipe(
-      switchMap((screenShares) => {
-        if (screenShares.length > 0) {
-          return this.spotlightSpeaker;
-        }
+  private readonly pip: Observable<UserMediaViewModel | null> = combineLatest([
+    this.screenShares,
+    this.spotlightSpeaker,
+    this.mediaItems,
+  ]).pipe(
+    switchMap(([screenShares, spotlight, mediaItems]) => {
+      if (screenShares.length > 0) {
+        return this.spotlightSpeaker;
+      }
+      if (!spotlight || spotlight.local) {
+        return of(null);
+      }
 
-        return this.spotlightSpeaker.pipe(
-          switchMap((speaker) => {
-            if (!speaker || speaker.local) {
-              return of(null);
-            }
+      const localUserMedia = mediaItems.find(
+        (m) => m.vm instanceof LocalUserMediaViewModel,
+      ) as UserMedia | undefined;
 
-            return this.mediaItems.pipe(
-              switchMap((mediaItems) => {
-                const localUserMedia = mediaItems.find(
-                  (m) => m.vm instanceof LocalUserMediaViewModel,
-                ) as UserMedia | undefined;
+      const localUserMediaViewModel = localUserMedia?.vm as
+        | LocalUserMediaViewModel
+        | undefined;
 
-                const localUserMediaViewModel = localUserMedia?.vm as
-                  | LocalUserMediaViewModel
-                  | undefined;
+      if (!localUserMediaViewModel) {
+        return of(null);
+      }
+      return localUserMediaViewModel.alwaysShow.pipe(
+        map((alwaysShow) => {
+          if (alwaysShow) {
+            return localUserMediaViewModel;
+          }
 
-                if (!localUserMediaViewModel) {
-                  return of(null);
-                }
-
-                return localUserMediaViewModel.alwaysShow.pipe(
-                  map((alwaysShow) => {
-                    if (alwaysShow) {
-                      return localUserMediaViewModel;
-                    }
-
-                    return null;
-                  }),
-                );
-              }),
-            );
-          }),
-        );
-      }),
-      this.scope.state(),
-    );
+          return null;
+        }),
+      );
+    }),
+    this.scope.state(),
+  );
 
   private readonly hasRemoteScreenShares: Observable<boolean> =
     this.spotlight.pipe(
@@ -878,15 +803,16 @@ export class CallViewModel extends ViewModel {
     this.mediaItems.pipe(
       map((mediaItems) => {
         if (mediaItems.length !== 2) return null;
-        const local = mediaItems.find((vm) => vm.vm.local)!
-          .vm as LocalUserMediaViewModel;
+        const local = mediaItems.find((vm) => vm.vm.local)?.vm as
+          | LocalUserMediaViewModel
+          | undefined;
         const remote = mediaItems.find((vm) => !vm.vm.local)?.vm as
           | RemoteUserMediaViewModel
           | undefined;
         // There might not be a remote tile if there are screen shares, or if
         // only the local user is in the call and they're using the duplicate
         // tiles option
-        if (remote === undefined) return null;
+        if (!remote || !local) return null;
 
         return { type: "one-on-one", local, remote };
       }),
