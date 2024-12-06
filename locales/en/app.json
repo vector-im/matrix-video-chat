@@ -150,8 +150,6 @@
       "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play",
       "effect_volume_label": "Sound effect volume"
     },
-    "developer_settings_label": "Developer Settings",
-    "developer_settings_label_description": "Expose developer settings in the settings window.",
     "developer_tab_title": "Developer",
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
@@ -162,6 +160,8 @@
     "more_tab_title": "More",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
     "preferences_tab": {
+      "developer_mode_label": "Developer Mode",
+      "developer_mode_label_description": "Enable developer mode and show developer settings tab.",
       "reactions_play_sound_description": "Play a sound effect when anyone sends a reaction into a call.",
       "reactions_play_sound_label": "Play reaction sounds",
       "reactions_show_description": "Show an animation when anyone sends a reaction.",
