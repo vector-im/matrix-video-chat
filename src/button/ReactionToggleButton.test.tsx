@@ -10,6 +10,7 @@ import { expect, test } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
 import { ReactNode } from "react";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 
 import {
   MockRoom,
@@ -18,7 +19,6 @@ import {
 } from "../utils/testReactions";
 import { ReactionToggleButton } from "./ReactionToggleButton";
 import { ElementCallReactionEventType } from "../reactions";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 
 const memberUserIdAlice = "@alice:example.org";
 const memberEventAlice = "$membership-alice:example.org";

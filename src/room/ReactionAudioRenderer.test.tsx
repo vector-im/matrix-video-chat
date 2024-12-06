@@ -18,6 +18,7 @@ import {
 import { TooltipProvider } from "@vector-im/compound-web";
 import { act, ReactNode } from "react";
 import { afterEach } from "node:test";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 
 import {
   MockRoom,
@@ -31,7 +32,6 @@ import {
 } from "../settings/settings";
 import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import { GenericReaction, ReactionSet } from "../reactions";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 
 const memberUserIdAlice = "@alice:example.org";
 const memberUserIdBob = "@bob:example.org";
