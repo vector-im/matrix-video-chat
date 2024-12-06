@@ -87,6 +87,7 @@ import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
 import { soundEffectVolumeSetting, useSetting } from "../settings/settings";
 import { ReactionsOverlay } from "./ReactionsOverlay";
+import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -123,7 +124,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   useEffect(() => {
     if (livekitRoom !== undefined) {
       const vm = new CallViewModel(
-        props.rtcSession.room,
+        props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
         connStateObservable,
@@ -131,12 +132,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       setVm(vm);
       return (): void => vm.destroy();
     }
-  }, [
-    props.rtcSession.room,
-    livekitRoom,
-    props.e2eeSystem,
-    connStateObservable,
-  ]);
+  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable]);
 
   if (livekitRoom === undefined || vm === null) return null;
 
@@ -670,6 +666,7 @@ export const InCallView: FC<InCallViewProps> = ({
         ))}
       <RoomAudioRenderer />
       {renderContent()}
+      <CallEventAudioRenderer vm={vm} />
       <audio ref={handRaisePlayer} preload="auto" hidden>
         <source src={handSoundOgg} type="audio/ogg; codecs=vorbis" />
         <source src={handSoundMp3} type="audio/mpeg" />
