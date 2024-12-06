@@ -12,7 +12,7 @@ import { FC, PropsWithChildren } from "react";
 
 import { ClientContextProvider } from "./ClientContext";
 import { Avatar } from "./Avatar";
-import { mockMatrixRoomMember } from "./utils/test";
+import { mockMatrixRoomMember, mockRtcMembership } from "./utils/test";
 
 const TestComponent: FC<
   PropsWithChildren<{ client: MatrixClient; supportsThumbnails?: boolean }>
@@ -51,10 +51,12 @@ test("should just render a placeholder when the user has no avatar", () => {
   } as unknown as MatrixClient);
 
   vi.spyOn(client, "mxcUrlToHttp");
-  const member = mockMatrixRoomMember({
-    userId: "@alice:example.org",
-    getMxcAvatarUrl: () => undefined,
-  });
+  const member = mockMatrixRoomMember(
+    mockRtcMembership("@alice:example.org", "AAAA"),
+    {
+      getMxcAvatarUrl: () => undefined,
+    },
+  );
   const displayName = "Alice";
   render(
     <TestComponent client={client}>
@@ -78,10 +80,12 @@ test("should just render a placeholder when thumbnails are not supported", () =>
   } as unknown as MatrixClient);
 
   vi.spyOn(client, "mxcUrlToHttp");
-  const member = mockMatrixRoomMember({
-    userId: "@alice:example.org",
-    getMxcAvatarUrl: () => "mxc://example.org/alice-avatar",
-  });
+  const member = mockMatrixRoomMember(
+    mockRtcMembership("@alice:example.org", "AAAA"),
+    {
+      getMxcAvatarUrl: () => "mxc://example.org/alice-avatar",
+    },
+  );
   const displayName = "Alice";
   render(
     <TestComponent client={client} supportsThumbnails={false}>
@@ -122,10 +126,12 @@ test("should attempt to fetch authenticated media", async () => {
   } as unknown as MatrixClient);
 
   vi.spyOn(client, "mxcUrlToHttp").mockReturnValue(expectedAuthUrl);
-  const member = mockMatrixRoomMember({
-    userId: "@alice:example.org",
-    getMxcAvatarUrl: () => "mxc://example.org/alice-avatar",
-  });
+  const member = mockMatrixRoomMember(
+    mockRtcMembership("@alice:example.org", "AAAA"),
+    {
+      getMxcAvatarUrl: () => "mxc://example.org/alice-avatar",
+    },
+  );
   const displayName = "Alice";
   render(
     <TestComponent client={client}>
