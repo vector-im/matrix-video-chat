@@ -84,6 +84,9 @@ export const VideoPreview: FC<Props> = ({
               name={matrixInfo.displayName}
               size={Math.min(previewBounds.width, previewBounds.height) / 2}
               src={matrixInfo.avatarUrl}
+              loading={
+                muteStates.video.enabled && (!videoTrack || !videoEl.current)
+              }
             />
           </div>
         </>

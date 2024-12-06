@@ -6,10 +6,15 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useMemo, FC, CSSProperties } from "react";
-import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
+import {
+  Avatar as CompoundAvatar,
+  InlineSpinner,
+} from "@vector-im/compound-web";
 
 import { getAvatarUrl } from "./utils/matrix";
 import { useClient } from "./ClientContext";
+
+import styles from "./Avatar.module.css";
 
 export enum Size {
   XS = "xs",
@@ -34,6 +39,7 @@ interface Props {
   src?: string;
   size?: Size | number;
   style?: CSSProperties;
+  loading?: boolean;
 }
 
 export const Avatar: FC<Props> = ({
@@ -43,6 +49,7 @@ export const Avatar: FC<Props> = ({
   src,
   size = Size.MD,
   style,
+  loading,
   ...props
 }) => {
   const { client } = useClient();
@@ -61,14 +68,23 @@ export const Avatar: FC<Props> = ({
   }, [client, src, sizePx]);
 
   return (
-    <CompoundAvatar
-      className={className}
-      id={id}
-      name={name}
-      size={`${sizePx}px`}
-      src={resolvedSrc}
-      style={style}
-      {...props}
-    />
+    <div>
+      {loading && (
+        <div className={styles.loading}>
+          <InlineSpinner
+            size={typeof sizePx === "number" ? sizePx / 3 : undefined}
+          />
+        </div>
+      )}
+      <CompoundAvatar
+        className={className}
+        id={id}
+        name={name}
+        size={`${sizePx}px`}
+        src={resolvedSrc}
+        style={style}
+        {...props}
+      />
+    </div>
   );
 };
