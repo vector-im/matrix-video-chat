@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { ReactNode, useDeferredValue, useEffect, useMemo } from "react";
-import { filter, interval, throttle } from "rxjs";
+import { filter, interval, map, scan, throttle } from "rxjs";
 
 import { CallViewModel } from "../state/CallViewModel";
 import joinCallSoundMp3 from "../sound/join_call.mp3";
@@ -51,19 +51,6 @@ export function CallEventAudioRenderer({
   });
   const audioEngineRef = useLatest(audioEngineCtx);
 
-  const { raisedHands } = useReactions();
-  const raisedHandCount = useMemo(
-    () => Object.keys(raisedHands).length,
-    [raisedHands],
-  );
-  const previousRaisedHandCount = useDeferredValue(raisedHandCount);
-
-  useEffect(() => {
-    if (audioEngineRef.current && previousRaisedHandCount < raisedHandCount) {
-      audioEngineRef.current.playSound("raiseHand");
-    }
-  }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
-
   useEffect(() => {
     const joinSub = vm.memberChanges
       .pipe(
@@ -89,9 +76,14 @@ export function CallEventAudioRenderer({
         audioEngineRef.current?.playSound("left");
       });
 
+    const handRaisedSub = vm.handRaised.subscribe(() => {
+      audioEngineRef.current?.playSound("raiseHand");
+    });
+
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
+      handRaisedSub.unsubscribe();
     };
   }, [audioEngineRef, vm]);
 

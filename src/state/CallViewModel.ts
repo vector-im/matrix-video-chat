@@ -26,7 +26,6 @@ import {
   Subject,
   combineLatest,
   concat,
-  distinct,
   distinctUntilChanged,
   filter,
   forkJoin,
@@ -1099,13 +1098,16 @@ export class CallViewModel extends ViewModel {
   );
 
   public readonly handsRaised = new Subject<Record<string, Date>>();
-  public readonly reactions = new Subject<Record<string, ReactionOption>>();
+  private readonly reactions = new Subject<Record<string, ReactionOption>>();
 
   public updateReactions(data: ReturnType<typeof useReactions>) {
     this.handsRaised.next(data.raisedHands);
     this.reactions.next(data.reactions);
   }
 
+  /**
+   * Emits an array of reactions that should be visible on the screen.
+   */
   public readonly visibleReactions = showReactions.value
     .pipe(switchMap((show) => (show ? this.reactions : of({}))))
     .pipe(
@@ -1125,6 +1127,9 @@ export class CallViewModel extends ViewModel {
     )
     .pipe(this.scope.state());
 
+  /**
+   * Emits an array of reactions that should be played.
+   */
   public readonly audibleReactions = playReactionsSound.value
     .pipe(
       switchMap((show) =>
@@ -1147,9 +1152,24 @@ export class CallViewModel extends ViewModel {
         { playing: [], newSounds: [] },
       ),
       map((v) => v.newSounds),
-      distinct(),
     )
     .pipe(this.scope.state());
+
+  /**
+   * Emits an event every time a new hand is raised in
+   * the call.
+   */
+  public readonly handRaised = this.handsRaised.pipe(
+    map((v) => Object.keys(v).length),
+    scan(
+      (acc, newValue) => ({
+        value: newValue,
+        playSounds: newValue > acc.value,
+      }),
+      { value: 0, playSounds: false },
+    ),
+    filter((v) => v.playSounds),
+  );
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
