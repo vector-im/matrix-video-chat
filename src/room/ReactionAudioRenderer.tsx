@@ -5,9 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useDeferredValue, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
-import { useReactions } from "../useReactions";
 import { playReactionsSound, useSetting } from "../settings/settings";
 import { GenericReaction, ReactionSet } from "../reactions";
 import { useAudioContext } from "../useAudioContext";

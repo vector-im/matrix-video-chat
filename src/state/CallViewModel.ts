@@ -207,6 +207,10 @@ enum SortingBin {
    */
   Speakers,
   /**
+   * Participants that have their hand raised.
+   */
+  HandRaised,
+  /**
    * Participants with video.
    */
   Video,
@@ -241,6 +245,8 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    handRaised: Observable<Date | undefined>,
+    reactions: Observable<ReactionOption | undefined>,
   ) {
     this.participant = new BehaviorSubject(participant);
 
@@ -251,6 +257,8 @@ class UserMedia {
         this.participant.asObservable() as Observable<LocalParticipant>,
         encryptionSystem,
         livekitRoom,
+        handRaised,
+        reactions,
       );
     } else {
       this.vm = new RemoteUserMediaViewModel(
@@ -261,6 +269,8 @@ class UserMedia {
         >,
         encryptionSystem,
         livekitRoom,
+        handRaised,
+        reactions,
       );
     }
 
@@ -468,6 +478,8 @@ export class CallViewModel extends ViewModel {
               let livekitParticipantId =
                 rtcMember.sender + ":" + rtcMember.deviceId;
 
+              const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+
               let participant:
                 | LocalParticipant
                 | RemoteParticipant
@@ -509,6 +521,12 @@ export class CallViewModel extends ViewModel {
                       participant,
                       this.encryptionSystem,
                       this.livekitRoom,
+                      this.handsRaised.pipe(
+                        map((v) => v[matrixIdentifier] ?? undefined),
+                      ),
+                      this.reactions.pipe(
+                        map((v) => v[matrixIdentifier] ?? undefined),
+                      ),
                     ),
                 ];
 
@@ -618,12 +636,13 @@ export class CallViewModel extends ViewModel {
           [
             m.speaker,
             m.presenter,
+            m.vm.handRaised,
             m.vm.videoEnabled,
             m.vm instanceof LocalUserMediaViewModel
               ? m.vm.alwaysShow
               : of(false),
           ],
-          (speaker, presenter, video, alwaysShow) => {
+          (speaker, presenter, handRaised, video, alwaysShow) => {
             let bin: SortingBin;
             if (m.vm.local)
               bin = alwaysShow
@@ -631,6 +650,7 @@ export class CallViewModel extends ViewModel {
                 : SortingBin.SelfNotAlwaysShown;
             else if (presenter) bin = SortingBin.Presenters;
             else if (speaker) bin = SortingBin.Speakers;
+            else if (handRaised) bin = SortingBin.HandRaised;
             else if (video) bin = SortingBin.Video;
             else bin = SortingBin.NoVideo;
 

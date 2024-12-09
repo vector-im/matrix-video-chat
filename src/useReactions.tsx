@@ -140,10 +140,10 @@ export const ReactionsProvider = ({
     };
 
     // Remove any raised hands for users no longer joined to the call.
-    for (const userId of Object.keys(raisedHands).filter(
+    for (const identifier of Object.keys(raisedHands).filter(
       (rhId) => !memberships.find((u) => u.sender == rhId),
     )) {
-      removeRaisedHand(userId);
+      removeRaisedHand(identifier);
     }
 
     // For each member in the call, check to see if a reaction has
@@ -152,13 +152,14 @@ export const ReactionsProvider = ({
       if (!m.sender || !m.eventId) {
         continue;
       }
+      const identifier = `${m.sender}:${m.deviceId}`;
       if (
-        raisedHands[m.sender] &&
-        raisedHands[m.sender].membershipEventId !== m.eventId
+        raisedHands[identifier] &&
+        raisedHands[identifier].membershipEventId !== m.eventId
       ) {
         // Membership event for sender has changed since the hand
         // was raised, reset.
-        removeRaisedHand(m.sender);
+        removeRaisedHand(identifier);
       }
       const reaction = getLastReactionEvent(m.eventId, m.sender);
       if (reaction) {
@@ -166,7 +167,7 @@ export const ReactionsProvider = ({
         if (!eventId) {
           continue;
         }
-        addRaisedHand(m.sender, {
+        addRaisedHand(`${m.sender}:${m.deviceId}`, {
           membershipEventId: m.eventId,
           reactionEventId: eventId,
           time: new Date(reaction.localTimestamp),
@@ -181,11 +182,16 @@ export const ReactionsProvider = ({
   const latestMemberships = useLatest(memberships);
   const latestRaisedHands = useLatest(raisedHands);
 
-  const myMembership = useMemo(
+  const myMembershipEvent = useMemo(
     () => memberships.find((m) => m.sender === myUserId)?.eventId,
     [memberships, myUserId],
   );
-
+  const myMembershipIdentifier = useMemo(() => {
+    const membership = memberships.find((m) => m.sender === myUserId);
+    return membership
+      ? `${membership.sender}:${membership.deviceId}`
+      : undefined;
+  }, [memberships, myUserId]);
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
     const reactionTimeouts = new Set<number>();
@@ -271,11 +277,10 @@ export const ReactionsProvider = ({
 
         // Check to see if this reaction was made to a membership event (and the
         // sender of the reaction matches the membership)
-        if (
-          !latestMemberships.current.some(
-            (e) => e.eventId === membershipEventId && e.sender === sender,
-          )
-        ) {
+        const membershipEvent = latestMemberships.current.find(
+          (e) => e.eventId === membershipEventId && e.sender === sender,
+        );
+        if (!membershipEvent) {
           logger.warn(
             `Reaction target was not a membership event for ${sender}, ignoring`,
           );
@@ -283,11 +288,14 @@ export const ReactionsProvider = ({
         }
 
         if (content?.["m.relates_to"].key === "🖐️") {
-          addRaisedHand(sender, {
-            reactionEventId,
-            membershipEventId,
-            time: new Date(event.localTimestamp),
-          });
+          addRaisedHand(
+            `${membershipEvent.sender}:${membershipEvent.deviceId}`,
+            {
+              reactionEventId,
+              membershipEventId,
+              time: new Date(event.localTimestamp),
+            },
+          );
         }
       } else if (event.getType() === EventType.RoomRedaction) {
         const targetEvent = event.event.redacts;
@@ -328,14 +336,14 @@ export const ReactionsProvider = ({
   ]);
 
   const toggleRaisedHand = useCallback(async () => {
-    if (!myUserId) {
+    if (!myMembershipIdentifier) {
       return;
     }
-    const myReactionId = raisedHands[myUserId]?.reactionEventId;
+    const myReactionId = raisedHands[myMembershipIdentifier]?.reactionEventId;
 
     if (!myReactionId) {
       try {
-        if (!myMembership) {
+        if (!myMembershipEvent) {
           throw new Error("Cannot find own membership event");
         }
         const reaction = await room.client.sendEvent(
@@ -344,7 +352,7 @@ export const ReactionsProvider = ({
           {
             "m.relates_to": {
               rel_type: RelationType.Annotation,
-              event_id: myMembership,
+              event_id: myMembershipEvent,
               key: "🖐️",
             },
           },
@@ -362,7 +370,13 @@ export const ReactionsProvider = ({
         throw ex;
       }
     }
-  }, [myMembership, myUserId, raisedHands, rtcSession, room]);
+  }, [
+    myMembershipEvent,
+    myMembershipIdentifier,
+    raisedHands,
+    rtcSession,
+    room,
+  ]);
 
   const sendReaction = useCallback(
     async (reaction: ReactionOption) => {
@@ -370,7 +384,7 @@ export const ReactionsProvider = ({
         // We're still reacting
         return;
       }
-      if (!myMembership) {
+      if (!myMembershipEvent) {
         throw new Error("Cannot find own membership event");
       }
       await room.client.sendEvent(
@@ -379,14 +393,14 @@ export const ReactionsProvider = ({
         {
           "m.relates_to": {
             rel_type: RelationType.Reference,
-            event_id: myMembership,
+            event_id: myMembershipEvent,
           },
           emoji: reaction.emoji,
           name: reaction.name,
         },
       );
     },
-    [myMembership, reactions, room, myUserId, rtcSession],
+    [myMembershipEvent, reactions, room, myUserId, rtcSession],
   );
 
   return (
