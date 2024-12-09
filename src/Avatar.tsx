@@ -6,7 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useMemo, FC, CSSProperties, useState, useEffect } from "react";
-import { Avatar as CompoundAvatar, InlineSpinner } from "@vector-im/compound-web";
+import {
+  Avatar as CompoundAvatar,
+  InlineSpinner,
+} from "@vector-im/compound-web";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 
 import styles from "./Avatar.module.css";
@@ -134,15 +137,15 @@ export const Avatar: FC<Props> = ({
           />
         </div>
       )}
-    <CompoundAvatar
-      className={className}
-      id={id}
-      name={name}
-      size={`${sizePx}px`}
-      src={avatarUrl}
-      style={style}
-      {...props}
-    />
+      <CompoundAvatar
+        className={className}
+        id={id}
+        name={name}
+        size={`${sizePx}px`}
+        src={avatarUrl}
+        style={style}
+        {...props}
+      />
     </div>
   );
 };
