@@ -1118,7 +1118,7 @@ export class CallViewModel extends ViewModel {
   );
 
   public readonly handsRaised = new Subject<Record<string, Date>>();
-  private readonly reactions = new Subject<Record<string, ReactionOption>>();
+  public readonly reactions = new Subject<Record<string, ReactionOption>>();
 
   public updateReactions(data: ReturnType<typeof useReactions>) {
     this.handsRaised.next(data.raisedHands);

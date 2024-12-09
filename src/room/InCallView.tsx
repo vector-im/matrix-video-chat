@@ -544,9 +544,10 @@ export const InCallView: FC<InCallViewProps> = ({
   if (supportsReactions) {
     buttons.push(
       <ReactionToggleButton
+        vm={vm}
         key="raise_hand"
         className={styles.raiseHand}
-        userId={client.getUserId()!}
+        identifier={`${client.getUserId()}:${client.getDeviceId()}`}
         onTouchEnd={onControlsTouchEnd}
       />,
     );

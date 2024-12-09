@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useDeferredValue, useEffect, useMemo } from "react";
-import { filter, interval, map, scan, throttle } from "rxjs";
+import { ReactNode, useEffect } from "react";
+import { filter, interval, throttle } from "rxjs";
 
 import { CallViewModel } from "../state/CallViewModel";
 import joinCallSoundMp3 from "../sound/join_call.mp3";
@@ -17,7 +17,6 @@ import handSoundOgg from "../sound/raise_hand.ogg?url";
 import handSoundMp3 from "../sound/raise_hand.mp3?url";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
-import { useReactions } from "../useReactions";
 import { useLatest } from "../useLatest";
 
 // Do not play any sounds if the participant count has exceeded this

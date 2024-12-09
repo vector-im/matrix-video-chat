@@ -37,8 +37,14 @@ import {
 import { useLatest } from "./useLatest";
 
 interface ReactionsContextType {
+  /**
+   * identifier (userId:deviceId => Date)
+   */
   raisedHands: Record<string, Date>;
   supportsReactions: boolean;
+  /**
+   * reactions (userId:deviceId => Date)
+   */
   reactions: Record<string, ReactionOption>;
   toggleRaisedHand: () => Promise<void>;
   sendReaction: (reaction: ReactionOption) => Promise<void>;
@@ -92,6 +98,24 @@ export const ReactionsProvider = ({
     clientState?.state === "valid" && clientState.supportedFeatures.reactions;
   const room = rtcSession.room;
   const myUserId = room.client.getUserId();
+  const myDeviceId = room.client.getDeviceId();
+
+  const latestMemberships = useLatest(memberships);
+  const latestRaisedHands = useLatest(raisedHands);
+
+  const myMembershipEvent = useMemo(
+    () =>
+      memberships.find(
+        (m) => m.sender === myUserId && m.deviceId === myDeviceId,
+      )?.eventId,
+    [memberships, myUserId],
+  );
+  const myMembershipIdentifier = useMemo(() => {
+    const membership = memberships.find((m) => m.sender === myUserId);
+    return membership
+      ? `${membership.sender}:${membership.deviceId}`
+      : undefined;
+  }, [memberships, myUserId]);
 
   const [reactions, setReactions] = useState<Record<string, ReactionOption>>(
     {},
@@ -177,21 +201,8 @@ export const ReactionsProvider = ({
     // Ignoring raisedHands here because we don't want to trigger each time the raised
     // hands set is updated.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room, memberships, myUserId, addRaisedHand, removeRaisedHand]);
+  }, [room, memberships, addRaisedHand, removeRaisedHand]);
 
-  const latestMemberships = useLatest(memberships);
-  const latestRaisedHands = useLatest(raisedHands);
-
-  const myMembershipEvent = useMemo(
-    () => memberships.find((m) => m.sender === myUserId)?.eventId,
-    [memberships, myUserId],
-  );
-  const myMembershipIdentifier = useMemo(() => {
-    const membership = memberships.find((m) => m.sender === myUserId);
-    return membership
-      ? `${membership.sender}:${membership.deviceId}`
-      : undefined;
-  }, [memberships, myUserId]);
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
     const reactionTimeouts = new Set<number>();
@@ -215,18 +226,18 @@ export const ReactionsProvider = ({
         const content: ECallReactionEventContent = event.getContent();
 
         const membershipEventId = content?.["m.relates_to"]?.event_id;
+        const membershipEvent = latestMemberships.current.find(
+          (e) => e.eventId === membershipEventId && e.sender === sender,
+        );
         // Check to see if this reaction was made to a membership event (and the
         // sender of the reaction matches the membership)
-        if (
-          !latestMemberships.current.some(
-            (e) => e.eventId === membershipEventId && e.sender === sender,
-          )
-        ) {
+        if (!membershipEvent) {
           logger.warn(
             `Reaction target was not a membership event for ${sender}, ignoring`,
           );
           return;
         }
+        const identifier = `${membershipEvent.sender}:${membershipEvent.deviceId}`;
 
         if (!content.emoji) {
           logger.warn(`Reaction had no emoji from ${reactionEventId}`);
@@ -256,19 +267,21 @@ export const ReactionsProvider = ({
         };
 
         setReactions((reactions) => {
-          if (reactions[sender]) {
+          if (reactions[identifier]) {
             // We've still got a reaction from this user, ignore it to prevent spamming
             return reactions;
           }
           const timeout = window.setTimeout(() => {
             // Clear the reaction after some time.
-            setReactions(({ [sender]: _unused, ...remaining }) => remaining);
+            setReactions(
+              ({ [identifier]: _unused, ...remaining }) => remaining,
+            );
             reactionTimeouts.delete(timeout);
           }, REACTION_ACTIVE_TIME_MS);
           reactionTimeouts.add(timeout);
           return {
             ...reactions,
-            [sender]: reaction,
+            [identifier]: reaction,
           };
         });
       } else if (event.getType() === EventType.Reaction) {
@@ -380,7 +393,7 @@ export const ReactionsProvider = ({
 
   const sendReaction = useCallback(
     async (reaction: ReactionOption) => {
-      if (!myUserId || reactions[myUserId]) {
+      if (!myMembershipIdentifier || !reactions[myMembershipIdentifier]) {
         // We're still reacting
         return;
       }
@@ -400,7 +413,7 @@ export const ReactionsProvider = ({
         },
       );
     },
-    [myMembershipEvent, reactions, room, myUserId, rtcSession],
+    [myMembershipEvent, reactions, room, myMembershipIdentifier, rtcSession],
   );
 
   return (

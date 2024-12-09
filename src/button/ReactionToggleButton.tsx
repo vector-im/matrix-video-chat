@@ -29,6 +29,9 @@ import { useReactions } from "../useReactions";
 import styles from "./ReactionToggleButton.module.css";
 import { ReactionOption, ReactionSet, ReactionsRowSize } from "../reactions";
 import { Modal } from "../Modal";
+import { CallViewModel } from "../state/CallViewModel";
+import { useObservableState } from "observable-hooks";
+import { map } from "rxjs";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {
   raised: boolean;
@@ -158,22 +161,27 @@ export function ReactionPopupMenu({
 }
 
 interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
-  userId: string;
+  identifier: string;
+  vm: CallViewModel;
 }
 
 export function ReactionToggleButton({
-  userId,
+  identifier,
+  vm,
   ...props
 }: ReactionToggleButtonProps): ReactNode {
   const { t } = useTranslation();
-  const { raisedHands, toggleRaisedHand, sendReaction, reactions } =
-    useReactions();
+  const { toggleRaisedHand, sendReaction } = useReactions();
   const [busy, setBusy] = useState(false);
   const [showReactionsMenu, setShowReactionsMenu] = useState(false);
   const [errorText, setErrorText] = useState<string>();
 
-  const isHandRaised = !!raisedHands[userId];
-  const canReact = !reactions[userId];
+  const isHandRaised = useObservableState(
+    vm.handsRaised.pipe(map((v) => !!v[identifier])),
+  );
+  const canReact = useObservableState(
+    vm.reactions.pipe(map((v) => !!v[identifier])),
+  );
 
   useEffect(() => {
     // Clear whenever the reactions menu state changes.
@@ -219,7 +227,7 @@ export function ReactionToggleButton({
       <InnerButton
         disabled={busy}
         onClick={() => setShowReactionsMenu((show) => !show)}
-        raised={isHandRaised}
+        raised={!!isHandRaised}
         open={showReactionsMenu}
         {...props}
       />
@@ -233,8 +241,8 @@ export function ReactionToggleButton({
       >
         <ReactionPopupMenu
           errorText={errorText}
-          isHandRaised={isHandRaised}
-          canReact={!busy && canReact}
+          isHandRaised={!!isHandRaised}
+          canReact={!busy && !!canReact}
           sendReaction={(reaction) => void sendRelation(reaction)}
           toggleRaisedHand={wrappedToggleRaisedHand}
         />
