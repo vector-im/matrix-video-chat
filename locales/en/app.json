@@ -147,7 +147,7 @@
   "screenshare_button_label": "Share screen",
   "settings": {
     "audio_tab": {
-      "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play",
+      "effect_volume_description": "Volume at which sound effects (such as reactions and call membership sounds) play",
       "effect_volume_label": "Sound effect volume"
     },
     "developer_settings_label": "Developer Settings",

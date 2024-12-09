@@ -13,7 +13,6 @@ import {
   useSetting,
 } from "./settings/settings";
 import { useMediaDevices } from "./livekit/MediaDevicesContext";
-import { useInitial } from "./useInitial";
 
 type SoundDefinition = { mp3?: string; ogg: string };
 
@@ -53,11 +52,9 @@ function getPreferredAudioFormat(): "ogg" | "mp3" {
   return "mp3";
 }
 
-type PrefetchedSounds<S extends string> = Promise<Record<S, ArrayBuffer>>;
+const preferredFormat = getPreferredAudioFormat();
 
-// We prefer to load these sounds ahead of time, so there
-// is no delay on call join.
-const PreferredFormat = getPreferredAudioFormat();
+type PrefetchedSounds<S extends string> = Promise<Record<S, ArrayBuffer>>;
 
 /**
  * Prefetch sounds to be used by the AudioContext. This should
@@ -76,7 +73,7 @@ export async function prefetchSounds<S extends string>(
       // Use preferred format, fallback to ogg if no mp3 is provided.
       // Load an audio file
       const response = await fetch(
-        PreferredFormat === "ogg" ? ogg : (mp3 ?? ogg),
+        preferredFormat === "ogg" ? ogg : (mp3 ?? ogg),
       );
       if (!response.ok) {
         // If the sound doesn't load, it's not the end of the world. We won't play
@@ -92,7 +89,7 @@ export async function prefetchSounds<S extends string>(
 }
 
 interface Props<S extends string> {
-  sounds: PrefetchedSounds<S>;
+  sounds: PrefetchedSounds<S> | null;
   latencyHint: AudioContextLatencyCategory;
 }
 
@@ -113,9 +110,12 @@ export function useAudioContext<S extends string>(
   const devices = useMediaDevices();
   const [audioContext, setAudioContext] = useState<AudioContext>();
   const [audioBuffers, setAudioBuffers] = useState<Record<S, AudioBuffer>>();
-  const soundCache = useInitial(async () => props.sounds);
 
   useEffect(() => {
+    const soundList = props.sounds;
+    if (!soundList) {
+      return;
+    }
     const ctx = new AudioContext({
       // We want low latency for these effects.
       latencyHint: props.latencyHint,
@@ -126,11 +126,10 @@ export function useAudioContext<S extends string>(
     // close during this process, so it's okay if it throws.
     (async (): Promise<void> => {
       const buffers: Record<string, AudioBuffer> = {};
-      for (const [name, buffer] of Object.entries(await soundCache)) {
-        const audioBuffer = await ctx.decodeAudioData(
-          // Type quirk, this is *definitely* a ArrayBuffer.
-          (buffer as ArrayBuffer).slice(0),
-        );
+      for (const [name, buffer] of Object.entries<ArrayBuffer>(
+        await soundList,
+      )) {
+        const audioBuffer = await ctx.decodeAudioData(buffer.slice(0));
         buffers[name] = audioBuffer;
       }
       setAudioBuffers(buffers as Record<S, AudioBuffer>);
@@ -145,7 +144,7 @@ export function useAudioContext<S extends string>(
       });
       setAudioContext(undefined);
     };
-  }, [soundCache, props.latencyHint]);
+  }, [props.sounds, props.latencyHint]);
 
   // Update the sink ID whenever we change devices.
   useEffect(() => {
