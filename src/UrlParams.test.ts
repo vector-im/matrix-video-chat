@@ -7,7 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, it } from "vitest";
 
-import { getRoomIdentifierFromUrl, getUrlParams } from "../src/UrlParams";
+import {
+  getRoomIdentifierFromUrl,
+  getUrlParams,
+  UserIntent,
+} from "../src/UrlParams";
 
 const ROOM_NAME = "roomNameHere";
 const ROOM_ID = "!d45f138fsd";
@@ -98,6 +102,42 @@ describe("UrlParams", () => {
 
     it("respected in widget mode", () => {
       expect(getUrlParams("?preload=true&widgetId=12345").preload).toBe(true);
+    });
+  });
+
+  describe("intent", () => {
+    it("defaults to start_call", () => {
+      expect(getUrlParams().intent).toBe(UserIntent.StartNewCall);
+    });
+
+    it("ignores intent if it is not a valid value", () => {
+      expect(getUrlParams("?intent=foo").intent).toBe(UserIntent.StartNewCall);
+    });
+
+    it("accepts join_existing", () => {
+      expect(getUrlParams("?intent=join_existing").intent).toBe(
+        UserIntent.JoinExistingCall,
+      );
+    });
+  });
+
+  describe("skipLobby", () => {
+    it("defaults to false", () => {
+      expect(getUrlParams().skipLobby).toBe(false);
+    });
+
+    it("defaults to false if intent is start_call in SPA mode", () => {
+      expect(getUrlParams("?intent=start_call").skipLobby).toBe(false);
+    });
+
+    it("defaults to true if intent is start_call in widget mode", () => {
+      expect(getUrlParams("?intent=start_call&widgetId=12345").skipLobby).toBe(
+        true,
+      );
+    });
+
+    it("default to false if intent is join_existing", () => {
+      expect(getUrlParams("?intent=join_existing").skipLobby).toBe(false);
     });
   });
 });
