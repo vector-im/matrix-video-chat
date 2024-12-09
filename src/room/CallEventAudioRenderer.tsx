@@ -25,7 +25,7 @@ import { useLatest } from "../useLatest";
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
 export const THROTTLE_SOUND_EFFECT_MS = 500;
 
-const sounds = prefetchSounds({
+export const callEventAudioSounds = prefetchSounds({
   join: {
     mp3: joinCallSoundMp3,
     ogg: joinCallSoundOgg,
@@ -46,7 +46,7 @@ export function CallEventAudioRenderer({
   vm: CallViewModel;
 }): ReactNode {
   const audioEngineCtx = useAudioContext({
-    sounds,
+    sounds: callEventAudioSounds,
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);

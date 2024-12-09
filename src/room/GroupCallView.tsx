@@ -42,7 +42,7 @@ import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { useAudioContext } from "../useAudioContext";
-import { CallEventAudioSounds } from "./CallEventAudioRenderer";
+import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 
 declare global {
@@ -76,7 +76,7 @@ export const GroupCallView: FC<Props> = ({
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
   const leaveSoundContext = useLatest(
     useAudioContext({
-      sounds: CallEventAudioSounds,
+      sounds: callEventAudioSounds,
       latencyHint: "interactive",
     }),
   );
@@ -227,6 +227,7 @@ export const GroupCallView: FC<Props> = ({
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
       setLeaveError(leaveError);
+      setLeft(true);
       PosthogAnalytics.instance.eventCallEnded.track(
         rtcSession.room.roomId,
         rtcSession.memberships.length,
@@ -241,7 +242,6 @@ export const GroupCallView: FC<Props> = ({
       )
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
         .then(() => {
-          setLeft(true);
           if (
             !isPasswordlessUser &&
             !confineToRoom &&
