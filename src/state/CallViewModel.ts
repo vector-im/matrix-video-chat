@@ -66,7 +66,7 @@ import {
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
-import { duplicateTiles } from "../settings/settings";
+import { duplicateTiles, showReactions } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
@@ -77,6 +77,8 @@ import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { observeSpeaker } from "./observeSpeaker";
+import { useReactions } from "../useReactions";
+import { ReactionOption } from "../reactions";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -1090,6 +1092,36 @@ export class CallViewModel extends ViewModel {
     }),
     this.scope.state(),
   );
+
+  public readonly handsRaised = new Subject<Record<string, Date>>();
+  public readonly reactions = new Subject<Record<string, ReactionOption>>();
+
+  public updateReactions(data: ReturnType<typeof useReactions>) {
+    this.handsRaised.next(data.raisedHands);
+    this.reactions.next(data.reactions);
+  }
+
+  public readonly visibleReactions = combineLatest([
+    this.reactions,
+    showReactions.value,
+  ])
+    .pipe(
+      map(([reactions, setting]) => (setting ? reactions : {})),
+      scan<
+        Record<string, ReactionOption>,
+        { sender: string; emoji: string; startX: number }[]
+      >((acc, latest) => {
+        const newSet: { sender: string; emoji: string; startX: number }[] = [];
+        for (const [sender, reaction] of Object.entries(latest)) {
+          const startX =
+            acc.find((v) => v.sender === sender && v.emoji)?.startX ??
+            Math.ceil(Math.random() * 80) + 10;
+          newSet.push({ sender, emoji: reaction.emoji, startX });
+        }
+        return newSet;
+      }, []),
+    )
+    .pipe(this.scope.state());
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room

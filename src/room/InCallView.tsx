@@ -107,6 +107,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     [connState],
   );
   const [vm, setVm] = useState<CallViewModel | null>(null);
+  const reactions = useReactions();
 
   useEffect(() => {
     return (): void => {
@@ -116,6 +117,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    vm?.updateReactions(reactions);
+  }, [vm, reactions]);
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
@@ -638,7 +643,7 @@ export const InCallView: FC<InCallViewProps> = ({
       {renderContent()}
       <CallEventAudioRenderer vm={vm} />
       <ReactionsAudioRenderer />
-      <ReactionsOverlay />
+      <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (
         <>

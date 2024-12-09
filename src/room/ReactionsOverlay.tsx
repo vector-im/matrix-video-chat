@@ -5,33 +5,26 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useMemo } from "react";
-
-import { useReactions } from "../useReactions";
+import { ReactNode } from "react";
 import {
   showReactions as showReactionsSetting,
   useSetting,
 } from "../settings/settings";
 import styles from "./ReactionsOverlay.module.css";
+import { CallViewModel } from "../state/CallViewModel";
+import { useObservableState } from "observable-hooks";
 
-export function ReactionsOverlay(): ReactNode {
-  const { reactions } = useReactions();
+export function ReactionsOverlay({ vm }: { vm: CallViewModel }): ReactNode {
   const [showReactions] = useSetting(showReactionsSetting);
-  const reactionsIcons = useMemo(
-    () =>
-      showReactions
-        ? Object.entries(reactions).map(([sender, { emoji }]) => ({
-            sender,
-            emoji,
-            startX: Math.ceil(Math.random() * 80) + 10,
-          }))
-        : [],
-    [showReactions, reactions],
-  );
+  const reactionsIcons = useObservableState(vm.visibleReactions);
+
+  if (!showReactions) {
+    return;
+  }
 
   return (
     <div className={styles.container}>
-      {reactionsIcons.map(({ sender, emoji, startX }) => (
+      {reactionsIcons?.map(({ sender, emoji, startX }) => (
         <span
           // Reactions effects are considered presentation elements. The reaction
           // is also present on the sender's tile, which assistive technology can

@@ -41,6 +41,7 @@ import { InviteModal } from "./InviteModal";
 import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
+import { ReactionsProvider } from "../useReactions";
 
 declare global {
   interface Window {
@@ -328,18 +329,20 @@ export const GroupCallView: FC<Props> = ({
     return (
       <>
         {shareModal}
-        <ActiveCall
-          client={client}
-          matrixInfo={matrixInfo}
-          rtcSession={rtcSession as unknown as MatrixRTCSession}
-          participantCount={participantCount}
-          onLeave={onLeave}
-          hideHeader={hideHeader}
-          muteStates={muteStates}
-          e2eeSystem={e2eeSystem}
-          //otelGroupCallMembership={otelGroupCallMembership}
-          onShareClick={onShareClick}
-        />
+        <ReactionsProvider rtcSession={rtcSession}>
+          <ActiveCall
+            client={client}
+            matrixInfo={matrixInfo}
+            rtcSession={rtcSession as MatrixRTCSession}
+            participantCount={participantCount}
+            onLeave={onLeave}
+            hideHeader={hideHeader}
+            muteStates={muteStates}
+            e2eeSystem={e2eeSystem}
+            //otelGroupCallMembership={otelGroupCallMembership}
+            onShareClick={onShareClick}
+          />
+        </ReactionsProvider>
       </>
     );
   } else if (left && widget === null) {
