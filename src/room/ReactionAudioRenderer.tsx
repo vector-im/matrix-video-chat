@@ -13,7 +13,7 @@ import { GenericReaction, ReactionSet } from "../reactions";
 import { prefetchSounds, useAudioContext } from "../useAudioContext";
 import { useLatest } from "../useLatest";
 
-const SoundMap = Object.fromEntries([
+const soundMap = Object.fromEntries([
   ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
     v.name,
     v.sound!,
@@ -41,7 +41,7 @@ export function ReactionsAudioRenderer(): ReactNode {
     // This is fine even if we load the component multiple times,
     // as the browser's cache should ensure once the media is loaded
     // once that future fetches come via the cache.
-    setSoundCache(prefetchSounds(SoundMap));
+    setSoundCache(prefetchSounds(soundMap));
   }, [shouldPlay]);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export function ReactionsAudioRenderer(): ReactNode {
         // Don't replay old reactions
         return;
       }
-      if (SoundMap[reactionName]) {
+      if (soundMap[reactionName]) {
         audioEngineRef.current.playSound(reactionName);
       } else {
         // Fallback sounds.
