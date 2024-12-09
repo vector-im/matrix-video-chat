@@ -13,6 +13,7 @@ import { GenericReaction, ReactionSet } from "../reactions";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
+import { CallViewModel } from "../state/CallViewModel";
 
 const soundMap = Object.fromEntries([
   ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
@@ -22,8 +23,11 @@ const soundMap = Object.fromEntries([
   [GenericReaction.name, GenericReaction.sound],
 ]);
 
-export function ReactionsAudioRenderer(): ReactNode {
-  const { reactions } = useReactions();
+export function ReactionsAudioRenderer({
+  vm,
+}: {
+  vm: CallViewModel;
+}): ReactNode {
   const [shouldPlay] = useSetting(playReactionsSound);
   const [soundCache, setSoundCache] = useState<ReturnType<
     typeof prefetchSounds
@@ -33,7 +37,6 @@ export function ReactionsAudioRenderer(): ReactNode {
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
-  const oldReactions = useDeferredValue(reactions);
 
   useEffect(() => {
     if (!shouldPlay || soundCache) {
@@ -46,26 +49,19 @@ export function ReactionsAudioRenderer(): ReactNode {
   }, [soundCache, shouldPlay]);
 
   useEffect(() => {
-    if (!shouldPlay || !audioEngineRef.current) {
-      return;
-    }
-    const oldReactionSet = new Set(
-      Object.values(oldReactions).map((r) => r.name),
-    );
-    for (const reactionName of new Set(
-      Object.values(reactions).map((r) => r.name),
-    )) {
-      if (oldReactionSet.has(reactionName)) {
-        // Don't replay old reactions
-        return;
+    const sub = vm.audibleReactions.subscribe((newReactions) => {
+      for (const reactionName of newReactions) {
+        if (soundMap[reactionName]) {
+          audioEngineRef.current?.playSound(reactionName);
+        } else {
+          // Fallback sounds.
+          audioEngineRef.current?.playSound("generic");
+        }
       }
-      if (soundMap[reactionName]) {
-        audioEngineRef.current.playSound(reactionName);
-      } else {
-        // Fallback sounds.
-        audioEngineRef.current.playSound("generic");
-      }
-    }
-  }, [audioEngineRef, shouldPlay, oldReactions, reactions]);
+    });
+    return (): void => {
+      sub.unsubscribe();
+    };
+  }, [vm, audioEngineRef]);
   return null;
 }

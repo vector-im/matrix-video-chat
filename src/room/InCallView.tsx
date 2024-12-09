@@ -642,7 +642,7 @@ export const InCallView: FC<InCallViewProps> = ({
       <RoomAudioRenderer />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} />
-      <ReactionsAudioRenderer />
+      <ReactionsAudioRenderer vm={vm} />
       <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (

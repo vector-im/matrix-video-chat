@@ -26,6 +26,7 @@ import {
   Subject,
   combineLatest,
   concat,
+  distinct,
   distinctUntilChanged,
   filter,
   forkJoin,
@@ -66,7 +67,11 @@ import {
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
-import { duplicateTiles, showReactions } from "../settings/settings";
+import {
+  duplicateTiles,
+  playReactionsSound,
+  showReactions,
+} from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
@@ -1101,12 +1106,9 @@ export class CallViewModel extends ViewModel {
     this.reactions.next(data.reactions);
   }
 
-  public readonly visibleReactions = combineLatest([
-    this.reactions,
-    showReactions.value,
-  ])
+  public readonly visibleReactions = showReactions.value
+    .pipe(switchMap((show) => (show ? this.reactions : of({}))))
     .pipe(
-      map(([reactions, setting]) => (setting ? reactions : {})),
       scan<
         Record<string, ReactionOption>,
         { sender: string; emoji: string; startX: number }[]
@@ -1120,6 +1122,32 @@ export class CallViewModel extends ViewModel {
         }
         return newSet;
       }, []),
+    )
+    .pipe(this.scope.state());
+
+  public readonly audibleReactions = playReactionsSound.value
+    .pipe(
+      switchMap((show) =>
+        show ? this.reactions : of<Record<string, ReactionOption>>({}),
+      ),
+    )
+    .pipe(
+      map((reactions) => Object.values(reactions).map((v) => v.name)),
+      scan<string[], { playing: string[]; newSounds: string[] }>(
+        (acc, latest) => {
+          return {
+            playing: latest.filter(
+              (v) => acc.playing.includes(v) || acc.newSounds.includes(v),
+            ),
+            newSounds: latest.filter(
+              (v) => !acc.playing.includes(v) && !acc.newSounds.includes(v),
+            ),
+          };
+        },
+        { playing: [], newSounds: [] },
+      ),
+      map((v) => v.newSounds),
+      distinct(),
     )
     .pipe(this.scope.state());
 
