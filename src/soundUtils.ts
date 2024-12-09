@@ -24,7 +24,7 @@ function getPreferredAudioFormat(): "ogg" | "mp3" {
 const preferredFormat = getPreferredAudioFormat();
 
 /**
- * Prefetch sounds to be used by the AudioContext. This should
+ * Prefetch sounds to be used by the AudioContext. This can
  * be called outside the scope of a component to ensure the
  * sounds load ahead of time.
  * @param sounds A set of sound files that may be played.
