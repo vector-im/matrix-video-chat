@@ -86,9 +86,6 @@ export const SettingsModal: FC<Props> = ({
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
 
-  // Debounce saving the sound volume as it triggers certain components to reload.
-  useEffect(() => {});
-
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
     name: t("common.audio"),

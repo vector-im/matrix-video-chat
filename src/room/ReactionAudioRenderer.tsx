@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useDeferredValue, useEffect } from "react";
+import { ReactNode, useDeferredValue, useEffect, useState } from "react";
 
 import { useReactions } from "../useReactions";
 import { playReactionsSound, useSetting } from "../settings/settings";
@@ -21,17 +21,25 @@ const SoundMap = Object.fromEntries([
   [GenericReaction.name, GenericReaction.sound],
 ]);
 
-const Sounds = prefetchSounds(SoundMap);
+let SoundCache: ReturnType<typeof prefetchSounds> | null = null;
 
 export function ReactionsAudioRenderer(): ReactNode {
   const { reactions } = useReactions();
   const [shouldPlay] = useSetting(playReactionsSound);
+  const [soundCache, setSoundCache] = useState(SoundCache);
   const audioEngineCtx = useAudioContext({
-    sounds: Sounds,
+    sounds: soundCache,
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
   const oldReactions = useDeferredValue(reactions);
+  useEffect(() => {
+    if (!shouldPlay || SoundCache) {
+      return;
+    }
+    SoundCache = prefetchSounds(SoundMap);
+    setSoundCache(SoundCache);
+  }, [shouldPlay]);
 
   useEffect(() => {
     if (!shouldPlay || !audioEngineRef.current) {
