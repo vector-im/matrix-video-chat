@@ -24,14 +24,14 @@ import {
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
 import classNames from "classnames";
+import { useObservableState } from "observable-hooks";
+import { map } from "rxjs";
 
 import { useReactions } from "../useReactions";
 import styles from "./ReactionToggleButton.module.css";
 import { ReactionOption, ReactionSet, ReactionsRowSize } from "../reactions";
 import { Modal } from "../Modal";
 import { CallViewModel } from "../state/CallViewModel";
-import { useObservableState } from "observable-hooks";
-import { map } from "rxjs";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {
   raised: boolean;

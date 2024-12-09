@@ -1117,12 +1117,17 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  public readonly handsRaised = new Subject<Record<string, Date>>();
-  public readonly reactions = new Subject<Record<string, ReactionOption>>();
+  private readonly handsRaisedSubject = new Subject<Record<string, Date>>();
+  private readonly reactionsSubject = new Subject<
+    Record<string, ReactionOption>
+  >();
 
-  public updateReactions(data: ReturnType<typeof useReactions>) {
-    this.handsRaised.next(data.raisedHands);
-    this.reactions.next(data.reactions);
+  public readonly handRaised = this.handsRaisedSubject.asObservable();
+  public readonly reactions = this.reactionsSubject.asObservable();
+
+  public updateReactions(data: ReturnType<typeof useReactions>): void {
+    this.handsRaisedSubject.next(data.raisedHands);
+    this.reactionsSubject.next(data.reactions);
   }
 
   /**
