@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
+import { ChangeEvent, FC, useCallback, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Root as Form, Text } from "@vector-im/compound-web";
@@ -85,9 +85,6 @@ export const SettingsModal: FC<Props> = ({
   useMediaDeviceNames(devices, open);
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
-
-  // Debounce saving the sound volume as it triggers certain components to reload.
-  useEffect(() => {});
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",

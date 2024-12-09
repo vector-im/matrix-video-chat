@@ -3051,12 +3051,12 @@
   dependencies:
     undici-types "~6.19.8"
 
-"@types/node@^20.0.0":
-  version "20.17.9"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.9.tgz#5f141d4b7ee125cdee5faefe28de095398865bab"
-  integrity sha512-0JOXkRyLanfGPE2QRCwgxhzlBAvaRdCNMcvbd7jFfpmD4eEXll7LRwy5ymJmyeZqk7Nh7eD2LeUyQ68BbndmXw==
+"@types/node@^22.0.0":
+  version "22.10.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.10.1.tgz#41ffeee127b8975a05f8c4f83fb89bcb2987d766"
+  integrity sha512-qKgsUwfHZV2WCWLAnVP1JqnpE6Im6h3Y0+fYgMTasNQ7V++CBX5OT1as0g0f+OyubbFqhf6XVNIsmN4IIhEgGQ==
   dependencies:
-    undici-types "~6.19.2"
+    undici-types "~6.20.0"
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.4"
@@ -3307,12 +3307,10 @@
   dependencies:
     "@use-gesture/core" "10.3.1"
 
-"@vector-im/compound-design-tokens@^1.9.1":
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-1.9.2.tgz#0b76e5475da3bc36443f7dc87951b937b5013d6f"
-  integrity sha512-gQmK4dHR2iws3ZskDv8Il6A4/rvQV7TPSmEOXLsahDhBTInWqexXeQnNRSt9Z5DsLPrkxL3/KoCt9lfYu/yiag==
-  dependencies:
-    prettier "^3.3.3"
+"@vector-im/compound-design-tokens@^2.0.0":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-2.1.1.tgz#d6175a99fe4b97688464126f255386990f3048d6"
+  integrity sha512-QnUi2K14D9KTXxcLQKUU3V75cforZLMwhaaJDNftT8F5mG86950hAM+qhgDNEpEU+pkTffQj0/g/5859YmqWzQ==
 
 "@vector-im/compound-web@^7.2.0":
   version "7.4.0"
@@ -7007,7 +7005,7 @@ prelude-ls@^1.2.1:
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
-prettier@^3.0.0, prettier@^3.3.3:
+prettier@^3.0.0:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.4.1.tgz#e211d451d6452db0a291672ca9154bc8c2579f7b"
   integrity sha512-G+YdqtITVZmOJje6QkXQWzl3fSfMxFwm1tjTyo9exhkmWSqC4Yhd1+lug++IlR2mvRVAxEDDWYkQdeSztajqgg==
@@ -8262,10 +8260,15 @@ underscore.string@~3.3.4:
     sprintf-js "^1.1.1"
     util-deprecate "^1.0.2"
 
-undici-types@~6.19.2, undici-types@~6.19.8:
+undici-types@~6.19.8:
   version "6.19.8"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.19.8.tgz#35111c9d1437ab83a7cdc0abae2f26d88eda0a02"
   integrity sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==
+
+undici-types@~6.20.0:
+  version "6.20.0"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.20.0.tgz#8171bf22c1f588d1554d55bf204bc624af388433"
+  integrity sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==
 
 undici@^5.25.4:
   version "5.28.4"
@@ -8411,9 +8414,9 @@ value-or-function@^4.0.0:
   integrity sha512-aeVK81SIuT6aMJfNo9Vte8Dw0/FZINGBV8BfCraGtqVxIeLAEhJyoWs8SmvRVmXfGss2PmmOwZCuBPbZR+IYWg==
 
 vaul@^1.0.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/vaul/-/vaul-1.1.0.tgz#7da4bc965e0b184ada632f1208096b0f5575d920"
-  integrity sha512-YhO/bikcauk48hzhMhvIvT+U87cuCbNbKk9fF4Ou5UkI9t2KkBMernmdP37pCzF15hrv55fcny1YhexK8h6GVQ==
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/vaul/-/vaul-1.1.1.tgz#93aceaad16f7c53aacf28a2609b2dd43b5a91fa0"
+  integrity sha512-+ejzF6ffQKPcfgS7uOrGn017g39F8SO4yLPXbBhpC7a0H+oPqPna8f1BUfXaz8eU4+pxbQcmjxW+jWBSbxjaFg==
   dependencies:
     "@radix-ui/react-dialog" "^1.1.1"
 

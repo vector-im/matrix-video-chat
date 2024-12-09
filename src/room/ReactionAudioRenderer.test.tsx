@@ -29,8 +29,9 @@ import {
   playReactionsSound,
   soundEffectVolumeSetting,
 } from "../settings/settings";
-import { prefetchSounds, useAudioContext } from "../useAudioContext";
+import { useAudioContext } from "../useAudioContext";
 import { GenericReaction, ReactionSet } from "../reactions";
+import { prefetchSounds } from "../soundUtils";
 
 const memberUserIdAlice = "@alice:example.org";
 const memberUserIdBob = "@bob:example.org";
@@ -60,6 +61,7 @@ function TestComponent({
 }
 
 vitest.mock("../useAudioContext");
+vitest.mock("../soundUtils");
 
 afterEach(() => {
   vitest.resetAllMocks();

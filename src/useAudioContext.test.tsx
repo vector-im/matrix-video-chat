@@ -15,11 +15,13 @@ import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
 import { useAudioContext } from "./useAudioContext";
 import { soundEffectVolumeSetting } from "./settings/settings";
 
+const staticSounds = Promise.resolve({
+  aSound: new ArrayBuffer(0),
+});
+
 const TestComponent: FC = () => {
   const audioCtx = useAudioContext({
-    sounds: Promise.resolve({
-      aSound: new ArrayBuffer(0),
-    }),
+    sounds: staticSounds,
     latencyHint: "balanced",
   });
   if (!audioCtx) {
@@ -27,11 +29,9 @@ const TestComponent: FC = () => {
   }
   return (
     <>
-      <button onClick={() => void audioCtx.playSound("aSound")}>
-        Valid sound
-      </button>
+      <button onClick={() => audioCtx.playSound("aSound")}>Valid sound</button>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-      <button onClick={() => void audioCtx.playSound("not-valid" as any)}>
+      <button onClick={() => audioCtx.playSound("not-valid" as any)}>
         Invalid sound
       </button>
     </>
@@ -61,7 +61,7 @@ class MockAudioContext {
     vitest.mocked({
       connect: (v: unknown) => v,
       start: () => {},
-      addEventListener: (_eventType: string, cb: () => void) => cb(),
+      addEventListener: (_name: string, cb: () => void) => cb(),
     }),
   );
   public createGain = vitest.fn().mockReturnValue(this.gain);

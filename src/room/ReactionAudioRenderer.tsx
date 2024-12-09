@@ -5,15 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useDeferredValue, useEffect } from "react";
+import { ReactNode, useDeferredValue, useEffect, useState } from "react";
 
 import { useReactions } from "../useReactions";
 import { playReactionsSound, useSetting } from "../settings/settings";
 import { GenericReaction, ReactionSet } from "../reactions";
-import { prefetchSounds, useAudioContext } from "../useAudioContext";
+import { useAudioContext } from "../useAudioContext";
+import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
 
-const SoundMap = Object.fromEntries([
+const soundMap = Object.fromEntries([
   ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
     v.name,
     v.sound!,
@@ -21,17 +22,28 @@ const SoundMap = Object.fromEntries([
   [GenericReaction.name, GenericReaction.sound],
 ]);
 
-const Sounds = prefetchSounds(SoundMap);
-
 export function ReactionsAudioRenderer(): ReactNode {
   const { reactions } = useReactions();
   const [shouldPlay] = useSetting(playReactionsSound);
+  const [soundCache, setSoundCache] = useState<ReturnType<
+    typeof prefetchSounds
+  > | null>(null);
   const audioEngineCtx = useAudioContext({
-    sounds: Sounds,
+    sounds: soundCache,
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
   const oldReactions = useDeferredValue(reactions);
+
+  useEffect(() => {
+    if (!shouldPlay || soundCache) {
+      return;
+    }
+    // This is fine even if we load the component multiple times,
+    // as the browser's cache should ensure once the media is loaded
+    // once that future fetches come via the cache.
+    setSoundCache(prefetchSounds(soundMap));
+  }, [soundCache, shouldPlay]);
 
   useEffect(() => {
     if (!shouldPlay || !audioEngineRef.current) {
@@ -47,7 +59,7 @@ export function ReactionsAudioRenderer(): ReactNode {
         // Don't replay old reactions
         return;
       }
-      if (SoundMap[reactionName]) {
+      if (soundMap[reactionName]) {
         void audioEngineRef.current.playSound(reactionName);
       } else {
         // Fallback sounds.
@@ -55,5 +67,5 @@ export function ReactionsAudioRenderer(): ReactNode {
       }
     }
   }, [audioEngineRef, shouldPlay, oldReactions, reactions]);
-  return <></>;
+  return null;
 }

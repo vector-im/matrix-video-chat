@@ -15,7 +15,8 @@ import leftCallSoundMp3 from "../sound/left_call.mp3";
 import leftCallSoundOgg from "../sound/left_call.ogg";
 import handSoundOgg from "../sound/raise_hand.ogg?url";
 import handSoundMp3 from "../sound/raise_hand.mp3?url";
-import { prefetchSounds, useAudioContext } from "../useAudioContext";
+import { useAudioContext } from "../useAudioContext";
+import { prefetchSounds } from "../soundUtils";
 import { useReactions } from "../useReactions";
 import { useLatest } from "../useLatest";
 
@@ -24,7 +25,7 @@ import { useLatest } from "../useLatest";
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
 export const THROTTLE_SOUND_EFFECT_MS = 500;
 
-export const CallEventAudioSounds = prefetchSounds({
+const sounds = prefetchSounds({
   join: {
     mp3: joinCallSoundMp3,
     ogg: joinCallSoundOgg,
@@ -45,7 +46,7 @@ export function CallEventAudioRenderer({
   vm: CallViewModel;
 }): ReactNode {
   const audioEngineCtx = useAudioContext({
-    sounds: CallEventAudioSounds,
+    sounds,
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
