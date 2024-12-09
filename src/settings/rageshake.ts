@@ -31,7 +31,7 @@ import EventEmitter from "events";
 import { throttle } from "lodash-es";
 import { type Logger, logger } from "matrix-js-sdk/src/logger";
 import { randomString } from "matrix-js-sdk/src/randomstring";
-import {type LoggingMethod} from "loglevel";
+import { type LoggingMethod } from "loglevel";
 
 import type loglevel from "loglevel";
 

@@ -5,7 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type FormEventHandler, type ReactNode, useCallback, useState } from "react";
+import {
+  type FC,
+  type FormEventHandler,
+  type ReactNode,
+  useCallback,
+  useState,
+} from "react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";

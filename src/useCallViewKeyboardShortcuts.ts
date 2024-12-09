@@ -8,7 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { type RefObject, useCallback, useMemo, useRef } from "react";
 
 import { useEventTarget } from "./useEvents";
-import { type ReactionOption, ReactionSet, ReactionsRowSize } from "./reactions";
+import {
+  type ReactionOption,
+  ReactionSet,
+  ReactionsRowSize,
+} from "./reactions";
 
 /**
  * Determines whether focus is in the same part of the tree as the given

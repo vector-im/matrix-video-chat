@@ -12,7 +12,11 @@ import { Button } from "@vector-im/compound-web";
 import userEvent from "@testing-library/user-event";
 
 import { useCallViewKeyboardShortcuts } from "../src/useCallViewKeyboardShortcuts";
-import { type ReactionOption, ReactionSet, ReactionsRowSize } from "./reactions";
+import {
+  type ReactionOption,
+  ReactionSet,
+  ReactionsRowSize,
+} from "./reactions";
 
 // Test Explanation:
 // - The main objective is to test `useCallViewKeyboardShortcuts`.

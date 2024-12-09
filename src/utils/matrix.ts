@@ -24,7 +24,10 @@ import IndexedDBWorker from "../IndexedDBWorker?worker";
 import { generateUrlSearchParams, getUrlParams } from "../UrlParams";
 import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
-import { type EncryptionSystem, saveKeyForRoom } from "../e2ee/sharedKeyManagement";
+import {
+  type EncryptionSystem,
+  saveKeyForRoom,
+} from "../e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";

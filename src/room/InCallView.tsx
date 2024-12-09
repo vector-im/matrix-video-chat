@@ -62,7 +62,11 @@ import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import { type ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
-import { CallViewModel, type GridMode, type Layout } from "../state/CallViewModel";
+import {
+  CallViewModel,
+  type GridMode,
+  type Layout,
+} from "../state/CallViewModel";
 import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";

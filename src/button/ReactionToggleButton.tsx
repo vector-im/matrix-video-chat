@@ -27,7 +27,11 @@ import classNames from "classnames";
 
 import { useReactions } from "../useReactions";
 import styles from "./ReactionToggleButton.module.css";
-import { type ReactionOption, ReactionSet, ReactionsRowSize } from "../reactions";
+import {
+  type ReactionOption,
+  ReactionSet,
+  ReactionsRowSize,
+} from "../reactions";
 import { Modal } from "../Modal";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {

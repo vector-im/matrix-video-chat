@@ -5,7 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import posthog, { type CaptureOptions, type PostHog, type Properties } from "posthog-js";
+import posthog, {
+  type CaptureOptions,
+  type PostHog,
+  type Properties,
+} from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Buffer } from "buffer";

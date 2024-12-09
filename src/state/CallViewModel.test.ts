@@ -25,7 +25,10 @@ import {
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import { isEqual } from "lodash-es";
-import { type CallMembership, type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import {
+  type CallMembership,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/src/matrixrtc";
 
 import { CallViewModel, type Layout } from "./CallViewModel";
 import {

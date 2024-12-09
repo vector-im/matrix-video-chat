@@ -15,7 +15,10 @@ import {
 import { type IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import { type MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
+import {
+  type MediaDevice,
+  useMediaDevices,
+} from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";

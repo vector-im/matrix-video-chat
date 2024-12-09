@@ -18,7 +18,10 @@ import {
   type RemoteParticipant,
   Track,
 } from "livekit-client";
-import { type Room as MatrixRoom, type RoomMember } from "matrix-js-sdk/src/matrix";
+import {
+  type Room as MatrixRoom,
+  type RoomMember,
+} from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   EMPTY,
@@ -69,7 +72,10 @@ import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
-import { type GridTileViewModel, type SpotlightTileViewModel } from "./TileViewModel";
+import {
+  type GridTileViewModel,
+  type SpotlightTileViewModel,
+} from "./TileViewModel";
 import { TileStore } from "./TileStore";
 import { gridLikeLayout } from "./GridLikeLayout";
 import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";

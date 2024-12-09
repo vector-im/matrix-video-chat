@@ -5,7 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import opentelemetry, { type Span, type Attributes, type Context } from "@opentelemetry/api";
+import opentelemetry, {
+  type Span,
+  type Attributes,
+  type Context,
+} from "@opentelemetry/api";
 import {
   type GroupCall,
   type MatrixClient,

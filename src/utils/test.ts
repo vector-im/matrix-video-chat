@@ -34,7 +34,10 @@ import {
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
-import { DEFAULT_CONFIG, type ResolvedConfigOptions } from "../config/ConfigOptions";
+import {
+  DEFAULT_CONFIG,
+  type ResolvedConfigOptions,
+} from "../config/ConfigOptions";
 import { Config } from "../config/Config";
 
 export function withFakeTimers(continuation: () => void): void {
