@@ -21,24 +21,27 @@ const SoundMap = Object.fromEntries([
   [GenericReaction.name, GenericReaction.sound],
 ]);
 
-let SoundCache: ReturnType<typeof prefetchSounds> | null = null;
-
 export function ReactionsAudioRenderer(): ReactNode {
   const { reactions } = useReactions();
   const [shouldPlay] = useSetting(playReactionsSound);
-  const [soundCache, setSoundCache] = useState(SoundCache);
+  const [soundCache, setSoundCache] = useState<ReturnType<
+    typeof prefetchSounds
+  > | null>(null);
   const audioEngineCtx = useAudioContext({
     sounds: soundCache,
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
   const oldReactions = useDeferredValue(reactions);
+
   useEffect(() => {
-    if (!shouldPlay || SoundCache) {
+    if (!shouldPlay || soundCache) {
       return;
     }
-    SoundCache = prefetchSounds(SoundMap);
-    setSoundCache(SoundCache);
+    // This is fine even if we load the component multiple times,
+    // as the browser's cache should ensure once the media is loaded
+    // once that future fetches come via the cache.
+    setSoundCache(prefetchSounds(SoundMap));
   }, [shouldPlay]);
 
   useEffect(() => {
