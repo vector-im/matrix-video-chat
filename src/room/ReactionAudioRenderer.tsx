@@ -42,7 +42,7 @@ export function ReactionsAudioRenderer(): ReactNode {
     // as the browser's cache should ensure once the media is loaded
     // once that future fetches come via the cache.
     setSoundCache(prefetchSounds(soundMap));
-  }, [shouldPlay]);
+  }, [soundCache, shouldPlay]);
 
   useEffect(() => {
     if (!shouldPlay || !audioEngineRef.current) {
