@@ -40,8 +40,9 @@ import {
   CallEventAudioRenderer,
   MAX_PARTICIPANT_COUNT_FOR_SOUND,
 } from "./CallEventAudioRenderer";
-import { prefetchSounds, useAudioContext } from "../useAudioContext";
+import { useAudioContext } from "../useAudioContext";
 import { TestReactionsWrapper } from "../utils/testReactions";
+import { prefetchSounds } from "../soundUtils";
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
 const local = mockMatrixRoomMember(localRtcMember);
@@ -53,6 +54,7 @@ const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
 const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
 
 vitest.mock("../useAudioContext");
+vitest.mock("../soundUtils");
 
 afterEach(() => {
   vitest.resetAllMocks();

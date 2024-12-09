@@ -15,7 +15,8 @@ import leftCallSoundMp3 from "../sound/left_call.mp3";
 import leftCallSoundOgg from "../sound/left_call.ogg";
 import handSoundOgg from "../sound/raise_hand.ogg?url";
 import handSoundMp3 from "../sound/raise_hand.mp3?url";
-import { prefetchSounds, useAudioContext } from "../useAudioContext";
+import { useAudioContext } from "../useAudioContext";
+import { prefetchSounds } from "../soundUtils";
 import { useReactions } from "../useReactions";
 import { useLatest } from "../useLatest";
 

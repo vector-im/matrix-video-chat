@@ -15,11 +15,13 @@ import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
 import { useAudioContext } from "./useAudioContext";
 import { soundEffectVolumeSetting } from "./settings/settings";
 
+const staticSounds = Promise.resolve({
+  aSound: new ArrayBuffer(0),
+});
+
 const TestComponent: FC = () => {
   const audioCtx = useAudioContext({
-    sounds: Promise.resolve({
-      aSound: new ArrayBuffer(0),
-    }),
+    sounds: staticSounds,
     latencyHint: "balanced",
   });
   if (!audioCtx) {

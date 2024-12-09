@@ -10,7 +10,8 @@ import { ReactNode, useDeferredValue, useEffect, useState } from "react";
 import { useReactions } from "../useReactions";
 import { playReactionsSound, useSetting } from "../settings/settings";
 import { GenericReaction, ReactionSet } from "../reactions";
-import { prefetchSounds, useAudioContext } from "../useAudioContext";
+import { useAudioContext } from "../useAudioContext";
+import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
 
 const soundMap = Object.fromEntries([
@@ -66,5 +67,5 @@ export function ReactionsAudioRenderer(): ReactNode {
       }
     }
   }, [audioEngineRef, shouldPlay, oldReactions, reactions]);
-  return <></>;
+  return null;
 }
