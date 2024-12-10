@@ -106,6 +106,7 @@ export const ReactionsProvider = ({
     [raisedHands],
   );
   const addRaisedHand = useCallback((userId: string, info: RaisedHandInfo) => {
+    logger.info(`Adding raised hand for ${userId}`);
     setRaisedHands((prevRaisedHands) => ({
       ...prevRaisedHands,
       [userId]: info,
@@ -113,6 +114,7 @@ export const ReactionsProvider = ({
   }, []);
 
   const removeRaisedHand = useCallback((userId: string) => {
+    logger.info(`Removing raised hand for ${userId}`);
     setRaisedHands(
       ({ [userId]: _removed, ...remainingRaisedHands }) => remainingRaisedHands,
     );
@@ -121,16 +123,26 @@ export const ReactionsProvider = ({
   // This effect will check the state whenever the membership of the session changes.
   useEffect(() => {
     // Fetches the first reaction for a given event.
-    const getLastReactionEvent = (
+    const getLastReactionEvent = async (
       eventId: string,
       expectedSender: string,
-    ): MatrixEvent | undefined => {
+    ): Promise<MatrixEvent | undefined> => {
       const relations = room.relations.getChildEventsForEvent(
         eventId,
         RelationType.Annotation,
         EventType.Reaction,
       );
-      const allEvents = relations?.getRelations() ?? [];
+      let allEvents = relations?.getRelations() ?? [];
+      // If we found no relations for this event, fetch via fetchRelations.
+      if (allEvents.length === 0) {
+        const res = await room.client.fetchRelations(
+          room.roomId,
+          eventId,
+          RelationType.Annotation,
+          EventType.Reaction,
+        );
+        allEvents = res.chunk.map((e) => new MatrixEvent(e));
+      }
       return allEvents.find(
         (reaction) =>
           reaction.event.sender === expectedSender &&
@@ -160,18 +172,26 @@ export const ReactionsProvider = ({
         // was raised, reset.
         removeRaisedHand(m.sender);
       }
-      const reaction = getLastReactionEvent(m.eventId, m.sender);
-      if (reaction) {
-        const eventId = reaction?.getId();
-        if (!eventId) {
-          continue;
-        }
-        addRaisedHand(m.sender, {
-          membershipEventId: m.eventId,
-          reactionEventId: eventId,
-          time: new Date(reaction.localTimestamp),
+      getLastReactionEvent(m.eventId, m.sender)
+        .then((reaction) => {
+          if (reaction) {
+            const eventId = reaction.getId();
+            if (!eventId) {
+              return;
+            }
+            addRaisedHand(m.sender!, {
+              membershipEventId: m.eventId!,
+              reactionEventId: eventId,
+              time: new Date(reaction.localTimestamp),
+            });
+          }
+        })
+        .catch((ex) => {
+          logger.warn(
+            `Failed to fetch reaction for member ${m.sender} (${m.eventId})`,
+            ex,
+          );
         });
-      }
     }
     // Ignoring raisedHands here because we don't want to trigger each time the raised
     // hands set is updated.
@@ -313,8 +333,8 @@ export const ReactionsProvider = ({
     return (): void => {
       room.off(MatrixRoomEvent.Timeline, handleReactionEvent);
       room.off(MatrixRoomEvent.Redaction, handleReactionEvent);
-      room.client.off(MatrixEventEvent.Decrypted, handleReactionEvent);
       room.off(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
+      room.client.off(MatrixEventEvent.Decrypted, handleReactionEvent);
       reactionTimeouts.forEach((t) => clearTimeout(t));
       // If we're clearing timeouts, we also clear all reactions.
       setReactions({});

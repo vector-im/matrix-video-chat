@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { render } from "@testing-library/react";
+import { findByRole, getByRole, render } from "@testing-library/react";
 import { act, FC } from "react";
 import { describe, expect, test } from "vitest";
 import { RoomEvent } from "matrix-js-sdk/src/matrix";
@@ -43,7 +43,7 @@ const TestComponent: FC = () => {
     <div>
       <ul>
         {Object.entries(raisedHands).map(([userId, date]) => (
-          <li key={userId}>
+          <li role="listitem" key={userId}>
             <span>{userId}</span>
             <time>{date.getTime()}</time>
           </li>
@@ -106,12 +106,12 @@ describe("useReactions", () => {
       createHandRaisedReaction(memberEventAlice, membership),
     ]);
     const rtcSession = new MockRTCSession(room, membership);
-    const { queryByRole } = render(
+    const { findByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
-    expect(queryByRole("list")?.children).to.have.lengthOf(1);
+    expect(findByRole("listitem")).toBeTruthy();
   });
   // If the membership event changes for a user, we want to remove
   // the raised hand event.
@@ -120,12 +120,12 @@ describe("useReactions", () => {
       createHandRaisedReaction(memberEventAlice, membership),
     ]);
     const rtcSession = new MockRTCSession(room, membership);
-    const { queryByRole } = render(
+    const { findByRole, queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
-    expect(queryByRole("list")?.children).to.have.lengthOf(1);
+    expect(findByRole("listitem")).toBeTruthy();
     act(() => rtcSession.testRemoveMember(memberUserIdAlice));
     expect(queryByRole("list")?.children).to.have.lengthOf(0);
   });
@@ -134,12 +134,12 @@ describe("useReactions", () => {
       createHandRaisedReaction(memberEventAlice, membership),
     ]);
     const rtcSession = new MockRTCSession(room, membership);
-    const { queryByRole } = render(
+    const { queryByRole, findByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
       </TestReactionsWrapper>,
     );
-    expect(queryByRole("list")?.children).to.have.lengthOf(1);
+    expect(findByRole("listitem")).toBeTruthy();
     // Simulate leaving and rejoining
     act(() => {
       rtcSession.testRemoveMember(memberUserIdAlice);

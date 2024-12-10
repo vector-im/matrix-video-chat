@@ -139,6 +139,7 @@ export class MockRoom extends EventEmitter {
         return Promise.resolve({ event_id: randomUUID() });
       },
       decryptEventIfNeeded: async () => {},
+      fetchRelations: async () => Promise.resolve({ chunk: [] }),
       on() {
         return this;
       },
