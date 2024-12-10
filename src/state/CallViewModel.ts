@@ -81,7 +81,6 @@ import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { observeSpeaker } from "./observeSpeaker";
-import { useReactions } from "../useReactions";
 import { ReactionOption } from "../reactions";
 
 // How long we wait after a focus switch before showing the real participant
@@ -1122,10 +1121,13 @@ export class CallViewModel extends ViewModel {
     Record<string, ReactionOption>
   >();
 
-  public readonly handRaised = this.handsRaisedSubject.asObservable();
+  public readonly handsRaised = this.handsRaisedSubject.asObservable();
   public readonly reactions = this.reactionsSubject.asObservable();
 
-  public updateReactions(data: ReturnType<typeof useReactions>): void {
+  public updateReactions(data: {
+    raisedHands: Record<string, Date>;
+    reactions: Record<string, ReactionOption>;
+  }): void {
     this.handsRaisedSubject.next(data.raisedHands);
     this.reactionsSubject.next(data.reactions);
   }

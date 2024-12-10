@@ -199,3 +199,43 @@ test("plays no sound when the participant list is more than the maximum size", (
   });
   expect(playSound).toBeCalledWith("left");
 });
+
+test("plays one sound when a hand is raised", () => {
+  const { session, vm } = getMockEnv([local, alice]);
+  render(<TestComponent rtcSession={session} vm={vm} />);
+  // Joining a call usually means remote participants are added later.
+  act(() => {
+    vm.updateReactions({
+      raisedHands: {
+        [bobRtcMember.callId]: new Date(),
+      },
+      reactions: {},
+    });
+  });
+  expect(playSound).toBeCalledWith("raiseHand");
+});
+
+test("should not play a sound when a hand raise is retracted", () => {
+  const { session, vm } = getMockEnv([local, alice]);
+  render(<TestComponent rtcSession={session} vm={vm} />);
+  // Joining a call usually means remote participants are added later.
+  act(() => {
+    vm.updateReactions({
+      raisedHands: {
+        ["foo"]: new Date(),
+        ["bar"]: new Date(),
+      },
+      reactions: {},
+    });
+  });
+  expect(playSound).toHaveBeenCalledTimes(2);
+  act(() => {
+    vm.updateReactions({
+      raisedHands: {
+        ["foo"]: new Date(),
+      },
+      reactions: {},
+    });
+  });
+  expect(playSound).toHaveBeenCalledTimes(2);
+});
