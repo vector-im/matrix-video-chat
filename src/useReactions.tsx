@@ -189,6 +189,10 @@ export const ReactionsProvider = ({
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
     const reactionTimeouts = new Set<number>();
+    // TODO: this should be somewhere more sensible
+    const handleTimelineReset = (): void => {
+      logger.warn("Received TimelineReset indicating limited sync response");
+    };
     const handleReactionEvent = (event: MatrixEvent): void => {
       // Decrypted events might come from a different room
       if (event.getRoomId() !== room.roomId) return;
@@ -302,6 +306,7 @@ export const ReactionsProvider = ({
       }
     };
 
+    room.on(MatrixRoomEvent.TimelineReset, handleTimelineReset);
     room.on(MatrixRoomEvent.Timeline, handleReactionEvent);
     room.on(MatrixRoomEvent.Redaction, handleReactionEvent);
     room.client.on(MatrixEventEvent.Decrypted, handleReactionEvent);
@@ -311,6 +316,7 @@ export const ReactionsProvider = ({
     room.on(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
 
     return (): void => {
+      room.off(MatrixRoomEvent.TimelineReset, handleTimelineReset);
       room.off(MatrixRoomEvent.Timeline, handleReactionEvent);
       room.off(MatrixRoomEvent.Redaction, handleReactionEvent);
       room.client.off(MatrixEventEvent.Decrypted, handleReactionEvent);
