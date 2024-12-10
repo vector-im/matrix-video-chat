@@ -263,6 +263,10 @@ export class MockRTCSession extends TypedEventEmitter<
     super();
   }
 
+  public isJoined(): true {
+    return true;
+  }
+
   public withMemberships(
     rtcMembers: Observable<Partial<CallMembership>[]>,
   ): MockRTCSession {
