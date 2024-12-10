@@ -44,6 +44,7 @@ test("GridTile is accessible", async () => {
           off: () => {},
           client: {
             getUserId: () => null,
+            getDeviceId: () => null,
             on: () => {},
             off: () => {},
           },
