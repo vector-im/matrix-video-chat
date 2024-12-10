@@ -48,7 +48,7 @@ export const Slider: FC<Props> = ({
   disabled,
 }) => {
   const onValueChange = useCallback(
-    ([v]: number[]) => onValueChangeProp?.(v),
+    ([v]: number[]) => onValueChangeProp(v),
     [onValueChangeProp],
   );
   const onValueCommit = useCallback(
