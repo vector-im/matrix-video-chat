@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 import { map, Observable, of, SchedulerLike } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, vi } from "vitest";
+import { expect, vi, vitest } from "vitest";
 import {
   RoomMember,
   Room as MatrixRoom,
@@ -255,6 +255,12 @@ export class MockRTCSession extends TypedEventEmitter<
   MatrixRTCSessionEvent,
   MatrixRTCSessionEventHandlerMap
 > {
+  public readonly statistics = {
+    counters: {},
+  };
+
+  public leaveRoomSession = vitest.fn().mockResolvedValue(undefined);
+
   public constructor(
     public readonly room: Room,
     private localMembership: CallMembership,

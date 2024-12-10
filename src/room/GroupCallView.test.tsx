@@ -26,36 +26,36 @@ import {
   MockRTCSession,
 } from "../utils/test";
 import { GroupCallView } from "./GroupCallView";
+import { leaveRTCSession } from "../rtcSessionHelpers";
+import { WidgetHelpers } from "../widget";
+import { LazyEventEmitter } from "../LazyEventEmitter";
 
 vitest.mock("../soundUtils");
 vitest.mock("../useAudioContext");
 vitest.mock("./InCallView");
+
+vitest.mock("../rtcSessionHelpers", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("../rtcSessionHelpers")>();
+  vitest.spyOn(orig, "leaveRTCSession");
+  return orig;
+});
 
 let playSound: MockedFunction<
   NonNullable<ReturnType<typeof useAudioContext>>["playSound"]
 >;
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
-const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
-const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
-
-const alice = mockMatrixRoomMember(aliceRtcMember);
-const bob = mockMatrixRoomMember(bobRtcMember);
 const carol = mockMatrixRoomMember(localRtcMember);
-const dave = mockMatrixRoomMember(daveRtcMember);
+const roomMembers = new Map([carol].map((p) => [p.userId, p]));
 
 const roomId = "!foo:bar";
-
-const roomMembers = new Map(
-  [alice, bob, carol, dave].map((p) => [p.userId, p]),
-);
+const soundPromise = Promise.resolve(true);
 
 beforeEach(() => {
   (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
     sound: new ArrayBuffer(0),
   });
-  playSound = vitest.fn().mockResolvedValue(undefined);
+  playSound = vitest.fn().mockReturnValue(soundPromise);
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
   });
@@ -71,8 +71,10 @@ beforeEach(() => {
   );
 });
 
-test("a leave sound should be played when the user leaves the call", async () => {
-  const user = userEvent.setup();
+function createGroupCallView(widget: WidgetHelpers | null): {
+  rtcSession: MockRTCSession;
+  getByText: ReturnType<typeof render>["getByText"];
+} {
   const history = createBrowserHistory();
   const client = {
     getUser: () => null,
@@ -94,7 +96,7 @@ test("a leave sound should be played when the user leaves the call", async () =>
     room,
     localRtcMember,
     [],
-  ).withMemberships(of([aliceRtcMember, bobRtcMember]));
+  ).withMemberships(of([]));
   const muteState = {
     audio: { enabled: false },
     video: { enabled: false },
@@ -110,10 +112,40 @@ test("a leave sound should be played when the user leaves the call", async () =>
         hideHeader={true}
         rtcSession={rtcSession as unknown as MatrixRTCSession}
         muteStates={muteState}
+        widget={widget}
       />
     </Router>,
+  );
+  return {
+    getByText,
+    rtcSession,
+  };
+}
+
+test("will play a leave sound asynchronously in SPA mode", async () => {
+  const user = userEvent.setup();
+  const { getByText, rtcSession } = createGroupCallView(null);
+  const leaveButton = getByText("Leave");
+  await user.click(leaveButton);
+  expect(playSound).toHaveBeenCalledWith("left");
+  expect(leaveRTCSession).toHaveBeenCalledWith(rtcSession, undefined);
+  expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
+});
+
+test("will play a leave sound synchronously in widget mode", async () => {
+  const user = userEvent.setup();
+  const widget = {
+    api: {
+      setAlwaysOnScreen: async () => Promise.resolve(true),
+    } as Partial<WidgetHelpers["api"]>,
+    lazyActions: new LazyEventEmitter(),
+  };
+  const { getByText, rtcSession } = createGroupCallView(
+    widget as WidgetHelpers,
   );
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
   expect(playSound).toHaveBeenCalledWith("left");
+  expect(leaveRTCSession).toHaveBeenCalledWith(rtcSession, soundPromise);
+  expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
 });

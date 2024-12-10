@@ -19,7 +19,7 @@ import { Heading, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { widget, ElementWidgetActions, JoinCallData } from "../widget";
+import { ElementWidgetActions, JoinCallData, WidgetHelpers } from "../widget";
 import { FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
@@ -60,6 +60,7 @@ interface Props {
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
   muteStates: MuteStates;
+  widget: WidgetHelpers | null;
 }
 
 export const GroupCallView: FC<Props> = ({
@@ -71,6 +72,7 @@ export const GroupCallView: FC<Props> = ({
   hideHeader,
   rtcSession,
   muteStates,
+  widget,
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
@@ -193,14 +195,14 @@ export const GroupCallView: FC<Props> = ({
                 ev.detail.data as unknown as JoinCallData,
               );
               await enterRTCSession(rtcSession, perParticipantE2EE);
-              widget!.api.transport.reply(ev.detail, {});
+              widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
               logger.error("Error joining RTC session", e);
             });
           };
           widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
           return (): void => {
-            widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+            widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
           };
         } else {
           // No lobby and no preload: we enter the rtc session right away
@@ -214,7 +216,7 @@ export const GroupCallView: FC<Props> = ({
         void enterRTCSession(rtcSession, perParticipantE2EE);
       }
     }
-  }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
+  }, [widget, rtcSession, preload, skipLobby, perParticipantE2EE]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -254,18 +256,25 @@ export const GroupCallView: FC<Props> = ({
           logger.error("Error leaving RTC session", e);
         });
     },
-    [rtcSession, isPasswordlessUser, confineToRoom, leaveSoundContext, history],
+    [
+      widget,
+      rtcSession,
+      isPasswordlessUser,
+      confineToRoom,
+      leaveSoundContext,
+      history,
+    ],
   );
 
   useEffect(() => {
     if (widget && isJoined) {
       // set widget to sticky once joined.
-      widget!.api.setAlwaysOnScreen(true).catch((e) => {
+      widget.api.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
 
       const onHangup = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        widget!.api.transport.reply(ev.detail, {});
+        widget.api.transport.reply(ev.detail, {});
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
         leaveRTCSession(rtcSession).catch((e) => {
           logger.error("Failed to leave RTC session", e);
@@ -273,10 +282,10 @@ export const GroupCallView: FC<Props> = ({
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return (): void => {
-        widget!.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
+        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
-  }, [isJoined, rtcSession]);
+  }, [widget, isJoined, rtcSession]);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
