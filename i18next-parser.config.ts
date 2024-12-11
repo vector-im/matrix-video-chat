@@ -1,3 +1,5 @@
+import { readdirSync } from "fs";
+
 export default {
   keySeparator: ".",
   namespaceSeparator: false,
@@ -21,7 +23,9 @@ export default {
       },
     ],
   },
-  locales: ["en"],
+  locales: readdirSync("locales", { withFileTypes: true })
+    .filter(({ isDirectory }) => isDirectory)
+    .map(({ name }) => name),
   output: "locales/$LOCALE/$NAMESPACE.json",
   input: ["src/**/*.{ts,tsx}"],
   sort: true,

@@ -53,7 +53,7 @@
     "encrypted": "Verschlüsselt",
     "error": "Fehler",
     "home": "Startseite",
-    "loading": "Lade …",
+    "loading": "Lade\u00a0…",
     "microphone": "Mikrofon",
     "next": "Weiter",
     "options": "Optionen",
@@ -70,6 +70,7 @@
   },
   "developer_mode": {
     "crypto_version": "Krypto-Version: {{version}}",
+    "debug_tile_layout_label": "",
     "device_id": "Geräte-ID: {{id}}",
     "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
     "hostname": "Hostname: {{hostname}}",
@@ -111,7 +112,7 @@
     "waiting_for_invite": "Anfrage gesendet! Warten auf Teilnahmefreigabe …"
   },
   "log_in": "Anmelden",
-  "logging_in": "Anmelden …",
+  "logging_in": "Anmelden\u00a0…",
   "login_auth_links": "<0>Konto erstellen</0> Oder <2>Als Gast betreten</2>",
   "login_auth_links_prompt": "Noch nicht registriert?",
   "login_subheading": "Weiter zu Element",
@@ -128,7 +129,7 @@
     "title": "Debug-Log Anfrage"
   },
   "rageshake_send_logs": "Debug-Logs senden",
-  "rageshake_sending": "Senden …",
+  "rageshake_sending": "Senden\u00a0…",
   "rageshake_sending_logs": "Sende Debug-Protokolle …",
   "rageshake_sent": "Danke!",
   "recaptcha_caption": "Diese Seite wird durch reCAPTCHA geschützt und es gelten Googles <2>Datenschutzerklärung</2> und <6>Nutzungsbedingungen</6>. <9></9>Mit einem Klick auf „Registrieren“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
@@ -136,7 +137,7 @@
   "recaptcha_not_loaded": "Recaptcha nicht geladen",
   "register": {
     "passwords_must_match": "Passwörter müssen übereinstimmen",
-    "registering": "Registrierung …"
+    "registering": "Registrierung\u00a0…"
   },
   "register_auth_links": "<0>Du hast bereits ein Konto?</0><1><0>Anmelden</0> Oder <2>Als Gast betreten</2></1>",
   "register_confirm_password_label": "Passwort bestätigen",
@@ -147,10 +148,9 @@
   "screenshare_button_label": "Bildschirm teilen",
   "settings": {
     "audio_tab": {
+      "effect_volume_description": "",
       "effect_volume_label": "Lautstärke der Soundeffekte"
     },
-    "developer_settings_label": "Entwicklereinstellungen",
-    "developer_settings_label_description": "Zeige die Entwicklereinstellungen im Einstellungsfenster.",
     "developer_tab_title": "Entwickler",
     "feedback_tab_body": "Falls du auf Probleme stößt oder einfach nur eine Rückmeldung geben möchtest, sende uns bitte eine kurze Beschreibung.",
     "feedback_tab_description_label": "Deine Rückmeldung",
@@ -158,17 +158,16 @@
     "feedback_tab_send_logs_label": "Debug-Protokolle anhängen",
     "feedback_tab_thank_you": "Danke, wir haben deine Rückmeldung erhalten!",
     "feedback_tab_title": "Rückmeldung",
-    "more_tab_title": "Mehr",
     "opt_in_description": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam.",
     "preferences_tab": {
+      "developer_mode_label": "",
+      "developer_mode_label_description": "",
       "reactions_play_sound_description": "Einen Soundeffekt abspielen, wenn jemand eine Reaktion sendet",
       "reactions_play_sound_label": "Reaktionstöne abspielen",
       "reactions_show_description": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
-      "reactions_show_label": "Reaktionen anzeigen",
-      "reactions_title": "Reaktionen"
+      "reactions_show_label": "Reaktionen anzeigen"
     },
     "preferences_tab_body": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden",
-    "preferences_tab_h4": "Einstellungen",
     "preferences_tab_show_hand_raised_timer_description": "Einen Timer zur Handmeldung anzeigen",
     "preferences_tab_show_hand_raised_timer_label": "Dauer der Handmeldung anzeigen",
     "speaker_device_selection_label": "Lautsprecher"
@@ -179,7 +178,7 @@
   "start_video_button_label": "Video aktivieren",
   "stop_screenshare_button_label": "Bildschirm wird geteilt",
   "stop_video_button_label": "Video deaktivieren",
-  "submitting": "Sende …",
+  "submitting": "Sende\u00a0…",
   "switch_camera": "Kamera wechseln",
   "unauthenticated_view_body": "Noch nicht registriert? <2>Konto erstellen</2>",
   "unauthenticated_view_eula_caption": "Mit einem Klick auf „Los geht’s“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",

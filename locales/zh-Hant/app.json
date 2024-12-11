@@ -5,14 +5,21 @@
   "action": {
     "close": "關閉",
     "copy_link": "複製連結",
+    "edit": "",
     "go": "前往",
     "invite": "邀請",
+    "lower_hand": "",
     "no": "否",
+    "pick_reaction": "",
+    "raise_hand": "",
     "register": "註冊",
     "remove": "移除",
+    "show_less": "",
+    "show_more": "",
     "sign_in": "登入",
     "sign_out": "登出",
-    "submit": "遞交"
+    "submit": "遞交",
+    "upload_file": ""
   },
   "analytics_notice": "參與此測試版即表示您同意蒐集匿名資料，我們使用這些資料來改進產品。您可以在我們的<2>隱私政策</2>與我們的 <5>Cookie 政策</5> 中找到關於我們追蹤哪些資料的更多資訊。",
   "app_selection_modal": {
@@ -21,7 +28,9 @@
     "text": "準備好加入了？",
     "title": "選取應用程式"
   },
+  "application_opened_another_tab": "",
   "browser_media_e2ee_unsupported": "您的網路瀏覽器不支援媒體端到端加密。支援的瀏覽器包含了 Chrome、Safari、Firefox >=117",
+  "browser_media_e2ee_unsupported_heading": "",
   "call_ended_view": {
     "body": "您已從通話斷線",
     "create_account_button": "建立帳號",
@@ -35,24 +44,52 @@
   },
   "call_name": "通話名稱",
   "common": {
+    "analytics": "",
     "audio": "語音",
     "avatar": "大頭照",
+    "back": "",
     "camera": "相機",
     "display_name": "顯示名稱",
     "encrypted": "已加密",
+    "error": "",
     "home": "首頁",
     "loading": "載入中…",
     "microphone": "麥克風",
+    "next": "",
+    "options": "",
     "password": "密碼",
+    "preferences": "",
     "profile": "個人檔案",
+    "reaction": "",
+    "reactions": "",
     "settings": "設定",
+    "something_went_wrong": "",
     "unencrypted": "未加密",
     "username": "使用者名稱",
     "video": "視訊"
   },
+  "developer_mode": {
+    "crypto_version": "",
+    "debug_tile_layout_label": "",
+    "device_id": "",
+    "duplicate_tiles_label": "",
+    "hostname": "",
+    "matrix_id": ""
+  },
   "disconnected_banner": "到伺服器的連線已遺失。",
   "full_screen_view_description": "<0>送出除錯紀錄，可幫助我們修正問題。</0>",
   "full_screen_view_h1": "<0>喔喔，有些地方怪怪的。</0>",
+  "group_call_loader": {
+    "banned_body": "",
+    "banned_heading": "",
+    "call_ended_body": "",
+    "call_ended_heading": "",
+    "failed_heading": "",
+    "failed_text": "",
+    "knock_reject_body": "",
+    "knock_reject_heading": "",
+    "reason": ""
+  },
   "hangup_button_label": "結束通話",
   "header_label": "Element Call 首頁",
   "header_participants_label": "參與者",
@@ -68,15 +105,23 @@
   "layout_grid_label": "網格",
   "layout_spotlight_label": "聚焦",
   "lobby": {
+    "ask_to_join": "",
+    "join_as_guest": "",
     "join_button": "加入通話",
-    "leave_button": "回到最近的通話"
+    "leave_button": "回到最近的通話",
+    "waiting_for_invite": ""
   },
+  "log_in": "",
   "logging_in": "登入中…",
   "login_auth_links": "<0>建立帳號</0> 或<2>以訪客身份登入</2>",
+  "login_auth_links_prompt": "",
+  "login_subheading": "",
   "login_title": "登入",
   "microphone_off": "麥克風關閉",
   "microphone_on": "麥克風開啟",
   "mute_microphone_button_label": "將麥克風靜音",
+  "participant_count_other": "",
+  "qr_code": "",
   "rageshake_button_error_caption": "重試傳送紀錄檔",
   "rageshake_request_modal": {
     "body": "這通對話中的另一位使用者遇到了某些問題。為了診斷問題，我們將會建立除錯紀錄。",
@@ -95,12 +140,16 @@
   },
   "register_auth_links": "<0>已經有帳號?</0><1><0>登入</0> 或<2>以訪客身份登入</2></1>",
   "register_confirm_password_label": "確認密碼",
+  "register_heading": "",
   "return_home_button": "回到首頁",
+  "room_auth_view_continue_button": "",
   "room_auth_view_eula_caption": "點擊「立刻加入通話」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
   "screenshare_button_label": "分享畫面",
   "settings": {
-    "developer_settings_label": "開發者設定",
-    "developer_settings_label_description": "在設定視窗中顯示開發者設定。",
+    "audio_tab": {
+      "effect_volume_description": "",
+      "effect_volume_label": ""
+    },
     "developer_tab_title": "開發者",
     "feedback_tab_body": "若您遇到問題或只是想提供一些回饋，請在下方傳送簡短說明給我們。",
     "feedback_tab_description_label": "您的回饋",
@@ -108,8 +157,18 @@
     "feedback_tab_send_logs_label": "包含除錯紀錄",
     "feedback_tab_thank_you": "感謝，我們已經收到您的回饋了！",
     "feedback_tab_title": "回饋",
-    "more_tab_title": "更多",
     "opt_in_description": "<0></0><1></1>您可以透過取消核取此方塊來撤回同意。若您目前正在通話中，此設定將在通話結束時生效。",
+    "preferences_tab": {
+      "developer_mode_label": "",
+      "developer_mode_label_description": "",
+      "reactions_play_sound_description": "",
+      "reactions_play_sound_label": "",
+      "reactions_show_description": "",
+      "reactions_show_label": ""
+    },
+    "preferences_tab_body": "",
+    "preferences_tab_show_hand_raised_timer_description": "",
+    "preferences_tab_show_hand_raised_timer_label": "",
     "speaker_device_selection_label": "發言者"
   },
   "star_rating_input_label_one": "{{count}} 個星星",
@@ -119,9 +178,20 @@
   "stop_screenshare_button_label": "分享畫面",
   "stop_video_button_label": "停止影片",
   "submitting": "正在遞交……",
+  "switch_camera": "",
   "unauthenticated_view_body": "還沒註冊嗎？<2>建立帳號</2>",
   "unauthenticated_view_eula_caption": "點擊「前往」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
   "unauthenticated_view_login_button": "登入您的帳號",
   "unmute_microphone_button_label": "將麥克風取消靜音",
-  "version": "版本： {{version}}"
+  "version": "版本： {{version}}",
+  "video_tile": {
+    "always_show": "",
+    "change_fit_contain": "",
+    "collapse": "",
+    "expand": "",
+    "mute_for_me": "",
+    "muted_for_me": "",
+    "volume": "",
+    "waiting_for_media": ""
+  }
 }

@@ -4,13 +4,22 @@
   },
   "action": {
     "close": "关闭",
+    "copy_link": "",
+    "edit": "",
     "go": "开始",
+    "invite": "",
+    "lower_hand": "",
     "no": "否",
+    "pick_reaction": "",
+    "raise_hand": "",
     "register": "注册",
     "remove": "移除",
+    "show_less": "",
+    "show_more": "",
     "sign_in": "登录",
     "sign_out": "登出",
-    "submit": "提交"
+    "submit": "提交",
+    "upload_file": ""
   },
   "analytics_notice": "参与测试即表示您同意我们收集匿名数据，用于改进产品。您可以在我们的<2>隐私政策</2>和<5>Cookie政策</5>中找到有关我们跟踪哪些数据以及更多信息。",
   "app_selection_modal": {
@@ -19,7 +28,9 @@
     "text": "准备好加入了吗？",
     "title": "选择应用程序"
   },
+  "application_opened_another_tab": "",
   "browser_media_e2ee_unsupported": "您的浏览器不支持媒体端对端加密。支持的浏览器有 Chrome、Safari、Firefox >=117",
+  "browser_media_e2ee_unsupported_heading": "",
   "call_ended_view": {
     "body": "通话已中断",
     "create_account_button": "创建账户",
@@ -33,26 +44,59 @@
   },
   "call_name": "通话名称",
   "common": {
+    "analytics": "",
     "audio": "音频",
     "avatar": "头像",
+    "back": "",
     "camera": "摄像头",
     "display_name": "显示名称",
     "encrypted": "已加密",
+    "error": "",
     "home": "主页",
     "loading": "加载中……",
     "microphone": "麦克风",
+    "next": "",
+    "options": "",
     "password": "密码",
+    "preferences": "",
     "profile": "个人信息",
+    "reaction": "",
+    "reactions": "",
     "settings": "设置",
+    "something_went_wrong": "",
     "unencrypted": "未加密",
     "username": "用户名",
     "video": "视频"
   },
+  "developer_mode": {
+    "crypto_version": "",
+    "debug_tile_layout_label": "",
+    "device_id": "",
+    "duplicate_tiles_label": "",
+    "hostname": "",
+    "matrix_id": ""
+  },
   "disconnected_banner": "与服务器的连接中断。",
   "full_screen_view_description": "<0>提交日志以帮助我们修复问题。</0>",
   "full_screen_view_h1": "<0>哎哟，出问题了。</0>",
+  "group_call_loader": {
+    "banned_body": "",
+    "banned_heading": "",
+    "call_ended_body": "",
+    "call_ended_heading": "",
+    "failed_heading": "",
+    "failed_text": "",
+    "knock_reject_body": "",
+    "knock_reject_heading": "",
+    "reason": ""
+  },
   "hangup_button_label": "通话结束",
   "header_label": "Element Call主页",
+  "header_participants_label": "",
+  "invite_modal": {
+    "link_copied_toast": "",
+    "title": ""
+  },
   "join_existing_call_modal": {
     "join_button": "是，加入通话",
     "text": "该通话已存在，你想加入吗？",
@@ -61,15 +105,23 @@
   "layout_grid_label": "网格",
   "layout_spotlight_label": "聚焦模式",
   "lobby": {
+    "ask_to_join": "",
+    "join_as_guest": "",
     "join_button": "加入通话",
-    "leave_button": "返回最近通话"
+    "leave_button": "返回最近通话",
+    "waiting_for_invite": ""
   },
+  "log_in": "",
   "logging_in": "登录中……",
   "login_auth_links": "<0>创建账户</0> Or <2>以访客身份继续</2>",
+  "login_auth_links_prompt": "",
+  "login_subheading": "",
   "login_title": "登录",
   "microphone_off": "麦克风关闭",
   "microphone_on": "麦克风开启",
   "mute_microphone_button_label": "静音麦克风",
+  "participant_count_other": "",
+  "qr_code": "",
   "rageshake_button_error_caption": "重传日志",
   "rageshake_request_modal": {
     "body": "这个通话中的另一个用户出现了问题。为了更好地诊断这些问题，我们想收集调试日志。",
@@ -88,12 +140,16 @@
   },
   "register_auth_links": "<0>已有账户？</0><1><0>登录</0> Or <2>以访客身份继续</2></1>",
   "register_confirm_password_label": "确认密码",
+  "register_heading": "",
   "return_home_button": "返回主页",
+  "room_auth_view_continue_button": "",
   "room_auth_view_eula_caption": "点击 \"加入通话\"，即表示您同意我们的<2>最终用户许可协议 (EULA)</2>",
   "screenshare_button_label": "屏幕共享",
   "settings": {
-    "developer_settings_label": "开发者设置",
-    "developer_settings_label_description": "在设置中显示开发者设置。",
+    "audio_tab": {
+      "effect_volume_description": "",
+      "effect_volume_label": ""
+    },
     "developer_tab_title": "开发者",
     "feedback_tab_body": "如果遇到问题或想提供一些反馈意见，请在下面向我们发送简短描述。",
     "feedback_tab_description_label": "您的反馈",
@@ -101,8 +157,18 @@
     "feedback_tab_send_logs_label": "包含调试日志",
     "feedback_tab_thank_you": "谢谢，我们收到了反馈！",
     "feedback_tab_title": "反馈",
-    "more_tab_title": "更多",
     "opt_in_description": "<0></0><1></1>您可以取消选中复选框来撤回同意。如果正在通话中，此设置将在通话结束时生效。",
+    "preferences_tab": {
+      "developer_mode_label": "",
+      "developer_mode_label_description": "",
+      "reactions_play_sound_description": "",
+      "reactions_play_sound_label": "",
+      "reactions_show_description": "",
+      "reactions_show_label": ""
+    },
+    "preferences_tab_body": "",
+    "preferences_tab_show_hand_raised_timer_description": "",
+    "preferences_tab_show_hand_raised_timer_label": "",
     "speaker_device_selection_label": "发言人"
   },
   "star_rating_input_label_one": "{{count}} 个星",
@@ -112,9 +178,20 @@
   "stop_screenshare_button_label": "屏幕共享",
   "stop_video_button_label": "停止视频",
   "submitting": "提交中…",
+  "switch_camera": "",
   "unauthenticated_view_body": "还没有注册？ <2>创建账户<2>",
   "unauthenticated_view_eula_caption": "点击 \"开始\"，即表示您同意我们的<2>最终用户许可协议 (EULA)</2>",
   "unauthenticated_view_login_button": "登录你的账户",
   "unmute_microphone_button_label": "取消麦克风静音",
-  "version": "版本：{{version}}"
+  "version": "版本：{{version}}",
+  "video_tile": {
+    "always_show": "",
+    "change_fit_contain": "",
+    "collapse": "",
+    "expand": "",
+    "mute_for_me": "",
+    "muted_for_me": "",
+    "volume": "",
+    "waiting_for_media": ""
+  }
 }
