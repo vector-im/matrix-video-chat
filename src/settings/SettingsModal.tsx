@@ -5,14 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useState } from "react";
+import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Root as Form } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
-import { Tab, TabContainer } from "../tabs/Tabs";
+import { type Tab, TabContainer } from "../tabs/Tabs";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import {
