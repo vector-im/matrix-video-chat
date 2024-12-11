@@ -35,6 +35,8 @@ vitest.mock("../useAudioContext");
 vitest.mock("./InCallView");
 
 vitest.mock("../rtcSessionHelpers", async (importOriginal) => {
+  // TODO: perhaps there is a more elegant way to manage the type import here?
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   const orig = await importOriginal<typeof import("../rtcSessionHelpers")>();
   vitest.spyOn(orig, "leaveRTCSession");
   return orig;
