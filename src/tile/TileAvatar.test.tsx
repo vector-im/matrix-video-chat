@@ -24,18 +24,4 @@ describe("TileAvatar", () => {
     );
     expect(container.querySelector(".loading")).not.toBeInTheDocument();
   });
-
-  it("show have maximum size of 120px", () => {
-    const { queryByRole } = render(
-      <TileAvatar
-        id="@a:example.org"
-        name="Alice"
-        size={999}
-        loading={false}
-      />,
-    );
-    expect(queryByRole("img", { name: "@a:example.org" })).toHaveStyle(
-      "--cpd-avatar-size: 120px;",
-    );
-  });
 });

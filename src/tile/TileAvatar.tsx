@@ -17,15 +17,14 @@ interface Props extends AvatarProps {
 }
 
 export const TileAvatar: FC<Props> = ({ size, loading, ...props }) => {
-  const adjustedSize = Math.min(size, 120);
   return (
     <div>
       {loading && (
         <div className={styles.loading}>
-          <InlineSpinner size={adjustedSize / 3} />
+          <InlineSpinner size={size / 3} />
         </div>
       )}
-      <Avatar size={adjustedSize} {...props} />
+      <Avatar size={size} {...props} />
     </div>
   );
 };
