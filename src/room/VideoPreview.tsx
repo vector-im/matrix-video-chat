@@ -80,7 +80,7 @@ export const VideoPreview: FC<Props> = ({
         <>
           <div className={styles.avatarContainer}>
             {cameraIsStarting && (
-              <div className={styles.cameraStarting}>
+              <div className={styles.cameraStarting} role="status">
                 {t("video_tile.camera_starting")}
               </div>
             )}
