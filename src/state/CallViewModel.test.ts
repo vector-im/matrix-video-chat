@@ -641,46 +641,50 @@ test("participants must have a MatrixRTCSession to be visible", () => {
 });
 
 test("shows participants without MatrixRTCSession when enabled in settings", () => {
-  // enable the setting:
-  showNonMemberTiles.setValue(true);
-  withTestScheduler(({ hot, expectObservable }) => {
-    const scenarioInputMarbles = " abc";
-    const expectedLayoutMarbles = "abc";
+  try {
+    // enable the setting:
+    showNonMemberTiles.setValue(true);
+    withTestScheduler(({ hot, expectObservable }) => {
+      const scenarioInputMarbles = " abc";
+      const expectedLayoutMarbles = "abc";
 
-    withCallViewModel(
-      hot(scenarioInputMarbles, {
-        a: [],
-        b: [aliceParticipant],
-        c: [aliceParticipant, bobParticipant],
-      }),
-      of([]), // No one joins the MatrixRTC session
-      of(ConnectionState.Connected),
-      new Map(),
-      (vm) => {
-        vm.setGridMode("grid");
-        expectObservable(summarizeLayout(vm.layout)).toBe(
-          expectedLayoutMarbles,
-          {
-            a: {
-              type: "grid",
-              spotlight: undefined,
-              grid: ["local:0"],
+      withCallViewModel(
+        hot(scenarioInputMarbles, {
+          a: [],
+          b: [aliceParticipant],
+          c: [aliceParticipant, bobParticipant],
+        }),
+        of([]), // No one joins the MatrixRTC session
+        of(ConnectionState.Connected),
+        new Map(),
+        (vm) => {
+          vm.setGridMode("grid");
+          expectObservable(summarizeLayout(vm.layout)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: ["local:0"],
+              },
+              b: {
+                type: "one-on-one",
+                local: "local:0",
+                remote: `${aliceId}:0`,
+              },
+              c: {
+                type: "grid",
+                spotlight: undefined,
+                grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              },
             },
-            b: {
-              type: "one-on-one",
-              local: "local:0",
-              remote: `${aliceId}:0`,
-            },
-            c: {
-              type: "grid",
-              spotlight: undefined,
-              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
-            },
-          },
-        );
-      },
-    );
-  });
+          );
+        },
+      );
+    });
+  } finally {
+    showNonMemberTiles.setValue(showNonMemberTiles.defaultValue);
+  }
 });
 
 it("should show at least one tile per MatrixRTCSession", () => {
