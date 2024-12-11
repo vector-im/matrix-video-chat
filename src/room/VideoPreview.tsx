@@ -5,16 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useEffect, useRef, FC, ReactNode, useMemo } from "react";
+import { useEffect, useMemo, useRef, type FC, type ReactNode } from "react";
 import useMeasure from "react-use-measure";
-import { facingModeFromLocalTrack, LocalVideoTrack } from "livekit-client";
+import { facingModeFromLocalTrack, type LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
-import { MuteStates } from "./MuteStates";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type MuteStates } from "./MuteStates";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 export type MatrixInfo = {
   userId: string;
