@@ -142,6 +142,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
         name={name}
         size={size === "sm" ? Size.SM : 56}
         src={avatarUrl ?? undefined}
+        loading={true}
       />
       <div className={styles.nameLine}>
         <Heading

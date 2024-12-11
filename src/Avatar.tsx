@@ -12,10 +12,9 @@ import {
   useState,
   useEffect,
 } from "react";
-import { Avatar as CompoundAvatar, InlineSpinner } from "@vector-im/compound-web";
+import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 
-import styles from "./Avatar.module.css";
 import { useClientState } from "./ClientContext";
 
 export enum Size {
@@ -34,14 +33,13 @@ export const sizes = new Map([
   [Size.XL, 90],
 ]);
 
-interface Props {
+export interface Props {
   id: string;
   name: string;
   className?: string;
   src?: string;
   size?: Size | number;
   style?: CSSProperties;
-  loading?: boolean;
 }
 
 export function getAvatarUrl(
@@ -73,7 +71,6 @@ export const Avatar: FC<Props> = ({
   src,
   size = Size.MD,
   style,
-  loading,
   ...props
 }) => {
   const clientState = useClientState();
@@ -132,23 +129,14 @@ export const Avatar: FC<Props> = ({
   }, [clientState, src, sizePx]);
 
   return (
-    <div>
-      {loading && (
-        <div className={styles.loading}>
-          <InlineSpinner
-            size={typeof sizePx === "number" ? sizePx / 3 : undefined}
-          />
-        </div>
-      )}
-      <CompoundAvatar
-        className={className}
-        id={id}
-        name={name}
-        size={`${sizePx}px`}
-        src={avatarUrl}
-        style={style}
-        {...props}
-      />
-    </div>
+    <CompoundAvatar
+      className={className}
+      id={id}
+      name={name}
+      size={`${sizePx}px`}
+      src={avatarUrl}
+      style={style}
+      {...props}
+    />
   );
 };

@@ -11,7 +11,7 @@ import { facingModeFromLocalTrack, type LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
-import { Avatar } from "../Avatar";
+import { TileAvatar } from "../tile/TileAvatar";
 import styles from "./VideoPreview.module.css";
 import { type MuteStates } from "./MuteStates";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -84,7 +84,7 @@ export const VideoPreview: FC<Props> = ({
                 {t("video_tile.camera_starting")}
               </div>
             )}
-            <Avatar
+            <TileAvatar
               id={matrixInfo.userId}
               name={matrixInfo.displayName}
               size={Math.min(previewBounds.width, previewBounds.height) / 2}
