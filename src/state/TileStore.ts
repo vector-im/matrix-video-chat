@@ -17,14 +17,8 @@ function debugEntries(entries: GridTileData[]): string[] {
   return entries.map((e) => e.media.member?.rawDisplayName ?? "[👻]");
 }
 
-function debugEnabled(): boolean {
-  let enabled = false;
-  const subscription = debugTileLayout.value.subscribe(
-    (value) => (enabled = value),
-  );
-  subscription.unsubscribe();
-  return enabled;
-}
+let DEBUG_ENABLED = false;
+debugTileLayout.value.subscribe((value) => (DEBUG_ENABLED = value));
 
 class SpotlightTileData {
   private readonly media_: BehaviorSubject<MediaViewModel[]>;
@@ -164,7 +158,7 @@ export class TileStoreBuilder {
    * will be no spotlight tile.
    */
   public registerSpotlight(media: MediaViewModel[], maximised: boolean): void {
-    if (debugEnabled())
+    if (DEBUG_ENABLED)
       logger.debug(
         `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.member?.rawDisplayName ?? "[👻]")}`,
       );
@@ -188,7 +182,7 @@ export class TileStoreBuilder {
    * media, then that media will have no grid tile.
    */
   public registerGridTile(media: UserMediaViewModel): void {
-    if (debugEnabled())
+    if (DEBUG_ENABLED)
       logger.debug(
         `[TileStore, ${this.generation}] register grid tile: ${media.member?.rawDisplayName ?? "[👻]"}`,
       );
@@ -280,7 +274,7 @@ export class TileStoreBuilder {
         ...this.invisibleGridEntries,
       ]),
     ];
-    if (debugEnabled()) {
+    if (DEBUG_ENABLED) {
       logger.debug(
         `[TileStore, ${this.generation}] stationary: ${debugEntries(this.stationaryGridEntries)}`,
       );
