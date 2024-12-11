@@ -650,7 +650,7 @@ test("shows participants without MatrixRTCSession when enabled in settings", () 
         b: [aliceParticipant],
         c: [aliceParticipant, bobParticipant],
       }),
-      of([]),
+      of([]), // No one joins the MatrixRTC session
       of(ConnectionState.Connected),
       new Map(),
       (vm) => {
