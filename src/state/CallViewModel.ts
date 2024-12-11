@@ -542,17 +542,17 @@ export class CallViewModel extends ViewModel {
         );
 
         // Generate non member items (items without a corresponding MatrixRTC member)
-        // Those items should not be rendered, they are participants in livekit that do not have a corresponding
-        // matrix rtc members. This cannot be any good:
+        // Those items should not be rendered, they are participants in LiveKit that do not have a corresponding
+        // MatrixRTC members. This cannot be any good:
         //  - A malicious user impersonates someone
         //  - Someone injects abusive content
         //  - The user cannot have encryption keys so it makes no sense to participate
-        // We can only trust users that have a matrixRTC member event.
+        // We can only trust users that have a MatrixRTC member event.
         //
         // This is still available as a debug option. This can be useful
-        //  - If one wants to test scalability using the livekit cli.
-        //  - If an experimental project does not yet do the matrixRTC bits.
-        //  - If someone wants to debug if the LK connection works but matrixRTC room state failed to arrive.
+        //  - If one wants to test scalability using the LiveKit CLI.
+        //  - If an experimental project does not yet do the MatrixRTC bits.
+        //  - If someone wants to debug if the LiveKit connection works but MatrixRTC room state failed to arrive.
         const newNonMemberItems = showNonMemberTiles
           ? new Map(
               function* (this: CallViewModel): Iterable<[string, MediaItem]> {
@@ -564,9 +564,6 @@ export class CallViewModel extends ViewModel {
                       const nonMemberId = maybeNonMemberParticipantId;
                       yield [
                         nonMemberId,
-                        // We create UserMedia with or without a participant.
-                        // This will be the initial value of a BehaviourSubject.
-                        // Once a participant appears we will update the BehaviourSubject. (see above)
                         prevItems.get(nonMemberId) ??
                           new UserMedia(
                             nonMemberId,
