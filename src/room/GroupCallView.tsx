@@ -26,7 +26,11 @@ import { Heading, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { ElementWidgetActions, type JoinCallData, type WidgetHelpers } from "../widget";
+import {
+  ElementWidgetActions,
+  type JoinCallData,
+  type WidgetHelpers,
+} from "../widget";
 import { FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { type MatrixInfo } from "./VideoPreview";
