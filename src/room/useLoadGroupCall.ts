@@ -20,7 +20,7 @@ import { KnownMembership } from "matrix-js-sdk/src/types";
 import { JoinRule, MatrixError } from "matrix-js-sdk/src/matrix";
 import { useTranslation } from "react-i18next";
 
-import { widget } from "../widget";
+import { isRunningAsWidget } from "../widget";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -238,7 +238,7 @@ export const useLoadGroupCall = (
           // room already joined so we are done here already.
           return room!;
         }
-        if (widget)
+        if (isRunningAsWidget)
           // in widget mode we never should reach this point. (getRoom should return the room.)
           throw new Error(
             "Room not found. The widget-api did not pass over the relevant room events/information.",

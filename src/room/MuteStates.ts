@@ -12,18 +12,18 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
 
+import type { IWidgetApiRequest } from "matrix-widget-api";
 import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
-import { ElementWidgetActions, widget } from "../widget";
+import { ElementWidgetActions, isRunningAsWidget, widget } from "../widget";
 import { Config } from "../config/Config";
 import { useUrlParams } from "../UrlParams";
 
 /**
  * If there already are this many participants in the call, we automatically mute
- * the user.
+ * the user when they join a call.
  */
 export const MUTE_PARTICIPANT_COUNT = 8;
 
@@ -74,13 +74,14 @@ export function useMuteStates(): MuteStates {
   const devices = useMediaDevices();
 
   const { skipLobby } = useUrlParams();
-
+  // In SPA without lobby we need to protect from unmuted joins for privacy.
+  const allowStartUnmuted = !skipLobby || isRunningAsWidget;
   const audio = useMuteState(devices.audioInput, () => {
-    return Config.get().media_devices.enable_audio && !skipLobby;
+    return Config.get().media_devices.enable_audio && allowStartUnmuted;
   });
   const video = useMuteState(
     devices.videoInput,
-    () => Config.get().media_devices.enable_video && !skipLobby,
+    () => Config.get().media_devices.enable_video && allowStartUnmuted,
   );
 
   useEffect(() => {
@@ -90,7 +91,7 @@ export function useMuteStates(): MuteStates {
         video_enabled: video.enabled,
       })
       .catch((e) =>
-        logger.warn("Could not send DeviceMute action to widget", e),
+        logger.warn("Could not send DeviceMute action to widget host", e),
       );
   }, [audio, video]);
 

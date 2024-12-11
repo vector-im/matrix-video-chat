@@ -10,7 +10,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Buffer } from "buffer";
 
-import { widget } from "../widget";
+import { isRunningAsWidget } from "../widget";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -183,9 +183,9 @@ export class PosthogAnalytics {
     const appVersion = import.meta.env.VITE_APP_VERSION || "dev";
     return {
       appVersion,
-      matrixBackend: widget ? "embedded" : "jssdk",
+      matrixBackend: isRunningAsWidget ? "embedded" : "jssdk",
       callBackend: "livekit",
-      cryptoVersion: widget
+      cryptoVersion: isRunningAsWidget
         ? undefined
         : window.matrixclient?.getCrypto()?.getVersion(),
     };
@@ -237,7 +237,7 @@ export class PosthogAnalytics {
       // different devices to send the same ID.
       let analyticsID = await this.getAnalyticsId();
       try {
-        if (!analyticsID && !widget) {
+        if (!analyticsID && !isRunningAsWidget) {
           // only try setting up a new analytics ID in the standalone app.
 
           // Couldn't retrieve an analytics ID from user settings, so create one and set it on the server.
@@ -269,7 +269,7 @@ export class PosthogAnalytics {
   private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
     let accountAnalyticsId;
-    if (widget) {
+    if (isRunningAsWidget) {
       accountAnalyticsId = getUrlParams().analyticsID;
     } else {
       const accountData = await client.getAccountDataFromServer(
@@ -302,7 +302,7 @@ export class PosthogAnalytics {
   }
 
   private async setAccountAnalyticsId(analyticsID: string): Promise<void> {
-    if (!widget) {
+    if (!isRunningAsWidget) {
       const client = window.matrixclient;
 
       // the analytics ID only needs to be set in the standalone version.

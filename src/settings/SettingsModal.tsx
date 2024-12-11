@@ -21,7 +21,7 @@ import {
   useMediaDevices,
   useMediaDeviceNames,
 } from "../livekit/MediaDevicesContext";
-import { widget } from "../widget";
+import { isRunningAsWidget } from "../widget";
 import {
   useSetting,
   developerSettingsTab as developerSettingsTabSetting,
@@ -246,7 +246,7 @@ export const SettingsModal: FC<Props> = ({
   };
 
   const tabs = [audioTab, videoTab];
-  if (widget === null) tabs.push(profileTab);
+  if (!isRunningAsWidget) tabs.push(profileTab);
   tabs.push(preferencesTab, feedbackTab, moreTab);
   if (developerSettingsTab) tabs.push(developerTab);
 

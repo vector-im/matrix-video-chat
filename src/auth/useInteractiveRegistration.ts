@@ -17,7 +17,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { initClient } from "../utils/matrix";
 import { Session } from "../ClientContext";
 import { Config } from "../config/Config";
-import { widget } from "../widget";
+import { isRunningAsWidget } from "../widget";
 
 export const useInteractiveRegistration = (
   oldClient?: MatrixClient,
@@ -47,7 +47,7 @@ export const useInteractiveRegistration = (
   }
 
   useEffect(() => {
-    if (widget) return;
+    if (isRunningAsWidget) return;
     // An empty registerRequest is used to get the privacy policy and recaptcha key.
     authClient.current!.registerRequest({}).catch((error) => {
       setPrivacyPolicyUrl(
