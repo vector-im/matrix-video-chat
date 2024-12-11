@@ -433,8 +433,6 @@ export class CallViewModel extends ViewModel {
       },
     );
 
-  private readonly nonMemberItemCount = new BehaviorSubject<number>(0);
-
   /**
    * List of MediaItems that we want to display
    */
@@ -587,11 +585,6 @@ export class CallViewModel extends ViewModel {
         if (newNonMemberItems.size > 0) {
           logger.debug("Added NonMember items: ", newNonMemberItems);
         }
-
-        const newNonMemberItemCount =
-          newNonMemberItems.size / (1 + duplicateTiles);
-        if (this.nonMemberItemCount.value !== newNonMemberItemCount)
-          this.nonMemberItemCount.next(newNonMemberItemCount);
 
         const combinedNew = new Map([
           ...newNonMemberItems.entries(),
