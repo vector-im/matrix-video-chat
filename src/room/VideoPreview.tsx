@@ -56,8 +56,8 @@ export const VideoPreview: FC<Props> = ({
   }, [videoTrack]);
 
   const cameraIsStarting = useMemo(
-    () => muteStates.video.enabled && (!videoTrack || !videoEl.current),
-    [muteStates.video.enabled, videoTrack, videoEl],
+    () => muteStates.video.enabled && !videoTrack,
+    [muteStates.video.enabled, videoTrack],
   );
 
   return (
