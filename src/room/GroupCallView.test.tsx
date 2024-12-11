@@ -5,17 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { beforeEach, expect, MockedFunction, test, vitest } from "vitest";
+import { beforeEach, expect, type MockedFunction, test, vitest } from "vitest";
 import { render } from "@testing-library/react";
-import { MatrixClient } from "matrix-js-sdk/src/client";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 import { of } from "rxjs";
-import { JoinRule, RoomState } from "matrix-js-sdk/src/matrix";
+import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
 import { Router } from "react-router-dom";
 import { createBrowserHistory } from "history";
 import userEvent from "@testing-library/user-event";
 
-import { MuteStates } from "./MuteStates";
+import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
@@ -27,7 +27,7 @@ import {
 } from "../utils/test";
 import { GroupCallView } from "./GroupCallView";
 import { leaveRTCSession } from "../rtcSessionHelpers";
-import { WidgetHelpers } from "../widget";
+import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
 
 vitest.mock("../soundUtils");
