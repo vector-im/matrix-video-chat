@@ -13,9 +13,9 @@ import {
   ReactionSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
-  ComponentPropsWithoutRef,
-  FC,
-  ReactNode,
+  type ComponentPropsWithoutRef,
+  type FC,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -29,7 +29,11 @@ import { map } from "rxjs";
 
 import { useReactions } from "../useReactions";
 import styles from "./ReactionToggleButton.module.css";
-import { ReactionOption, ReactionSet, ReactionsRowSize } from "../reactions";
+import {
+  type ReactionOption,
+  ReactionSet,
+  ReactionsRowSize,
+} from "../reactions";
 import { Modal } from "../Modal";
 import { CallViewModel } from "../state/CallViewModel";
 

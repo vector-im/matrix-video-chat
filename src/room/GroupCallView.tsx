@@ -5,31 +5,45 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useHistory } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
   Room,
   isE2EESupported as isE2EESupportedBrowser,
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule } from "matrix-js-sdk/src/matrix";
 import { Heading, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { widget, ElementWidgetActions, JoinCallData } from "../widget";
+import {
+  ElementWidgetActions,
+  type JoinCallData,
+  type WidgetHelpers,
+} from "../widget";
 import { FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
-import { MatrixInfo } from "./VideoPreview";
+import { type MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
-import { MUTE_PARTICIPANT_COUNT, MuteStates } from "./MuteStates";
-import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
+import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
+import {
+  useMediaDevices,
+  type MediaDevices,
+} from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
@@ -42,6 +56,9 @@ import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { ReactionsProvider } from "../useReactions";
+import { useAudioContext } from "../useAudioContext";
+import { callEventAudioSounds } from "./CallEventAudioRenderer";
+import { useLatest } from "../useLatest";
 
 declare global {
   interface Window {
@@ -58,6 +75,7 @@ interface Props {
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
   muteStates: MuteStates;
+  widget: WidgetHelpers | null;
 }
 
 export const GroupCallView: FC<Props> = ({
@@ -69,10 +87,16 @@ export const GroupCallView: FC<Props> = ({
   hideHeader,
   rtcSession,
   muteStates,
+  widget,
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
-
+  const leaveSoundContext = useLatest(
+    useAudioContext({
+      sounds: callEventAudioSounds,
+      latencyHint: "interactive",
+    }),
+  );
   // This should use `useEffectEvent` (only available in experimental versions)
   useEffect(() => {
     if (memberships.length >= MUTE_PARTICIPANT_COUNT)
@@ -186,14 +210,14 @@ export const GroupCallView: FC<Props> = ({
                 ev.detail.data as unknown as JoinCallData,
               );
               await enterRTCSession(rtcSession, perParticipantE2EE);
-              widget!.api.transport.reply(ev.detail, {});
+              widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
               logger.error("Error joining RTC session", e);
             });
           };
           widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
           return (): void => {
-            widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+            widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
           };
         } else {
           // No lobby and no preload: we enter the rtc session right away
@@ -207,7 +231,7 @@ export const GroupCallView: FC<Props> = ({
         void enterRTCSession(rtcSession, perParticipantE2EE);
       }
     }
-  }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
+  }, [widget, rtcSession, preload, skipLobby, perParticipantE2EE]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -215,12 +239,12 @@ export const GroupCallView: FC<Props> = ({
 
   const onLeave = useCallback(
     (leaveError?: Error): void => {
-      setLeaveError(leaveError);
-      setLeft(true);
-
+      const audioPromise = leaveSoundContext.current?.playSound("left");
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
+      setLeaveError(leaveError);
+      setLeft(true);
       PosthogAnalytics.instance.eventCallEnded.track(
         rtcSession.room.roomId,
         rtcSession.memberships.length,
@@ -228,8 +252,12 @@ export const GroupCallView: FC<Props> = ({
         rtcSession,
       );
 
-      // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-      leaveRTCSession(rtcSession)
+      leaveRTCSession(
+        rtcSession,
+        // Wait for the sound in widget mode (it's not long)
+        sendInstantly && audioPromise ? audioPromise : undefined,
+      )
+        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
         .then(() => {
           if (
             !isPasswordlessUser &&
@@ -243,18 +271,25 @@ export const GroupCallView: FC<Props> = ({
           logger.error("Error leaving RTC session", e);
         });
     },
-    [rtcSession, isPasswordlessUser, confineToRoom, history],
+    [
+      widget,
+      rtcSession,
+      isPasswordlessUser,
+      confineToRoom,
+      leaveSoundContext,
+      history,
+    ],
   );
 
   useEffect(() => {
     if (widget && isJoined) {
       // set widget to sticky once joined.
-      widget!.api.setAlwaysOnScreen(true).catch((e) => {
+      widget.api.setAlwaysOnScreen(true).catch((e) => {
         logger.error("Error calling setAlwaysOnScreen(true)", e);
       });
 
       const onHangup = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        widget!.api.transport.reply(ev.detail, {});
+        widget.api.transport.reply(ev.detail, {});
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
         leaveRTCSession(rtcSession).catch((e) => {
           logger.error("Failed to leave RTC session", e);
@@ -262,10 +297,10 @@ export const GroupCallView: FC<Props> = ({
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return (): void => {
-        widget!.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
+        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
-  }, [isJoined, rtcSession]);
+  }, [widget, isJoined, rtcSession]);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
@@ -360,14 +395,17 @@ export const GroupCallView: FC<Props> = ({
       leaveError
     ) {
       return (
-        <CallEndedView
-          endedCallId={rtcSession.room.roomId}
-          client={client}
-          isPasswordlessUser={isPasswordlessUser}
-          confineToRoom={confineToRoom}
-          leaveError={leaveError}
-          reconnect={onReconnect}
-        />
+        <>
+          <CallEndedView
+            endedCallId={rtcSession.room.roomId}
+            client={client}
+            isPasswordlessUser={isPasswordlessUser}
+            confineToRoom={confineToRoom}
+            leaveError={leaveError}
+            reconnect={onReconnect}
+          />
+          ;
+        </>
       );
     } else {
       // If the user is a regular user, we'll have sent them back to the homepage,

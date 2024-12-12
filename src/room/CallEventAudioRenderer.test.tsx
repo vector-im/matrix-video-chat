@@ -10,13 +10,13 @@ import {
   afterAll,
   beforeEach,
   expect,
-  MockedFunction,
+  type MockedFunction,
   test,
   vitest,
 } from "vitest";
 import { afterEach } from "node:test";
 import { act } from "react";
-import { CallMembership } from "matrix-js-sdk/src/matrixrtc";
+import { type CallMembership } from "matrix-js-sdk/src/matrixrtc";
 
 import { mockRtcMembership } from "../utils/test";
 import {

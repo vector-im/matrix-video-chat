@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC } from "react";
+import { type ChangeEvent, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Text } from "@vector-im/compound-web";
 
@@ -14,6 +14,7 @@ import {
   showHandRaisedTimer as showHandRaisedTimerSetting,
   showReactions as showReactionsSetting,
   playReactionsSound as playReactionsSoundSetting,
+  developerMode as developerModeSetting,
   useSetting,
 } from "./settings";
 
@@ -36,9 +37,10 @@ export const PreferencesSettingsTab: FC = () => {
     fn(e.target.checked);
   };
 
+  const [developerMode, setDeveloperMode] = useSetting(developerModeSetting);
+
   return (
     <div>
-      <h4>{t("settings.preferences_tab_h4")}</h4>
       <Text>{t("settings.preferences_tab_body")}</Text>
       <FieldRow>
         <InputField
@@ -52,7 +54,6 @@ export const PreferencesSettingsTab: FC = () => {
           onChange={(e) => onChangeSetting(e, setShowHandRaisedTimer)}
         />
       </FieldRow>
-      <h5>{t("settings.preferences_tab.reactions_title")}</h5>
       <FieldRow>
         <InputField
           id="showReactions"
@@ -73,6 +74,20 @@ export const PreferencesSettingsTab: FC = () => {
           type="checkbox"
           checked={playReactionsSound}
           onChange={(e) => onChangeSetting(e, setPlayReactionSound)}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="developerSettingsTab"
+          type="checkbox"
+          checked={developerMode}
+          label={t("settings.preferences_tab.developer_mode_label")}
+          description={t(
+            "settings.preferences_tab.developer_mode_label_description",
+          )}
+          onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+            setDeveloperMode(event.target.checked)
+          }
         />
       </FieldRow>
     </div>

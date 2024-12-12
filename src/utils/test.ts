@@ -4,32 +4,29 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { BehaviorSubject, map, Observable, of, SchedulerLike } from "rxjs";
-import { RunHelpers, TestScheduler } from "rxjs/testing";
+import { map, type Observable, of, type SchedulerLike } from "rxjs";
+import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi, vitest } from "vitest";
 import {
-  RoomMember,
-  Room as MatrixRoom,
+  type RoomMember,
+  type Room as MatrixRoom,
   MatrixEvent,
-  Room,
+  type Room,
   TypedEventEmitter,
-  MatrixClient,
 } from "matrix-js-sdk/src/matrix";
 import {
   CallMembership,
-  Focus,
-  MatrixRTCSession,
+  type Focus,
   MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap,
-  SessionMembershipData,
+  type MatrixRTCSessionEventHandlerMap,
+  type SessionMembershipData,
 } from "matrix-js-sdk/src/matrixrtc";
 import {
-  LocalParticipant,
-  LocalTrackPublication,
-  RemoteParticipant,
-  RemoteTrackPublication,
-  Room as LivekitRoom,
-  ConnectionState,
+  type LocalParticipant,
+  type LocalTrackPublication,
+  type RemoteParticipant,
+  type RemoteTrackPublication,
+  type Room as LivekitRoom,
 } from "livekit-client";
 
 import {
@@ -37,15 +34,11 @@ import {
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
-import { DEFAULT_CONFIG, ResolvedConfigOptions } from "../config/ConfigOptions";
-import { Config } from "../config/Config";
-import { CallViewModel } from "../state/CallViewModel";
 import {
-  aliceParticipant,
-  aliceRtcMember,
-  localParticipant,
-  localRtcMember,
-} from "./test-fixtures";
+  DEFAULT_CONFIG,
+  type ResolvedConfigOptions,
+} from "../config/ConfigOptions";
+import { Config } from "../config/Config";
 import { randomUUID } from "crypto";
 
 export function withFakeTimers(continuation: () => void): void {
@@ -271,12 +264,22 @@ export class MockRTCSession extends TypedEventEmitter<
   MatrixRTCSessionEvent,
   MatrixRTCSessionEventHandlerMap
 > {
+  public readonly statistics = {
+    counters: {},
+  };
+
+  public leaveRoomSession = vitest.fn().mockResolvedValue(undefined);
+
   public constructor(
     public readonly room: Room,
     private localMembership: CallMembership,
     public memberships: CallMembership[] = [],
   ) {
     super();
+  }
+
+  public isJoined(): true {
+    return true;
   }
 
   public withMemberships(
