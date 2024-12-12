@@ -349,6 +349,7 @@ export const ReactionsProvider = ({
   ]);
 
   const toggleRaisedHand = useCallback(async () => {
+    console.log("toggleRaisedHand", myMembershipIdentifier);
     if (!myMembershipIdentifier) {
       return;
     }

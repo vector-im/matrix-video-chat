@@ -27,53 +27,41 @@ import {
   ElementCallReactionEventType,
   ReactionOption,
 } from "../reactions";
+import { MockRTCSession } from "./test";
 
-export const TestReactionsWrapper = ({
-  rtcSession,
-  children,
-}: PropsWithChildren<{
-  rtcSession: MockRTCSession | MatrixRTCSession;
-}>): ReactNode => {
-  return (
-    <ReactionsProvider rtcSession={rtcSession as unknown as MatrixRTCSession}>
-      {children}
-    </ReactionsProvider>
-  );
-};
+// export class ReactionsMockRTCSession extends EventEmitter {
+//   public memberships: {
+//     sender: string;
+//     eventId: string;
+//     createdTs: () => Date;
+//   }[];
 
-export class MockRTCSession extends EventEmitter {
-  public memberships: {
-    sender: string;
-    eventId: string;
-    createdTs: () => Date;
-  }[];
+//   public constructor(
+//     public readonly room: MockRoom,
+//     membership: Record<string, string>,
+//   ) {
+//     super();
+//     this.memberships = Object.entries(membership).map(([eventId, sender]) => ({
+//       sender,
+//       eventId,
+//       createdTs: (): Date => new Date(),
+//     }));
+//   }
 
-  public constructor(
-    public readonly room: MockRoom,
-    membership: Record<string, string>,
-  ) {
-    super();
-    this.memberships = Object.entries(membership).map(([eventId, sender]) => ({
-      sender,
-      eventId,
-      createdTs: (): Date => new Date(),
-    }));
-  }
+//   public testRemoveMember(userId: string): void {
+//     this.memberships = this.memberships.filter((u) => u.sender !== userId);
+//     this.emit(MatrixRTCSessionEvent.MembershipsChanged);
+//   }
 
-  public testRemoveMember(userId: string): void {
-    this.memberships = this.memberships.filter((u) => u.sender !== userId);
-    this.emit(MatrixRTCSessionEvent.MembershipsChanged);
-  }
-
-  public testAddMember(sender: string): void {
-    this.memberships.push({
-      sender,
-      eventId: `!fake-${randomUUID()}:event`,
-      createdTs: (): Date => new Date(),
-    });
-    this.emit(MatrixRTCSessionEvent.MembershipsChanged);
-  }
-}
+//   public testAddMember(sender: string): void {
+//     this.memberships.push({
+//       sender,
+//       eventId: `!fake-${randomUUID()}:event`,
+//       createdTs: (): Date => new Date(),
+//     });
+//     this.emit(MatrixRTCSessionEvent.MembershipsChanged);
+//   }
+// }
 
 export function createHandRaisedReaction(
   parentMemberEvent: string,
@@ -126,6 +114,7 @@ export class MockRoom extends EventEmitter {
   public get client(): MatrixClient {
     return {
       getUserId: (): string => this.ownUserId,
+      getDeviceId: (): string => "ABCDEF",
       sendEvent: async (
         ...props: Parameters<MatrixClient["sendEvent"]>
       ): ReturnType<MatrixClient["sendEvent"]> => {

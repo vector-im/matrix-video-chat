@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished, it } from "vitest";
+import { test, vi, onTestFinished, it, vitest } from "vitest";
 import {
   combineLatest,
   debounceTime,
@@ -14,6 +14,7 @@ import {
   Observable,
   of,
   switchMap,
+  tap,
 } from "rxjs";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import {
@@ -677,6 +678,67 @@ it("should show at least one tile per MatrixRTCSession", () => {
               type: "one-on-one",
               local: "local:0",
               remote: `${daveId}:0`,
+            },
+          },
+        );
+      },
+    );
+  });
+});
+
+// TODO: Add presenters and speakers?
+it("should rank raised hands above video feeds and below speakers and presenters", () => {
+  withTestScheduler(({ schedule, expectObservable }) => {
+    // There should always be one tile for each MatrixRTCSession
+    const expectedLayoutMarbles = "a";
+
+    withCallViewModel(
+      of([aliceParticipant, bobParticipant]),
+      of([aliceRtcMember, bobRtcMember]),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        schedule("ah", {
+          a: () => {
+            // We imagine that only three tiles (the first three) will be visible
+            // on screen at a time
+            vm.layout.subscribe((layout) => {
+              console.log(layout);
+              if (layout.type === "grid") {
+                for (let i = 0; i < layout.grid.length; i++)
+                  layout.grid[i].setVisible(i <= 1);
+              }
+            });
+          },
+          h: () => {
+            vm.updateReactions({
+              reactions: {},
+              raisedHands: {
+                [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: new Date(),
+              },
+            });
+          },
+        });
+        expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: [
+                "local:0",
+                "@bob:example.org:BBBB:0",
+                "@alice:example.org:AAAA:0",
+              ],
+            },
+            h: {
+              type: "grid",
+              spotlight: undefined,
+              grid: [
+                "local:0",
+                "@bob:example.org:BBBB:0",
+                "@alice:example.org:AAAA:0",
+              ],
             },
           },
         );

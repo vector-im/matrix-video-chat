@@ -15,7 +15,7 @@ import {
   createHandRaisedReaction,
   createRedaction,
   MockRoom,
-  MockRTCSession,
+  ReactionsMockRTCSession,
   TestReactionsWrapper,
 } from "./utils/testReactions";
 
@@ -55,7 +55,7 @@ const TestComponent: FC = () => {
 
 describe("useReactions", () => {
   test("starts with an empty list", () => {
-    const rtcSession = new MockRTCSession(
+    const rtcSession = new ReactionsMockRTCSession(
       new MockRoom(memberUserIdAlice),
       membership,
     );
@@ -68,7 +68,7 @@ describe("useReactions", () => {
   });
   test("handles incoming raised hand", async () => {
     const room = new MockRoom(memberUserIdAlice);
-    const rtcSession = new MockRTCSession(room, membership);
+    const rtcSession = new ReactionsMockRTCSession(room, membership);
     const { queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
@@ -81,7 +81,7 @@ describe("useReactions", () => {
   });
   test("handles incoming unraised hand", async () => {
     const room = new MockRoom(memberUserIdAlice);
-    const rtcSession = new MockRTCSession(room, membership);
+    const rtcSession = new ReactionsMockRTCSession(room, membership);
     const { queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
@@ -105,7 +105,7 @@ describe("useReactions", () => {
     const room = new MockRoom(memberUserIdAlice, [
       createHandRaisedReaction(memberEventAlice, membership),
     ]);
-    const rtcSession = new MockRTCSession(room, membership);
+    const rtcSession = new ReactionsMockRTCSession(room, membership);
     const { queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
@@ -119,7 +119,7 @@ describe("useReactions", () => {
     const room = new MockRoom(memberUserIdAlice, [
       createHandRaisedReaction(memberEventAlice, membership),
     ]);
-    const rtcSession = new MockRTCSession(room, membership);
+    const rtcSession = new ReactionsMockRTCSession(room, membership);
     const { queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
@@ -133,7 +133,7 @@ describe("useReactions", () => {
     const room = new MockRoom(memberUserIdAlice, [
       createHandRaisedReaction(memberEventAlice, membership),
     ]);
-    const rtcSession = new MockRTCSession(room, membership);
+    const rtcSession = new ReactionsMockRTCSession(room, membership);
     const { queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
@@ -151,7 +151,7 @@ describe("useReactions", () => {
     const room = new MockRoom(memberUserIdAlice, [
       createHandRaisedReaction(memberEventAlice, memberUserIdBob),
     ]);
-    const rtcSession = new MockRTCSession(room, membership);
+    const rtcSession = new ReactionsMockRTCSession(room, membership);
     const { queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />
@@ -161,7 +161,7 @@ describe("useReactions", () => {
   });
   test("ignores invalid sender for new event", async () => {
     const room = new MockRoom(memberUserIdAlice);
-    const rtcSession = new MockRTCSession(room, membership);
+    const rtcSession = new ReactionsMockRTCSession(room, membership);
     const { queryByRole } = render(
       <TestReactionsWrapper rtcSession={rtcSession}>
         <TestComponent />

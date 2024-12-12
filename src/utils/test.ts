@@ -4,19 +4,21 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { map, Observable, of, SchedulerLike } from "rxjs";
+import { BehaviorSubject, map, Observable, of, SchedulerLike } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, vi } from "vitest";
+import { expect, vi, vitest } from "vitest";
 import {
   RoomMember,
   Room as MatrixRoom,
   MatrixEvent,
   Room,
   TypedEventEmitter,
+  MatrixClient,
 } from "matrix-js-sdk/src/matrix";
 import {
   CallMembership,
   Focus,
+  MatrixRTCSession,
   MatrixRTCSessionEvent,
   MatrixRTCSessionEventHandlerMap,
   SessionMembershipData,
@@ -27,6 +29,7 @@ import {
   RemoteParticipant,
   RemoteTrackPublication,
   Room as LivekitRoom,
+  ConnectionState,
 } from "livekit-client";
 
 import {
@@ -36,6 +39,14 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import { DEFAULT_CONFIG, ResolvedConfigOptions } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
+import { CallViewModel } from "../state/CallViewModel";
+import {
+  aliceParticipant,
+  aliceRtcMember,
+  localParticipant,
+  localRtcMember,
+} from "./test-fixtures";
+import { randomUUID } from "crypto";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -129,6 +140,7 @@ export function mockRtcMembership(
   };
   const event = new MatrixEvent({
     sender: typeof user === "string" ? user : user.userId,
+    event_id: `$-ev-${randomUUID()}:example.org`,
   });
   return new CallMembership(event, data);
 }

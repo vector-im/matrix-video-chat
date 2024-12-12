@@ -42,6 +42,7 @@ import {
   switchMap,
   switchScan,
   take,
+  tap,
   timer,
   withLatestFrom,
 } from "rxjs";
@@ -635,13 +636,14 @@ export class CallViewModel extends ViewModel {
           [
             m.speaker,
             m.presenter,
-            m.vm.handRaised,
             m.vm.videoEnabled,
             m.vm instanceof LocalUserMediaViewModel
               ? m.vm.alwaysShow
               : of(false),
+            m.vm.handRaised,
           ],
-          (speaker, presenter, handRaised, video, alwaysShow) => {
+          (speaker, presenter, video, alwaysShow, handRaised) => {
+            console.log(m.vm.id, handRaised);
             let bin: SortingBin;
             if (m.vm.local)
               bin = alwaysShow
@@ -664,6 +666,12 @@ export class CallViewModel extends ViewModel {
             bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m.vm),
           );
     }),
+    tap((v) =>
+      console.log(
+        "final grid",
+        v.map((v) => v.id),
+      ),
+    ),
   );
 
   private readonly spotlight: Observable<MediaViewModel[]> =
@@ -1116,10 +1124,12 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  private readonly handsRaisedSubject = new Subject<Record<string, Date>>();
-  private readonly reactionsSubject = new Subject<
+  private readonly handsRaisedSubject = new BehaviorSubject<
+    Record<string, Date>
+  >({});
+  private readonly reactionsSubject = new BehaviorSubject<
     Record<string, ReactionOption>
-  >();
+  >({});
 
   public readonly handsRaised = this.handsRaisedSubject.asObservable();
   public readonly reactions = this.reactionsSubject.asObservable();
