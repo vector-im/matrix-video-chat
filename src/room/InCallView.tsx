@@ -96,6 +96,7 @@ import {
   useSetting,
 } from "../settings/settings";
 import useReactionsReader from "../reactions/useReactionsReader";
+import { useLatest } from "../useLatest";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -129,17 +130,18 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const reader = useReactionsReader(props.rtcSession);
+  const reader = useLatest(useReactionsReader(props.rtcSession));
 
   useEffect(() => {
     if (livekitRoom !== undefined && reader !== undefined) {
+      console.log("Creating new VM");
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
         connStateObservable,
-        reader.raisedHands,
-        reader.reactions,
+        reader.current.raisedHands,
+        reader.current.reactions,
       );
       setVm(vm);
       return (): void => vm.destroy();

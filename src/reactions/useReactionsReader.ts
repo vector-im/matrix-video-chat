@@ -245,7 +245,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
         }
       } else if (event.getType() === EventType.RoomRedaction) {
         const targetEvent = event.event.redacts;
-        const targetUser = Object.entries(latestRaisedHands.current).find(
+        const targetUser = Object.entries(latestRaisedHands.current.value).find(
           ([_u, r]) => r.reactionEventId === targetEvent,
         )?.[0];
         if (!targetUser) {
