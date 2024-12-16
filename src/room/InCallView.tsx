@@ -134,7 +134,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     if (livekitRoom !== undefined && reader !== undefined) {
-      console.log("Creating new VM");
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,

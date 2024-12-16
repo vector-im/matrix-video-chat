@@ -73,6 +73,7 @@ import {
   duplicateTiles,
   playReactionsSound,
   showReactions,
+  showNonMemberTiles,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
@@ -92,6 +93,7 @@ import {
   type ReactionInfo,
   type ReactionOption,
 } from "../reactions";
+import { shallowEquals } from "../utils/array";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -152,18 +154,21 @@ export interface GridLayout {
   type: "grid";
   spotlight?: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightLandscapeLayout {
   type: "spotlight-landscape";
   spotlight: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightPortraitLayout {
   type: "spotlight-portrait";
   spotlight: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightExpandedLayout {
@@ -236,7 +241,6 @@ enum SortingBin {
 interface LayoutScanState {
   layout: Layout | null;
   tiles: TileStore;
-  visibleTiles: Set<GridTileViewModel>;
 }
 
 class UserMedia {
@@ -466,6 +470,7 @@ export class CallViewModel extends ViewModel {
       this.matrixRTCSession,
       MatrixRTCSessionEvent.MembershipsChanged,
     ).pipe(startWith(null)),
+    showNonMemberTiles.value,
   ]).pipe(
     scan(
       (
@@ -475,6 +480,7 @@ export class CallViewModel extends ViewModel {
           { participant: localParticipant },
           duplicateTiles,
           _membershipsChanged,
+          showNonMemberTiles,
         ],
       ) => {
         const newItems = new Map(
@@ -514,9 +520,17 @@ export class CallViewModel extends ViewModel {
               }
               for (let i = 0; i < 1 + duplicateTiles; i++) {
                 const indexedMediaId = `${livekitParticipantId}:${i}`;
-                const prevMedia = prevItems.get(indexedMediaId);
+                let prevMedia = prevItems.get(indexedMediaId);
                 if (prevMedia && prevMedia instanceof UserMedia) {
                   prevMedia.updateParticipant(participant);
+                  if (prevMedia.vm.member === undefined) {
+                    // We have a previous media created because of the `debugShowNonMember` flag.
+                    // In this case we actually replace the media item.
+                    // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
+                    // option and if we always find a room member for each rtc member (which also
+                    // only fails if we have a fundamental problem)
+                    prevMedia = undefined;
+                  }
                 }
                 yield [
                   indexedMediaId,
@@ -558,7 +572,57 @@ export class CallViewModel extends ViewModel {
           }.bind(this)(),
         );
 
-        return newItems;
+        // Generate non member items (items without a corresponding MatrixRTC member)
+        // Those items should not be rendered, they are participants in LiveKit that do not have a corresponding
+        // MatrixRTC members. This cannot be any good:
+        //  - A malicious user impersonates someone
+        //  - Someone injects abusive content
+        //  - The user cannot have encryption keys so it makes no sense to participate
+        // We can only trust users that have a MatrixRTC member event.
+        //
+        // This is still available as a debug option. This can be useful
+        //  - If one wants to test scalability using the LiveKit CLI.
+        //  - If an experimental project does not yet do the MatrixRTC bits.
+        //  - If someone wants to debug if the LiveKit connection works but MatrixRTC room state failed to arrive.
+        const newNonMemberItems = showNonMemberTiles
+          ? new Map(
+              function* (this: CallViewModel): Iterable<[string, MediaItem]> {
+                for (const participant of remoteParticipants) {
+                  for (let i = 0; i < 1 + duplicateTiles; i++) {
+                    const maybeNonMemberParticipantId =
+                      participant.identity + ":" + i;
+                    if (!newItems.has(maybeNonMemberParticipantId)) {
+                      const nonMemberId = maybeNonMemberParticipantId;
+                      yield [
+                        nonMemberId,
+                        prevItems.get(nonMemberId) ??
+                          new UserMedia(
+                            nonMemberId,
+                            undefined,
+                            participant,
+                            this.encryptionSystem,
+                            this.livekitRoom,
+                            of(null),
+                            of(null),
+                          ),
+                      ];
+                    }
+                  }
+                }
+              }.bind(this)(),
+            )
+          : new Map();
+        if (newNonMemberItems.size > 0) {
+          logger.debug("Added NonMember items: ", newNonMemberItems);
+        }
+
+        const combinedNew = new Map([
+          ...newNonMemberItems.entries(),
+          ...newItems.entries(),
+        ]);
+
+        for (const [id, t] of prevItems) if (!combinedNew.has(id)) t.destroy();
+        return combinedNew;
       },
       new Map<string, MediaItem>(),
     ),
@@ -674,6 +738,8 @@ export class CallViewModel extends ViewModel {
             bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m.vm),
           );
     }),
+    distinctUntilChanged(shallowEquals),
+    this.scope.state(),
   );
 
   private readonly spotlight: Observable<MediaViewModel[]> =
@@ -687,6 +753,7 @@ export class CallViewModel extends ViewModel {
           map((speaker) => (speaker ? [speaker] : [])),
         );
       }),
+      distinctUntilChanged(shallowEquals),
       this.scope.state(),
     );
 
@@ -920,62 +987,53 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  // There is a cyclical dependency here: the layout algorithms want to know
+  // which tiles are on screen, but to know which tiles are on screen we have to
+  // first render a layout. To deal with this we assume initially that no tiles
+  // are visible, and loop the data back into the layouts with a Subject.
+  private readonly visibleTiles = new Subject<number>();
+  private readonly setVisibleTiles = (value: number): void =>
+    this.visibleTiles.next(value);
+
   public readonly layoutInternals: Observable<
     LayoutScanState & { layout: Layout }
-  > = this.layoutMedia.pipe(
-    // Each layout will produce a set of tiles, and these tiles have an
-    // observable indicating whether they're visible. We loop this information
-    // back into the layout process by using switchScan.
-    switchScan<
-      LayoutMedia,
-      LayoutScanState,
-      Observable<LayoutScanState & { layout: Layout }>
+  > = combineLatest([
+    this.layoutMedia,
+    this.visibleTiles.pipe(startWith(0), distinctUntilChanged()),
+  ]).pipe(
+    scan<
+      [LayoutMedia, number],
+      LayoutScanState & { layout: Layout },
+      LayoutScanState
     >(
-      ({ tiles: prevTiles, visibleTiles }, media) => {
+      ({ tiles: prevTiles }, [media, visibleTiles]) => {
         let layout: Layout;
         let newTiles: TileStore;
         switch (media.type) {
           case "grid":
           case "spotlight-landscape":
           case "spotlight-portrait":
-            [layout, newTiles] = gridLikeLayout(media, visibleTiles, prevTiles);
-            break;
-          case "spotlight-expanded":
-            [layout, newTiles] = spotlightExpandedLayout(
+            [layout, newTiles] = gridLikeLayout(
               media,
               visibleTiles,
+              this.setVisibleTiles,
               prevTiles,
             );
             break;
+          case "spotlight-expanded":
+            [layout, newTiles] = spotlightExpandedLayout(media, prevTiles);
+            break;
           case "one-on-one":
-            [layout, newTiles] = oneOnOneLayout(media, visibleTiles, prevTiles);
+            [layout, newTiles] = oneOnOneLayout(media, prevTiles);
             break;
           case "pip":
-            [layout, newTiles] = pipLayout(media, visibleTiles, prevTiles);
+            [layout, newTiles] = pipLayout(media, prevTiles);
             break;
         }
 
-        // Take all of the 'visible' observables and combine them into one big
-        // observable array
-        const visibilities =
-          newTiles.gridTiles.length === 0
-            ? of([])
-            : combineLatest(newTiles.gridTiles.map((tile) => tile.visible));
-        return visibilities.pipe(
-          map((visibilities) => ({
-            layout: layout,
-            tiles: newTiles,
-            visibleTiles: new Set(
-              newTiles.gridTiles.filter((_tile, i) => visibilities[i]),
-            ),
-          })),
-        );
+        return { layout, tiles: newTiles };
       },
-      {
-        layout: null,
-        tiles: TileStore.empty(),
-        visibleTiles: new Set(),
-      },
+      { layout: null, tiles: TileStore.empty() },
     ),
     this.scope.state(),
   );
