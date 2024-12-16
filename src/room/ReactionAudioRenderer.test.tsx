@@ -27,29 +27,15 @@ import {
 import { useAudioContext } from "../useAudioContext";
 import { GenericReaction, ReactionSet } from "../reactions";
 import { prefetchSounds } from "../soundUtils";
-import { ConnectionState } from "livekit-client";
-import { CallMembership, MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
-import { BehaviorSubject, of } from "rxjs";
-import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
+import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import {
-  mockLivekitRoom,
-  mockLocalParticipant,
-  mockMatrixRoom,
-  mockMatrixRoomMember,
-  mockRemoteParticipant,
-  mockRtcMembership,
-  MockRTCSession,
-} from "../utils/test";
-import { MatrixClient } from "matrix-js-sdk/src/client";
-
-const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-const local = mockMatrixRoomMember(localRtcMember);
-const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
-const alice = mockMatrixRoomMember(aliceRtcMember);
-const localParticipant = mockLocalParticipant({ identity: "" });
-const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
-const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
+  alice,
+  aliceRtcMember,
+  bobRtcMember,
+  local,
+  localRtcMember,
+} from "../utils/test-fixtures";
 
 function TestComponent({ vm }: { vm: CallViewModel }): ReactNode {
   return (
@@ -57,42 +43,6 @@ function TestComponent({ vm }: { vm: CallViewModel }): ReactNode {
       <ReactionsAudioRenderer vm={vm} />
     </TooltipProvider>
   );
-}
-function testEnv(): CallViewModel {
-  const matrixRoomMembers = new Map([local, alice].map((p) => [p.userId, p]));
-  const remoteParticipants = of([aliceParticipant]);
-  const liveKitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants },
-  );
-  const matrixRoom = mockMatrixRoom({
-    client: {
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-      on: vitest.fn(),
-      off: vitest.fn(),
-    } as Partial<MatrixClient> as MatrixClient,
-    getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
-  });
-
-  const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>([
-    aliceRtcMember,
-  ]);
-
-  const session = new MockRTCSession(
-    matrixRoom,
-    localRtcMember,
-  ).withMemberships(remoteRtcMemberships);
-
-  const vm = new CallViewModel(
-    session as unknown as MatrixRTCSession,
-    liveKitRoom,
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    of(ConnectionState.Connected),
-  );
-  return vm;
 }
 
 vitest.mock("../useAudioContext");
@@ -123,14 +73,17 @@ beforeEach(() => {
 });
 
 test("preloads all audio elements", () => {
-  const vm = testEnv();
+  const { vm } = getBasicCallViewModelEnvironment([local, alice]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
   expect(prefetchSounds).toHaveBeenCalledOnce();
 });
 
 test("will play an audio sound when there is a reaction", () => {
-  const vm = testEnv();
+  const { vm, reactionsSubject } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -142,18 +95,18 @@ test("will play an audio sound when there is a reaction", () => {
     );
   }
   act(() => {
-    vm.updateReactions({
-      raisedHands: {},
-      reactions: {
-        memberEventAlice: chosenReaction,
-      },
+    reactionsSubject.next({
+      [aliceRtcMember.deviceId]: { reactionOption: chosenReaction, ttl: 0 },
     });
   });
   expect(playSound).toHaveBeenCalledWith(chosenReaction.name);
 });
 
 test("will play the generic audio sound when there is soundless reaction", () => {
-  const vm = testEnv();
+  const { vm, reactionsSubject } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -165,18 +118,18 @@ test("will play the generic audio sound when there is soundless reaction", () =>
     );
   }
   act(() => {
-    vm.updateReactions({
-      raisedHands: {},
-      reactions: {
-        memberEventAlice: chosenReaction,
-      },
+    reactionsSubject.next({
+      [aliceRtcMember.deviceId]: { reactionOption: chosenReaction, ttl: 0 },
     });
   });
   expect(playSound).toHaveBeenCalledWith(GenericReaction.name);
 });
 
 test("will play multiple audio sounds when there are multiple different reactions", () => {
-  const vm = testEnv();
+  const { vm, reactionsSubject } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -188,13 +141,10 @@ test("will play multiple audio sounds when there are multiple different reaction
     );
   }
   act(() => {
-    vm.updateReactions({
-      raisedHands: {},
-      reactions: {
-        memberEventAlice: reaction1,
-        memberEventBob: reaction2,
-        memberEventCharlie: reaction1,
-      },
+    reactionsSubject.next({
+      [aliceRtcMember.deviceId]: { reactionOption: reaction1, ttl: 0 },
+      [bobRtcMember.deviceId]: { reactionOption: reaction2, ttl: 0 },
+      [localRtcMember.deviceId]: { reactionOption: reaction1, ttl: 0 },
     });
   });
   expect(playSound).toHaveBeenCalledWith(reaction1.name);
