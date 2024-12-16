@@ -201,12 +201,18 @@ describe("UrlParams", () => {
   });
 
   describe("intent", () => {
-    it("defaults to start_call", () => {
-      expect(getUrlParams().intent).toBe(UserIntent.StartNewCall);
+    it("defaults to unknown", () => {
+      expect(getUrlParams().intent).toBe(UserIntent.Unknown);
     });
 
     it("ignores intent if it is not a valid value", () => {
-      expect(getUrlParams("?intent=foo").intent).toBe(UserIntent.StartNewCall);
+      expect(getUrlParams("?intent=foo").intent).toBe(UserIntent.Unknown);
+    });
+
+    it("accepts start_call", () => {
+      expect(getUrlParams("?intent=start_call").intent).toBe(
+        UserIntent.StartNewCall,
+      );
     });
 
     it("accepts join_existing", () => {
@@ -226,9 +232,11 @@ describe("UrlParams", () => {
     });
 
     it("defaults to true if intent is start_call in widget mode", () => {
-      expect(getUrlParams("?intent=start_call&widgetId=12345").skipLobby).toBe(
-        true,
-      );
+      expect(
+        getUrlParams(
+          "?intent=start_call&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
+        ).skipLobby,
+      ).toBe(true);
     });
 
     it("default to false if intent is join_existing", () => {

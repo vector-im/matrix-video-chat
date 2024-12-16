@@ -22,6 +22,7 @@ interface RoomIdentifier {
 export enum UserIntent {
   StartNewCall = "start_call",
   JoinExistingCall = "join_existing",
+  Unknown = "unknown",
 }
 
 // If you need to add a new flag to this interface, prefer a name that describes
@@ -224,8 +225,8 @@ export const getUrlParams = (
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
   let intent = parser.getParam("intent");
-  if (!Object.values(UserIntent).includes(intent as UserIntent)) {
-    intent = UserIntent.StartNewCall;
+  if (!intent || !Object.values(UserIntent).includes(intent as UserIntent)) {
+    intent = UserIntent.Unknown;
   }
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
