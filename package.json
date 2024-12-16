@@ -121,6 +121,7 @@
     "vitest-axe": "^1.0.0-pre.3"
   },
   "resolutions": {
+    "@matrix-org/matrix-sdk-crypto-wasm": "12.0.0",
     "strip-ansi": "6.0.1"
   }
 }
