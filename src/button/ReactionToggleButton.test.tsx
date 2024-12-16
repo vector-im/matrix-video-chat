@@ -11,14 +11,13 @@ import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
 import { type ReactNode } from "react";
 
-import { MockRoom } from "../utils/testReactions";
 import { ReactionToggleButton } from "./ReactionToggleButton";
 import { ElementCallReactionEventType } from "../reactions";
 import { CallViewModel } from "../state/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local, localRtcMember } from "../utils/test-fixtures";
 import { MockRTCSession } from "../utils/test";
-import { ReactionsProvider } from "../useReactionsSender";
+import { ReactionsSenderProvider } from "../useReactionsSender";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 const localIdent = `${localRtcMember.sender}:${localRtcMember.deviceId}`;
@@ -32,9 +31,12 @@ function TestComponent({
 }): ReactNode {
   return (
     <TooltipProvider>
-      <ReactionsProvider rtcSession={rtcSession as unknown as MatrixRTCSession}>
+      <ReactionsSenderProvider
+        vm={vm}
+        rtcSession={rtcSession as unknown as MatrixRTCSession}
+      >
         <ReactionToggleButton vm={vm} identifier={localIdent} />
-      </ReactionsProvider>
+      </ReactionsSenderProvider>
     </TooltipProvider>
   );
 }
@@ -51,14 +53,15 @@ test("Can open menu", async () => {
 
 test("Can raise hand", async () => {
   const user = userEvent.setup();
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, rtcSession, handRaisedSubject } =
+    getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.raise_hand"));
   expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
-    undefined,
+    rtcSession.room.roomId,
     "m.reaction",
     {
       "m.relates_to": {
@@ -69,50 +72,46 @@ test("Can raise hand", async () => {
     },
   );
   await act(() => {
-    vm.updateReactions({
-      raisedHands: {
-        [localIdent]: new Date(),
+    // Mock receiving a reaction.
+    handRaisedSubject.next({
+      [localIdent]: {
+        time: new Date(),
+        reactionEventId: "",
+        membershipEventId: localRtcMember.eventId!,
       },
-      reactions: {},
     });
   });
   expect(container).toMatchSnapshot();
 });
 
 test("Can lower hand", async () => {
+  const reactionEventId = "$my-reaction-event:example.org";
   const user = userEvent.setup();
-  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, rtcSession, handRaisedSubject } =
+    getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.raise_hand"));
   await act(() => {
-    vm.updateReactions({
-      raisedHands: {
-        [localIdent]: new Date(),
+    handRaisedSubject.next({
+      [localIdent]: {
+        time: new Date(),
+        reactionEventId,
+        membershipEventId: localRtcMember.eventId!,
       },
-      reactions: {},
     });
   });
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.lower_hand"));
   expect(rtcSession.room.client.redactEvent).toHaveBeenCalledWith(
-    undefined,
-    "m.reaction",
-    {
-      "m.relates_to": {
-        event_id: localRtcMember.eventId,
-        key: "🖐️",
-        rel_type: "m.annotation",
-      },
-    },
+    rtcSession.room.roomId,
+    reactionEventId,
   );
   await act(() => {
-    vm.updateReactions({
-      raisedHands: {},
-      reactions: {},
-    });
+    // Mock receiving a redacted reaction.
+    handRaisedSubject.next({});
   });
   expect(container).toMatchSnapshot();
 });
@@ -126,7 +125,7 @@ test("Can react with emoji", async () => {
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByText("🐶"));
   expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
-    undefined,
+    rtcSession.room.roomId,
     ElementCallReactionEventType,
     {
       "m.relates_to": {
@@ -150,7 +149,7 @@ test("Can fully expand emoji picker", async () => {
   expect(container).toMatchSnapshot();
   await user.click(getByText("🦗"));
   expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
-    undefined,
+    rtcSession.room.roomId,
     ElementCallReactionEventType,
     {
       "m.relates_to": {

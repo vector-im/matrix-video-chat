@@ -32,6 +32,7 @@ export function getBasicCallViewModelEnvironment(
   handRaisedSubject: BehaviorSubject<Record<string, RaisedHandInfo>>;
   reactionsSubject: BehaviorSubject<Record<string, ReactionInfo>>;
 } {
+  const matrixRoomId = "!myRoomId:example.com";
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
   const remoteParticipants = of([aliceParticipant]);
   const liveKitRoom = mockLivekitRoom(
@@ -51,6 +52,7 @@ export function getBasicCallViewModelEnvironment(
       off: vitest.fn(),
     } as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
+    roomId: matrixRoomId,
   });
 
   const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>(
