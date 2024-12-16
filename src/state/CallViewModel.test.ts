@@ -11,23 +11,26 @@ import {
   debounceTime,
   distinctUntilChanged,
   map,
-  Observable,
+  type Observable,
   of,
   switchMap,
 } from "rxjs";
-import { MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import {
   ConnectionState,
-  LocalParticipant,
-  Participant,
+  type LocalParticipant,
+  type Participant,
   ParticipantEvent,
-  RemoteParticipant,
+  type RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import { isEqual } from "lodash-es";
-import { CallMembership, MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import {
+  type CallMembership,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/src/matrixrtc";
 
-import { CallViewModel, Layout } from "./CallViewModel";
+import { CallViewModel, type Layout } from "./CallViewModel";
 import {
   mockLivekitRoom,
   mockLocalParticipant,
@@ -40,9 +43,10 @@ import {
 } from "../utils/test";
 import {
   ECAddonConnectionState,
-  ECConnectionState,
+  type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
+import { showNonMemberTiles } from "../settings/settings";
 
 vi.mock("@livekit/components-core");
 
@@ -373,16 +377,16 @@ test("screen sharing activates spotlight layout", () => {
 
 test("participants stay in the same order unless to appear/disappear", () => {
   withTestScheduler(({ hot, schedule, expectObservable }) => {
-    const modeInputMarbles = "     a";
+    const visibilityInputMarbles = "a";
     // First Bob speaks, then Dave, then Alice
-    const aSpeakingInputMarbles = "n- 1998ms - 1999ms y";
-    const bSpeakingInputMarbles = "ny 1998ms n 1999ms -";
-    const dSpeakingInputMarbles = "n- 1998ms y 1999ms n";
+    const aSpeakingInputMarbles = " n- 1998ms - 1999ms y";
+    const bSpeakingInputMarbles = " ny 1998ms n 1999ms -";
+    const dSpeakingInputMarbles = " n- 1998ms y 1999ms n";
     // Nothing should change when Bob speaks, because Bob is already on screen.
     // When Dave speaks he should switch with Alice because she's the one who
     // hasn't spoken at all. Then when Alice speaks, she should return to her
     // place at the top.
-    const expectedLayoutMarbles = "a  1999ms b 1999ms a 57999ms c 1999ms a";
+    const expectedLayoutMarbles = " a  1999ms b 1999ms a 57999ms c 1999ms a";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
@@ -394,15 +398,12 @@ test("participants stay in the same order unless to appear/disappear", () => {
         [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
       ]),
       (vm) => {
-        schedule(modeInputMarbles, {
+        schedule(visibilityInputMarbles, {
           a: () => {
             // We imagine that only three tiles (the first three) will be visible
             // on screen at a time
             vm.layout.subscribe((layout) => {
-              if (layout.type === "grid") {
-                for (let i = 0; i < layout.grid.length; i++)
-                  layout.grid[i].setVisible(i < 3);
-              }
+              if (layout.type === "grid") layout.setVisibleTiles(3);
             });
           },
         });
@@ -424,6 +425,56 @@ test("participants stay in the same order unless to appear/disappear", () => {
               type: "grid",
               spotlight: undefined,
               grid: ["local:0", `${aliceId}:0`, `${daveId}:0`, `${bobId}:0`],
+            },
+          },
+        );
+      },
+    );
+  });
+});
+
+test("participants adjust order when space becomes constrained", () => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
+    // Start with all tiles on screen then shrink to 3
+    const visibilityInputMarbles = "a-b";
+    // Bob and Dave speak
+    const bSpeakingInputMarbles = " ny";
+    const dSpeakingInputMarbles = " ny";
+    // Nothing should change when Bob or Dave initially speak, because they are
+    // on screen. When the screen becomes smaller Alice should move off screen
+    // to make way for the speakers (specifically, she should swap with Dave).
+    const expectedLayoutMarbles = " a-b";
+
+    withCallViewModel(
+      of([aliceParticipant, bobParticipant, daveParticipant]),
+      of([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      of(ConnectionState.Connected),
+      new Map([
+        [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
+        [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
+      ]),
+      (vm) => {
+        let setVisibleTiles: ((value: number) => void) | null = null;
+        vm.layout.subscribe((layout) => {
+          if (layout.type === "grid") setVisibleTiles = layout.setVisibleTiles;
+        });
+        schedule(visibilityInputMarbles, {
+          a: () => setVisibleTiles!(Infinity),
+          b: () => setVisibleTiles!(3),
+        });
+
+        expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`, `${daveId}:0`],
+            },
+            b: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${daveId}:0`, `${bobId}:0`, `${aliceId}:0`],
             },
           },
         );
@@ -634,6 +685,53 @@ test("participants must have a MatrixRTCSession to be visible", () => {
       },
     );
   });
+});
+
+test("shows participants without MatrixRTCSession when enabled in settings", () => {
+  try {
+    // enable the setting:
+    showNonMemberTiles.setValue(true);
+    withTestScheduler(({ hot, expectObservable }) => {
+      const scenarioInputMarbles = " abc";
+      const expectedLayoutMarbles = "abc";
+
+      withCallViewModel(
+        hot(scenarioInputMarbles, {
+          a: [],
+          b: [aliceParticipant],
+          c: [aliceParticipant, bobParticipant],
+        }),
+        of([]), // No one joins the MatrixRTC session
+        of(ConnectionState.Connected),
+        new Map(),
+        (vm) => {
+          vm.setGridMode("grid");
+          expectObservable(summarizeLayout(vm.layout)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: ["local:0"],
+              },
+              b: {
+                type: "one-on-one",
+                local: "local:0",
+                remote: `${aliceId}:0`,
+              },
+              c: {
+                type: "grid",
+                spotlight: undefined,
+                grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              },
+            },
+          );
+        },
+      );
+    });
+  } finally {
+    showNonMemberTiles.setValue(showNonMemberTiles.defaultValue);
+  }
 });
 
 it("should show at least one tile per MatrixRTCSession", () => {

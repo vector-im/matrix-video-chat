@@ -6,15 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import React, { ReactNode } from "react";
-import { beforeEach } from "vitest";
+import { type ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { useMuteStates } from "./MuteStates";
 import {
-  MediaDevice,
-  MediaDevices,
+  type MediaDevice,
+  type MediaDevices,
   MediaDevicesContext,
 } from "../livekit/MediaDevicesContext";
 import { mockConfig } from "../utils/test";
@@ -92,16 +91,12 @@ function mockMediaDevices(
 }
 
 describe("useMuteStates", () => {
-  beforeEach(() => {
-    vi.spyOn(React, "useContext").mockReturnValue({});
-  });
-
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   afterAll(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("disabled when no input devices", () => {

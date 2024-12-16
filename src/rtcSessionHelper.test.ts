@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { expect, test, vi } from "vitest";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
@@ -40,7 +40,7 @@ test("It joins the correct Session", async () => {
     room: {
       roomId: "roomId",
       client: {
-        getClientWellKnown: vi.fn().mockReturnValue(clientWellKnown),
+        waitForClientWellKnown: vi.fn().mockResolvedValue(clientWellKnown),
       },
     },
     memberships: [],
