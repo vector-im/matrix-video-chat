@@ -29,6 +29,7 @@ import { GroupCallView } from "./GroupCallView";
 import { leaveRTCSession } from "../rtcSessionHelpers";
 import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
+import { RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
 
 vitest.mock("../soundUtils");
 vitest.mock("../useAudioContext");
@@ -85,6 +86,12 @@ function createGroupCallView(widget: WidgetHelpers | null): {
     getRoom: (rId) => (rId === roomId ? room : null),
   } as Partial<MatrixClient> as MatrixClient;
   const room = mockMatrixRoom({
+    relations: {
+      getChildEventsForEvent: () =>
+        vitest.mocked({
+          getRelations: () => [],
+        }),
+    } as unknown as RelationsContainer,
     client,
     roomId,
     getMember: (userId) => roomMembers.get(userId) ?? null,

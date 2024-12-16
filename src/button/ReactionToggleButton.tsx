@@ -184,7 +184,7 @@ export function ReactionToggleButton({
     vm.handsRaised.pipe(map((v) => !!v[identifier])),
   );
   const canReact = useObservableState(
-    vm.reactions.pipe(map((v) => !!v[identifier])),
+    vm.reactions.pipe(map((v) => !v[identifier])),
   );
 
   useEffect(() => {

@@ -35,17 +35,10 @@ import {
   ReactionSet,
 } from "./reactions";
 import { useLatest } from "./useLatest";
+import { CallViewModel } from "./state/CallViewModel";
 
 interface ReactionsContextType {
-  /**
-   * identifier (userId:deviceId => Date)
-   */
-  raisedHands: Record<string, Date>;
   supportsReactions: boolean;
-  /**
-   * reactions (userId:deviceId => Date)
-   */
-  reactions: Record<string, ReactionOption>;
   toggleRaisedHand: () => Promise<void>;
   sendReaction: (reaction: ReactionOption) => Promise<void>;
 }
@@ -80,14 +73,22 @@ export const useReactions = (): ReactionsContextType => {
 };
 
 /**
+ * HS plan:
+ *  Provider should publish new hand raised, reaction events to CallViewModel
+ *  Provider should listen for new events from CVM
+ */
+
+/**
  * Provider that handles raised hand reactions for a given `rtcSession`.
  */
 export const ReactionsProvider = ({
   children,
   rtcSession,
+  vm,
 }: {
   children: ReactNode;
   rtcSession: MatrixRTCSession;
+  vm: CallViewModel;
 }): JSX.Element => {
   const [raisedHands, setRaisedHands] = useState<
     Record<string, RaisedHandInfo>
@@ -102,6 +103,15 @@ export const ReactionsProvider = ({
 
   const latestMemberships = useLatest(memberships);
   const latestRaisedHands = useLatest(raisedHands);
+
+  useEffect(() => {
+    vm.updateReactions({
+      raisedHands: Object.fromEntries(
+        Object.entries(raisedHands).map(([uid, data]) => [uid, data.time]),
+      ),
+      reactions,
+    });
+  }, [memberships, raisedHands]);
 
   const myMembershipEvent = useMemo(
     () =>
@@ -121,14 +131,6 @@ export const ReactionsProvider = ({
     {},
   );
 
-  // Reduce the data down for the consumers.
-  const resultRaisedHands = useMemo(
-    () =>
-      Object.fromEntries(
-        Object.entries(raisedHands).map(([uid, data]) => [uid, data.time]),
-      ),
-    [raisedHands],
-  );
   const addRaisedHand = useCallback((userId: string, info: RaisedHandInfo) => {
     setRaisedHands((prevRaisedHands) => ({
       ...prevRaisedHands,
@@ -394,7 +396,7 @@ export const ReactionsProvider = ({
 
   const sendReaction = useCallback(
     async (reaction: ReactionOption) => {
-      if (!myMembershipIdentifier || !reactions[myMembershipIdentifier]) {
+      if (!myMembershipIdentifier || reactions[myMembershipIdentifier]) {
         // We're still reacting
         return;
       }
@@ -420,9 +422,7 @@ export const ReactionsProvider = ({
   return (
     <ReactionsContext.Provider
       value={{
-        raisedHands: resultRaisedHands,
         supportsReactions,
-        reactions,
         toggleRaisedHand,
         sendReaction,
       }}

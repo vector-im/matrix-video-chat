@@ -15,8 +15,6 @@ import {
   createHandRaisedReaction,
   createRedaction,
   MockRoom,
-  ReactionsMockRTCSession,
-  TestReactionsWrapper,
 } from "./utils/testReactions";
 
 const memberUserIdAlice = "@alice:example.org";

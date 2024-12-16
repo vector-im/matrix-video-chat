@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type PropsWithChildren, type ReactNode } from "react";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
@@ -17,51 +16,10 @@ import {
   type Room,
 } from "matrix-js-sdk/src/matrix";
 import {
-  type MatrixRTCSession,
-  MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc";
-
-import { ReactionsProvider } from "../useReactions";
-import {
   type ECallReactionEventContent,
   ElementCallReactionEventType,
   type ReactionOption,
 } from "../reactions";
-import { MockRTCSession } from "./test";
-
-// export class ReactionsMockRTCSession extends EventEmitter {
-//   public memberships: {
-//     sender: string;
-//     eventId: string;
-//     createdTs: () => Date;
-//   }[];
-
-//   public constructor(
-//     public readonly room: MockRoom,
-//     membership: Record<string, string>,
-//   ) {
-//     super();
-//     this.memberships = Object.entries(membership).map(([eventId, sender]) => ({
-//       sender,
-//       eventId,
-//       createdTs: (): Date => new Date(),
-//     }));
-//   }
-
-//   public testRemoveMember(userId: string): void {
-//     this.memberships = this.memberships.filter((u) => u.sender !== userId);
-//     this.emit(MatrixRTCSessionEvent.MembershipsChanged);
-//   }
-
-//   public testAddMember(sender: string): void {
-//     this.memberships.push({
-//       sender,
-//       eventId: `!fake-${randomUUID()}:event`,
-//       createdTs: (): Date => new Date(),
-//     });
-//     this.emit(MatrixRTCSessionEvent.MembershipsChanged);
-//   }
-// }
 
 export function createHandRaisedReaction(
   parentMemberEvent: string,

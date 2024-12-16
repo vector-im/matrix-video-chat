@@ -689,63 +689,117 @@ it("should show at least one tile per MatrixRTCSession", () => {
   });
 });
 
-// TODO: Add presenters and speakers?
-it("should rank raised hands above video feeds and below speakers and presenters", () => {
-  withTestScheduler(({ schedule, expectObservable }) => {
-    // There should always be one tile for each MatrixRTCSession
-    const expectedLayoutMarbles = "a";
-
+it("Should correctly handle a raised hand event", () => {
+  withTestScheduler(({ expectObservable }) => {
+    const date = new Date();
     withCallViewModel(
-      of([aliceParticipant, bobParticipant]),
-      of([aliceRtcMember, bobRtcMember]),
+      of([]),
+      of([]),
       of(ConnectionState.Connected),
       new Map(),
       (vm) => {
-        schedule("ah", {
-          a: () => {
-            // We imagine that only three tiles (the first three) will be visible
-            // on screen at a time
-            vm.layout.subscribe((layout) => {
-              console.log(layout);
-              if (layout.type === "grid") {
-                for (let i = 0; i < layout.grid.length; i++)
-                  layout.grid[i].setVisible(i <= 1);
-              }
-            });
-          },
-          h: () => {
-            vm.updateReactions({
-              reactions: {},
-              raisedHands: {
-                [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: new Date(),
-              },
-            });
+        vm.addHandRaised(alice.userId, date);
+        expectObservable(vm.handsRaised).toBe("a", {
+          a: {
+            [alice.userId]: date,
           },
         });
-        expectObservable(summarizeLayout(vm.layout)).toBe(
-          expectedLayoutMarbles,
-          {
-            a: {
-              type: "grid",
-              spotlight: undefined,
-              grid: [
-                "local:0",
-                "@bob:example.org:BBBB:0",
-                "@alice:example.org:AAAA:0",
-              ],
-            },
-            h: {
-              type: "grid",
-              spotlight: undefined,
-              grid: [
-                "local:0",
-                "@bob:example.org:BBBB:0",
-                "@alice:example.org:AAAA:0",
-              ],
-            },
+        expectObservable(vm.handRaised).toBe("a", {
+          a: {
+            value: 1,
+            playSounds: true,
           },
-        );
+        });
       },
     );
   });
 });
+
+it.only("Should correctly handle a lowered hand event", () => {
+  const date = new Date();
+  withTestScheduler(({ expectObservable }) => {
+    withCallViewModel(
+      of([]),
+      of([]),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        vm.addHandRaised(alice.userId, date);
+        vm.addHandRaised(bob.userId, date);
+        expectObservable(vm.handsRaised).toBe("a", {
+          a: {
+            [bob.userId]: date,
+          },
+          b: {
+            [bob.userId]: date,
+          },
+        });
+      },
+    );
+  });
+});
+
+// TODO: Add presenters and speakers?
+it.todo(
+  "should rank raised hands above video feeds and below speakers and presenters",
+  () => {
+    withTestScheduler(({ schedule, expectObservable }) => {
+      // There should always be one tile for each MatrixRTCSession
+      const expectedLayoutMarbles = "a";
+
+      withCallViewModel(
+        of([aliceParticipant, bobParticipant]),
+        of([aliceRtcMember, bobRtcMember]),
+        of(ConnectionState.Connected),
+        new Map(),
+        (vm) => {
+          schedule("ah", {
+            a: () => {
+              // We imagine that only three tiles (the first three) will be visible
+              // on screen at a time
+              vm.layout.subscribe((layout) => {
+                console.log(layout);
+                if (layout.type === "grid") {
+                  for (let i = 0; i < layout.grid.length; i++)
+                    layout.grid[i].setVisible(i <= 1);
+                }
+              });
+            },
+            h: () => {
+              vm.updateReactions({
+                reactions: {},
+                raisedHands: {
+                  [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]:
+                    new Date(),
+                },
+              });
+            },
+          });
+          expectObservable(summarizeLayout(vm.layout)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [
+                  "local:0",
+                  "@bob:example.org:BBBB:0",
+                  "@alice:example.org:AAAA:0",
+                ],
+              },
+              h: {
+                type: "grid",
+                spotlight: undefined,
+                grid: [
+                  "local:0",
+                  "@bob:example.org:BBBB:0",
+                  "@alice:example.org:AAAA:0",
+                ],
+              },
+            },
+          );
+        },
+      );
+    });
+  },
+);

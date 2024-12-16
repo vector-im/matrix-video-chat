@@ -1146,22 +1146,60 @@ export class CallViewModel extends ViewModel {
   );
 
   private readonly handsRaisedSubject = new BehaviorSubject<
-    Record<string, Date>
-  >({});
+    { userId: string; date: Date | null }[]
+  >([]);
   private readonly reactionsSubject = new BehaviorSubject<
-    Record<string, ReactionOption>
-  >({});
+    { userId: string; reaction: ReactionOption; ttl: number }[]
+  >([]);
 
-  public readonly handsRaised = this.handsRaisedSubject.asObservable();
-  public readonly reactions = this.reactionsSubject.asObservable();
-
-  public updateReactions(data: {
-    raisedHands: Record<string, Date>;
-    reactions: Record<string, ReactionOption>;
-  }): void {
-    this.handsRaisedSubject.next(data.raisedHands);
-    this.reactionsSubject.next(data.reactions);
+  public addHandRaised(userId: string, date: Date) {
+    this.handsRaisedSubject.next([{ userId, date }]);
   }
+
+  public removeHandRaised(userId: string, date: Date | null) {
+    this.handsRaisedSubject.next([{ userId, date }]);
+  }
+
+  public addReaction(userId: string, reaction: ReactionOption, ttl: number) {
+    this.reactionsSubject.next([{ userId, reaction, ttl }]);
+  }
+
+  public readonly reactions = this.reactionsSubject
+    .pipe(
+      scan<
+        { userId: string; reaction: ReactionOption; ttl: number }[],
+        Record<string, { reaction: ReactionOption; ttl: number }>
+      >((acc, value) => {
+        for (const { userId, reaction, ttl } of value) {
+          acc[userId] = { reaction, ttl };
+        }
+        return acc;
+      }, {}),
+    )
+    .pipe(
+      map((v) =>
+        Object.fromEntries(
+          Object.entries(v).map(([a, { reaction }]) => [a, reaction]),
+        ),
+      ),
+    );
+
+  public readonly handsRaised = this.handsRaisedSubject.pipe(
+    scan<{ userId: string; date: Date | null }[], Record<string, Date>>(
+      (acc, value) => {
+        for (const { userId, date } of value) {
+          if (date) {
+            acc[userId] = date;
+          } else {
+            delete acc[userId];
+          }
+        }
+        console.log("handsRaised", acc);
+        return acc;
+      },
+      {},
+    ),
+  );
 
   /**
    * Emits an array of reactions that should be visible on the screen.

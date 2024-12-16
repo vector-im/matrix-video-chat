@@ -79,7 +79,7 @@ test("Can raise hand", async () => {
   expect(container).toMatchSnapshot();
 });
 
-test.only("Can lower hand", async () => {
+test("Can lower hand", async () => {
   const user = userEvent.setup();
   const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
@@ -95,6 +95,7 @@ test.only("Can lower hand", async () => {
       reactions: {},
     });
   });
+  await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.lower_hand"));
   expect(rtcSession.room.client.redactEvent).toHaveBeenCalledWith(
     undefined,
@@ -118,63 +119,55 @@ test.only("Can lower hand", async () => {
 
 test("Can react with emoji", async () => {
   const user = userEvent.setup();
-  const room = new MockRoom(memberUserIdAlice);
-  const rtcSession = new MockRTCSession(room, membership);
+  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, getByText } = render(
-    <TestComponent rtcSession={rtcSession} />,
+    <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByText("🐶"));
-  expect(room.testSentEvents).toEqual([
-    [
-      undefined,
-      ElementCallReactionEventType,
-      {
-        "m.relates_to": {
-          event_id: memberEventAlice,
-          rel_type: "m.reference",
-        },
-        name: "dog",
-        emoji: "🐶",
+  expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
+    undefined,
+    ElementCallReactionEventType,
+    {
+      "m.relates_to": {
+        event_id: localRtcMember.eventId,
+        rel_type: "m.reference",
       },
-    ],
-  ]);
+      name: "dog",
+      emoji: "🐶",
+    },
+  );
 });
 
 test("Can fully expand emoji picker", async () => {
   const user = userEvent.setup();
-  const room = new MockRoom(memberUserIdAlice);
-  const rtcSession = new MockRTCSession(room, membership);
-  const { getByText, container, getByLabelText } = render(
-    <TestComponent rtcSession={rtcSession} />,
+  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
+  const { getByLabelText, container, getByText } = render(
+    <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.show_more"));
   expect(container).toMatchSnapshot();
   await user.click(getByText("🦗"));
-
-  expect(room.testSentEvents).toEqual([
-    [
-      undefined,
-      ElementCallReactionEventType,
-      {
-        "m.relates_to": {
-          event_id: memberEventAlice,
-          rel_type: "m.reference",
-        },
-        name: "crickets",
-        emoji: "🦗",
+  expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
+    undefined,
+    ElementCallReactionEventType,
+    {
+      "m.relates_to": {
+        event_id: localRtcMember.eventId,
+        rel_type: "m.reference",
       },
-    ],
-  ]);
+      name: "crickets",
+      emoji: "🦗",
+    },
+  );
 });
 
 test("Can close reaction dialog", async () => {
   const user = userEvent.setup();
-  const room = new MockRoom(memberUserIdAlice);
-  const rtcSession = new MockRTCSession(room, membership);
+  const { vm, rtcSession } = getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
-    <TestComponent rtcSession={rtcSession} />,
+    <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.show_more"));
