@@ -15,7 +15,8 @@ import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSess
 import { GridTile } from "./GridTile";
 import { mockRtcMembership, withRemoteMedia } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
-import { ReactionsProvider } from "../useReactionsSender";
+import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
+import { CallViewModel } from "../state/CallViewModel";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -51,8 +52,12 @@ test("GridTile is accessible", async () => {
         },
         memberships: [],
       } as unknown as MatrixRTCSession;
+      const cVm = {
+        reactions: of({}),
+        handsRaised: of({}),
+      } as Partial<CallViewModel> as CallViewModel;
       const { container } = render(
-        <ReactionsProvider rtcSession={fakeRtcSession}>
+        <ReactionsSenderProvider vm={cVm} rtcSession={fakeRtcSession}>
           <GridTile
             vm={new GridTileViewModel(of(vm))}
             onOpenProfile={() => {}}
@@ -60,7 +65,7 @@ test("GridTile is accessible", async () => {
             targetHeight={200}
             showSpeakingIndicators
           />
-        </ReactionsProvider>,
+        </ReactionsSenderProvider>,
       );
       expect(await axe(container)).toHaveNoViolations();
       // Name should be visible

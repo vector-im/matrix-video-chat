@@ -27,7 +27,7 @@ import classNames from "classnames";
 import { useObservableState } from "observable-hooks";
 import { map } from "rxjs";
 
-import { useReactionsSender } from "../useReactionsSender";
+import { useReactionsSender } from "../reactions/useReactionsSender";
 import styles from "./ReactionToggleButton.module.css";
 import {
   type ReactionOption,
@@ -35,7 +35,7 @@ import {
   ReactionsRowSize,
 } from "../reactions";
 import { Modal } from "../Modal";
-import { CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {
   raised: boolean;

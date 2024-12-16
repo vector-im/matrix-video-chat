@@ -5,8 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished, it, vitest } from "vitest";
+import { test, vi, onTestFinished, it } from "vitest";
 import {
+  BehaviorSubject,
   combineLatest,
   debounceTime,
   distinctUntilChanged,
@@ -14,7 +15,6 @@ import {
   type Observable,
   of,
   switchMap,
-  tap,
 } from "rxjs";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import {
@@ -47,6 +47,7 @@ import {
   type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
+import { RaisedHandInfo } from "../reactions";
 
 vi.mock("@livekit/components-core");
 
@@ -190,7 +191,10 @@ function withCallViewModel(
   rtcMembers: Observable<Partial<CallMembership>[]>,
   connectionState: Observable<ECConnectionState>,
   speaking: Map<Participant, Observable<boolean>>,
-  continuation: (vm: CallViewModel) => void,
+  continuation: (
+    vm: CallViewModel,
+    subjects: { raisedHands: BehaviorSubject<Record<string, RaisedHandInfo>> },
+  ) => void,
 ): void {
   const room = mockMatrixRoom({
     client: {
@@ -235,6 +239,8 @@ function withCallViewModel(
     { remoteParticipants },
   );
 
+  const raisedHands = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
+
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
@@ -242,6 +248,8 @@ function withCallViewModel(
       kind: E2eeType.PER_PARTICIPANT,
     },
     connectionState,
+    raisedHands,
+    new BehaviorSubject({}),
   );
 
   onTestFinished(() => {
@@ -252,7 +260,7 @@ function withCallViewModel(
     roomEventSelectorSpy!.mockRestore();
   });
 
-  continuation(vm);
+  continuation(vm, { raisedHands });
 }
 
 test("participants are retained during a focus switch", () => {
@@ -689,117 +697,63 @@ it("should show at least one tile per MatrixRTCSession", () => {
   });
 });
 
-it("Should correctly handle a raised hand event", () => {
-  withTestScheduler(({ expectObservable }) => {
-    const date = new Date();
+it("should rank raised hands above video feeds and below speakers and presenters", () => {
+  withTestScheduler(({ schedule, expectObservable }) => {
+    // There should always be one tile for each MatrixRTCSession
+    const expectedLayoutMarbles = "ab";
+
     withCallViewModel(
-      of([]),
-      of([]),
+      of([aliceParticipant, bobParticipant]),
+      of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
-      (vm) => {
-        vm.addHandRaised(alice.userId, date);
-        expectObservable(vm.handsRaised).toBe("a", {
-          a: {
-            [alice.userId]: date,
+      (vm, { raisedHands }) => {
+        schedule("ab", {
+          a: () => {
+            // We imagine that only three tiles (the first three) will be visible
+            // on screen at a time
+            vm.layout.subscribe((layout) => {
+              if (layout.type === "grid") {
+                for (let i = 0; i < layout.grid.length; i++)
+                  layout.grid[i].setVisible(i <= 1);
+              }
+            });
+          },
+          b: () => {
+            raisedHands.next({
+              [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: {
+                time: new Date(),
+                reactionEventId: "",
+                membershipEventId: "",
+              },
+            });
           },
         });
-        expectObservable(vm.handRaised).toBe("a", {
-          a: {
-            value: 1,
-            playSounds: true,
+        expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: [
+                "local:0",
+                "@alice:example.org:AAAA:0",
+                "@bob:example.org:BBBB:0",
+              ],
+            },
+            b: {
+              type: "grid",
+              spotlight: undefined,
+              grid: [
+                "local:0",
+                // Bob shifts up!
+                "@bob:example.org:BBBB:0",
+                "@alice:example.org:AAAA:0",
+              ],
+            },
           },
-        });
+        );
       },
     );
   });
 });
-
-it.only("Should correctly handle a lowered hand event", () => {
-  const date = new Date();
-  withTestScheduler(({ expectObservable }) => {
-    withCallViewModel(
-      of([]),
-      of([]),
-      of(ConnectionState.Connected),
-      new Map(),
-      (vm) => {
-        vm.addHandRaised(alice.userId, date);
-        vm.addHandRaised(bob.userId, date);
-        expectObservable(vm.handsRaised).toBe("a", {
-          a: {
-            [bob.userId]: date,
-          },
-          b: {
-            [bob.userId]: date,
-          },
-        });
-      },
-    );
-  });
-});
-
-// TODO: Add presenters and speakers?
-it.todo(
-  "should rank raised hands above video feeds and below speakers and presenters",
-  () => {
-    withTestScheduler(({ schedule, expectObservable }) => {
-      // There should always be one tile for each MatrixRTCSession
-      const expectedLayoutMarbles = "a";
-
-      withCallViewModel(
-        of([aliceParticipant, bobParticipant]),
-        of([aliceRtcMember, bobRtcMember]),
-        of(ConnectionState.Connected),
-        new Map(),
-        (vm) => {
-          schedule("ah", {
-            a: () => {
-              // We imagine that only three tiles (the first three) will be visible
-              // on screen at a time
-              vm.layout.subscribe((layout) => {
-                console.log(layout);
-                if (layout.type === "grid") {
-                  for (let i = 0; i < layout.grid.length; i++)
-                    layout.grid[i].setVisible(i <= 1);
-                }
-              });
-            },
-            h: () => {
-              vm.updateReactions({
-                reactions: {},
-                raisedHands: {
-                  [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]:
-                    new Date(),
-                },
-              });
-            },
-          });
-          expectObservable(summarizeLayout(vm.layout)).toBe(
-            expectedLayoutMarbles,
-            {
-              a: {
-                type: "grid",
-                spotlight: undefined,
-                grid: [
-                  "local:0",
-                  "@bob:example.org:BBBB:0",
-                  "@alice:example.org:AAAA:0",
-                ],
-              },
-              h: {
-                type: "grid",
-                spotlight: undefined,
-                grid: [
-                  "local:0",
-                  "@bob:example.org:BBBB:0",
-                  "@alice:example.org:AAAA:0",
-                ],
-              },
-            },
-          );
-        },
-      );
-    });
-  },
-);

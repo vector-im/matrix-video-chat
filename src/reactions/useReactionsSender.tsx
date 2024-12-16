@@ -15,12 +15,13 @@ import {
 } from "react";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
-import { useMatrixRTCSessionMemberships } from "./useMatrixRTCSessionMemberships";
-import { useClientState } from "./ClientContext";
-import { ElementCallReactionEventType, type ReactionOption } from "./reactions";
-import { CallViewModel } from "./state/CallViewModel";
 import { useObservableEagerState } from "observable-hooks";
 import { map } from "rxjs";
+
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
+import { useClientState } from "../ClientContext";
+import { ElementCallReactionEventType, type ReactionOption } from ".";
+import { type CallViewModel } from "../state/CallViewModel";
 
 interface ReactionsSenderContextType {
   supportsReactions: boolean;

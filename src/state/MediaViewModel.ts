@@ -51,7 +51,7 @@ import { alwaysShowSelf } from "../settings/settings";
 import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
-import { ReactionOption } from "../reactions";
+import { type ReactionOption } from "../reactions";
 
 // TODO: Move this naming logic into the view model
 export function useDisplayName(vm: MediaViewModel): string {
@@ -372,8 +372,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     participant: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    public readonly handRaised: Observable<Date | undefined>,
-    public readonly reactions: Observable<ReactionOption | undefined>,
+    public readonly handRaised: Observable<Date | null>,
+    public readonly reactions: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -440,8 +440,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     participant: Observable<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    handRaised: Observable<Date | undefined>,
-    reactions: Observable<ReactionOption | undefined>,
+    handRaised: Observable<Date | null>,
+    reactions: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -511,8 +511,8 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    handRaised: Observable<Date | undefined>,
-    reactions: Observable<ReactionOption | undefined>,
+    handRaised: Observable<Date | null>,
+    reactions: Observable<ReactionOption | null>,
   ) {
     super(
       id,

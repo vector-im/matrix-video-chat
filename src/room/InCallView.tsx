@@ -86,7 +86,7 @@ import { GridTileViewModel, type TileViewModel } from "../state/TileViewModel";
 import {
   ReactionsSenderProvider,
   useReactionsSender,
-} from "../useReactionsSender";
+} from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";

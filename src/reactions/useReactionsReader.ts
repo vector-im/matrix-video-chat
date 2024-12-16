@@ -1,24 +1,32 @@
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
-import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
+*/
+
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 import { useCallback, useEffect, useRef } from "react";
-import { useLatest } from "../useLatest";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixEvent, MatrixEventEvent } from "matrix-js-sdk/src/matrix";
+import { type MatrixEvent, MatrixEventEvent } from "matrix-js-sdk/src/matrix";
 import { type ReactionEventContent } from "matrix-js-sdk/src/types";
 import {
   RelationType,
   EventType,
   RoomEvent as MatrixRoomEvent,
 } from "matrix-js-sdk/src/matrix";
+import { BehaviorSubject, type Observable } from "rxjs";
+
 import {
   ElementCallReactionEventType,
-  ECallReactionEventContent,
+  type ECallReactionEventContent,
   GenericReaction,
   ReactionSet,
-  RaisedHandInfo,
-  ReactionInfo,
+  type RaisedHandInfo,
+  type ReactionInfo,
 } from ".";
-import { BehaviorSubject, Observable } from "rxjs";
+import { useLatest } from "../useLatest";
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 
 const REACTION_ACTIVE_TIME_MS = 3000;
 
@@ -256,6 +264,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
     // may still be sending.
     room.on(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
 
+    const innerReactionsSubject = reactionsSubject.current;
     return (): void => {
       room.off(MatrixRoomEvent.Timeline, handleReactionEvent);
       room.off(MatrixRoomEvent.Redaction, handleReactionEvent);
@@ -263,7 +272,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
       room.off(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
       reactionTimeouts.forEach((t) => clearTimeout(t));
       // If we're clearing timeouts, we also clear all reactions.
-      reactionsSubject.current.next({});
+      innerReactionsSubject.next({});
     };
   }, [
     room,

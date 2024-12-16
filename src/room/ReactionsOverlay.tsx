@@ -6,10 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ReactNode } from "react";
+import { useObservableState } from "observable-hooks";
 
 import styles from "./ReactionsOverlay.module.css";
-import { CallViewModel } from "../state/CallViewModel";
-import { useObservableState } from "observable-hooks";
+import { type CallViewModel } from "../state/CallViewModel";
 
 export function ReactionsOverlay({ vm }: { vm: CallViewModel }): ReactNode {
   const reactionsIcons = useObservableState(vm.visibleReactions);

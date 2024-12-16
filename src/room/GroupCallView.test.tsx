@@ -14,6 +14,7 @@ import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
 import { Router } from "react-router-dom";
 import { createBrowserHistory } from "history";
 import userEvent from "@testing-library/user-event";
+import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
 
 import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
@@ -29,7 +30,6 @@ import { GroupCallView } from "./GroupCallView";
 import { leaveRTCSession } from "../rtcSessionHelpers";
 import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
-import { RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
 
 vitest.mock("../soundUtils");
 vitest.mock("../useAudioContext");

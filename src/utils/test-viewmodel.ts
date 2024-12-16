@@ -1,9 +1,18 @@
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
+*/
+
 import { ConnectionState } from "livekit-client";
-import { MatrixClient } from "matrix-js-sdk/src/client";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { CallMembership, MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type RoomMember } from "matrix-js-sdk/src/matrix";
+import { type CallMembership, type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
+import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
+
 import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
 import { mockLivekitRoom, mockMatrixRoom, MockRTCSession } from "./test";
@@ -13,8 +22,7 @@ import {
   localParticipant,
   localRtcMember,
 } from "./test-fixtures";
-import { RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
-import { RaisedHandInfo, ReactionInfo } from "../reactions";
+import { type RaisedHandInfo, type ReactionInfo } from "../reactions";
 
 /**
  * Construct a basic CallViewModel to test components that make use of it.

@@ -15,6 +15,7 @@ import {
   EventTimelineSet,
   type Room,
 } from "matrix-js-sdk/src/matrix";
+
 import {
   type ECallReactionEventContent,
   ElementCallReactionEventType,

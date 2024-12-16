@@ -48,7 +48,7 @@ import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
 import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
-import { useReactionsSender } from "../useReactionsSender";
+import { useReactionsSender } from "../reactions/useReactionsSender";
 
 interface TileProps {
   className?: string;
@@ -170,8 +170,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
             {menu}
           </Menu>
         }
-        raisedHandTime={handRaised}
-        currentReaction={reaction}
+        raisedHandTime={handRaised ?? undefined}
+        currentReaction={reaction ?? undefined}
         raisedHandOnClick={raisedHandOnClick}
         localParticipant={vm.local}
         {...props}

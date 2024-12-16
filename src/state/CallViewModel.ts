@@ -45,7 +45,6 @@ import {
   switchMap,
   switchScan,
   take,
-  tap,
   timer,
   withLatestFrom,
 } from "rxjs";
@@ -88,7 +87,11 @@ import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { observeSpeaker } from "./observeSpeaker";
-import { RaisedHandInfo, ReactionInfo, ReactionOption } from "../reactions";
+import {
+  type RaisedHandInfo,
+  type ReactionInfo,
+  type ReactionOption,
+} from "../reactions";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -251,8 +254,8 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    handRaised: Observable<Date | undefined>,
-    reactions: Observable<ReactionOption | undefined>,
+    handRaised: Observable<Date | null>,
+    reactions: Observable<ReactionOption | null>,
   ) {
     this.participant = new BehaviorSubject(participant);
 
@@ -528,7 +531,7 @@ export class CallViewModel extends ViewModel {
                       this.encryptionSystem,
                       this.livekitRoom,
                       this.handsRaised.pipe(
-                        map((v) => v[matrixIdentifier].time ?? undefined),
+                        map((v) => v[matrixIdentifier]?.time ?? null),
                       ),
                       this.reactions.pipe(
                         map((v) => v[matrixIdentifier] ?? undefined),
@@ -649,7 +652,6 @@ export class CallViewModel extends ViewModel {
             m.vm.handRaised,
           ],
           (speaker, presenter, video, alwaysShow, handRaised) => {
-            console.log(m.vm.id, handRaised);
             let bin: SortingBin;
             if (m.vm.local)
               bin = alwaysShow
@@ -672,12 +674,6 @@ export class CallViewModel extends ViewModel {
             bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m.vm),
           );
     }),
-    tap((v) =>
-      console.log(
-        "final grid",
-        v.map((v) => v.id),
-      ),
-    ),
   );
 
   private readonly spotlight: Observable<MediaViewModel[]> =

@@ -28,6 +28,7 @@ import {
   type RemoteTrackPublication,
   type Room as LivekitRoom,
 } from "livekit-client";
+import { randomUUID } from "crypto";
 
 import {
   LocalUserMediaViewModel,
@@ -39,7 +40,6 @@ import {
   type ResolvedConfigOptions,
 } from "../config/ConfigOptions";
 import { Config } from "../config/Config";
-import { randomUUID } from "crypto";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();

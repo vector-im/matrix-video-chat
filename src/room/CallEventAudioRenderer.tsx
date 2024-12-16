@@ -76,7 +76,7 @@ export function CallEventAudioRenderer({
       });
 
     const handRaisedSub = vm.newHandRaised.subscribe(() => {
-      audioEngineRef.current?.playSound("raiseHand");
+      void audioEngineRef.current?.playSound("raiseHand");
     });
 
     return (): void => {

@@ -10,15 +10,15 @@ import { expect, test } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
 import { type ReactNode } from "react";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { ReactionToggleButton } from "./ReactionToggleButton";
 import { ElementCallReactionEventType } from "../reactions";
-import { CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local, localRtcMember } from "../utils/test-fixtures";
-import { MockRTCSession } from "../utils/test";
-import { ReactionsSenderProvider } from "../useReactionsSender";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MockRTCSession } from "../utils/test";
+import { ReactionsSenderProvider } from "../reactions/useReactionsSender";
 
 const localIdent = `${localRtcMember.sender}:${localRtcMember.deviceId}`;
 
@@ -71,7 +71,7 @@ test("Can raise hand", async () => {
       },
     },
   );
-  await act(() => {
+  act(() => {
     // Mock receiving a reaction.
     handRaisedSubject.next({
       [localIdent]: {
@@ -94,7 +94,7 @@ test("Can lower hand", async () => {
   );
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.raise_hand"));
-  await act(() => {
+  act(() => {
     handRaisedSubject.next({
       [localIdent]: {
         time: new Date(),
@@ -109,7 +109,7 @@ test("Can lower hand", async () => {
     rtcSession.room.roomId,
     reactionEventId,
   );
-  await act(() => {
+  act(() => {
     // Mock receiving a redacted reaction.
     handRaisedSubject.next({});
   });
