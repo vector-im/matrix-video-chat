@@ -48,7 +48,7 @@ import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
 import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
-import { useReactions } from "../useReactions";
+import { useReactionsSender } from "../useReactionsSender";
 
 interface TileProps {
   className?: string;
@@ -81,7 +81,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     },
     ref,
   ) => {
-    const { toggleRaisedHand } = useReactions();
+    const { toggleRaisedHand } = useReactionsSender();
     const { t } = useTranslation();
     const video = useObservableEagerState(vm.video);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);

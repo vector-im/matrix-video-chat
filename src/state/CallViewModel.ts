@@ -88,7 +88,7 @@ import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { observeSpeaker } from "./observeSpeaker";
-import { ReactionOption } from "../reactions";
+import { RaisedHandInfo, ReactionInfo, ReactionOption } from "../reactions";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -528,7 +528,7 @@ export class CallViewModel extends ViewModel {
                       this.encryptionSystem,
                       this.livekitRoom,
                       this.handsRaised.pipe(
-                        map((v) => v[matrixIdentifier] ?? undefined),
+                        map((v) => v[matrixIdentifier].time ?? undefined),
                       ),
                       this.reactions.pipe(
                         map((v) => v[matrixIdentifier] ?? undefined),
@@ -1145,61 +1145,15 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  private readonly handsRaisedSubject = new BehaviorSubject<
-    { userId: string; date: Date | null }[]
-  >([]);
-  private readonly reactionsSubject = new BehaviorSubject<
-    { userId: string; reaction: ReactionOption; ttl: number }[]
-  >([]);
-
-  public addHandRaised(userId: string, date: Date) {
-    this.handsRaisedSubject.next([{ userId, date }]);
-  }
-
-  public removeHandRaised(userId: string, date: Date | null) {
-    this.handsRaisedSubject.next([{ userId, date }]);
-  }
-
-  public addReaction(userId: string, reaction: ReactionOption, ttl: number) {
-    this.reactionsSubject.next([{ userId, reaction, ttl }]);
-  }
-
-  public readonly reactions = this.reactionsSubject
-    .pipe(
-      scan<
-        { userId: string; reaction: ReactionOption; ttl: number }[],
-        Record<string, { reaction: ReactionOption; ttl: number }>
-      >((acc, value) => {
-        for (const { userId, reaction, ttl } of value) {
-          acc[userId] = { reaction, ttl };
-        }
-        return acc;
-      }, {}),
-    )
-    .pipe(
-      map((v) =>
-        Object.fromEntries(
-          Object.entries(v).map(([a, { reaction }]) => [a, reaction]),
-        ),
+  public readonly reactions = this.reactionsSubject.pipe(
+    map((v) =>
+      Object.fromEntries(
+        Object.entries(v).map(([a, { reactionOption }]) => [a, reactionOption]),
       ),
-    );
-
-  public readonly handsRaised = this.handsRaisedSubject.pipe(
-    scan<{ userId: string; date: Date | null }[], Record<string, Date>>(
-      (acc, value) => {
-        for (const { userId, date } of value) {
-          if (date) {
-            acc[userId] = date;
-          } else {
-            delete acc[userId];
-          }
-        }
-        console.log("handsRaised", acc);
-        return acc;
-      },
-      {},
     ),
   );
+
+  public readonly handsRaised = this.handsRaisedSubject.pipe();
 
   /**
    * Emits an array of reactions that should be visible on the screen.
@@ -1255,7 +1209,7 @@ export class CallViewModel extends ViewModel {
    * Emits an event every time a new hand is raised in
    * the call.
    */
-  public readonly handRaised = this.handsRaised.pipe(
+  public readonly newHandRaised = this.handsRaised.pipe(
     map((v) => Object.keys(v).length),
     scan(
       (acc, newValue) => ({
@@ -1273,6 +1227,10 @@ export class CallViewModel extends ViewModel {
     private readonly livekitRoom: LivekitRoom,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly connectionState: Observable<ECConnectionState>,
+    private readonly handsRaisedSubject: Observable<
+      Record<string, RaisedHandInfo>
+    >,
+    private readonly reactionsSubject: Observable<Record<string, ReactionInfo>>,
   ) {
     super();
   }

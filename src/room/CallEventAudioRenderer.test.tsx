@@ -130,40 +130,53 @@ test("plays no sound when the participant list is more than the maximum size", (
 });
 
 test("plays one sound when a hand is raised", () => {
-  const { vm } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, handRaisedSubject } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    vm.updateReactions({
-      raisedHands: {
-        [bobRtcMember.callId]: new Date(),
+    handRaisedSubject.next({
+      [bobRtcMember.callId]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
       },
-      reactions: {},
     });
   });
   expect(playSound).toBeCalledWith("raiseHand");
 });
 
 test("should not play a sound when a hand raise is retracted", () => {
-  const { vm } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, handRaisedSubject } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    vm.updateReactions({
-      raisedHands: {
-        ["foo"]: new Date(),
-        ["bar"]: new Date(),
+    handRaisedSubject.next({
+      ["foo"]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
       },
-      reactions: {},
+      ["bar"]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
+      },
     });
   });
   expect(playSound).toHaveBeenCalledTimes(2);
   act(() => {
-    vm.updateReactions({
-      raisedHands: {
-        ["foo"]: new Date(),
+    handRaisedSubject.next({
+      ["foo"]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
       },
-      reactions: {},
     });
   });
   expect(playSound).toHaveBeenCalledTimes(2);

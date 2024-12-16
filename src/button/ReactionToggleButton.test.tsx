@@ -18,7 +18,7 @@ import { CallViewModel } from "../state/CallViewModel";
 import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
 import { alice, local, localRtcMember } from "../utils/test-fixtures";
 import { MockRTCSession } from "../utils/test";
-import { ReactionsProvider } from "../useReactions";
+import { ReactionsProvider } from "../useReactionsSender";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 const localIdent = `${localRtcMember.sender}:${localRtcMember.deviceId}`;

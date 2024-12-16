@@ -14,6 +14,7 @@ import {
   localRtcMember,
 } from "./test-fixtures";
 import { RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
+import { RaisedHandInfo, ReactionInfo } from "../reactions";
 
 /**
  * Construct a basic CallViewModel to test components that make use of it.
@@ -28,6 +29,8 @@ export function getBasicCallViewModelEnvironment(
   vm: CallViewModel;
   remoteRtcMemberships: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
+  handRaisedSubject: BehaviorSubject<Record<string, RaisedHandInfo>>;
+  reactionsSubject: BehaviorSubject<Record<string, ReactionInfo>>;
 } {
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
   const remoteParticipants = of([aliceParticipant]);
@@ -54,6 +57,9 @@ export function getBasicCallViewModelEnvironment(
     initialRemoteRtcMemberships,
   );
 
+  const handRaisedSubject = new BehaviorSubject({});
+  const reactionsSubject = new BehaviorSubject({});
+
   const rtcSession = new MockRTCSession(
     matrixRoom,
     localRtcMember,
@@ -66,6 +72,14 @@ export function getBasicCallViewModelEnvironment(
       kind: E2eeType.PER_PARTICIPANT,
     },
     of(ConnectionState.Connected),
+    handRaisedSubject,
+    reactionsSubject,
   );
-  return { vm, remoteRtcMemberships, rtcSession };
+  return {
+    vm,
+    remoteRtcMemberships,
+    rtcSession,
+    handRaisedSubject,
+    reactionsSubject,
+  };
 }

@@ -27,7 +27,7 @@ import classNames from "classnames";
 import { useObservableState } from "observable-hooks";
 import { map } from "rxjs";
 
-import { useReactions } from "../useReactions";
+import { useReactionsSender } from "../useReactionsSender";
 import styles from "./ReactionToggleButton.module.css";
 import {
   type ReactionOption,
@@ -175,7 +175,7 @@ export function ReactionToggleButton({
   ...props
 }: ReactionToggleButtonProps): ReactNode {
   const { t } = useTranslation();
-  const { toggleRaisedHand, sendReaction } = useReactions();
+  const { toggleRaisedHand, sendReaction } = useReactionsSender();
   const [busy, setBusy] = useState(false);
   const [showReactionsMenu, setShowReactionsMenu] = useState(false);
   const [errorText, setErrorText] = useState<string>();

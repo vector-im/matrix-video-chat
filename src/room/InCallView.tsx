@@ -83,7 +83,10 @@ import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
 import { GridTileViewModel, type TileViewModel } from "../state/TileViewModel";
-import { ReactionsProvider, useReactions } from "../useReactions";
+import {
+  ReactionsSenderProvider,
+  useReactionsSender,
+} from "../useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
@@ -92,6 +95,7 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   useSetting,
 } from "../settings/settings";
+import useReactionsReader from "../reactions/useReactionsReader";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -125,31 +129,41 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const reader = useReactionsReader(props.rtcSession);
+
   useEffect(() => {
-    if (livekitRoom !== undefined) {
+    if (livekitRoom !== undefined && reader !== undefined) {
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
         connStateObservable,
+        reader.raisedHands,
+        reader.reactions,
       );
       setVm(vm);
       return (): void => vm.destroy();
     }
-  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable]);
+  }, [
+    reader,
+    props.rtcSession,
+    livekitRoom,
+    props.e2eeSystem,
+    connStateObservable,
+  ]);
 
   if (livekitRoom === undefined || vm === null) return null;
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <ReactionsProvider vm={vm} rtcSession={props.rtcSession}>
+      <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
         <InCallView
           {...props}
           vm={vm}
           livekitRoom={livekitRoom}
           connState={connState}
         />
-      </ReactionsProvider>
+      </ReactionsSenderProvider>
     </RoomContext.Provider>
   );
 };
@@ -182,7 +196,8 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
-  const { supportsReactions, sendReaction, toggleRaisedHand } = useReactions();
+  const { supportsReactions, sendReaction, toggleRaisedHand } =
+    useReactionsSender();
 
   useWakeLock();
 

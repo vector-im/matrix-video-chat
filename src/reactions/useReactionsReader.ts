@@ -1,146 +1,62 @@
-/*
-Copyright 2024 Milton Moura <miltonmoura@gmail.com>
-
-SPDX-License-Identifier: AGPL-3.0-only
-Please see LICENSE in the repository root for full details.
-*/
-
-import {
-  EventType,
-  type MatrixEvent,
-  RelationType,
-  RoomEvent as MatrixRoomEvent,
-  MatrixEventEvent,
-} from "matrix-js-sdk/src/matrix";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
+import { useCallback, useEffect, useRef } from "react";
+import { useLatest } from "../useLatest";
+import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixEvent, MatrixEventEvent } from "matrix-js-sdk/src/matrix";
 import { type ReactionEventContent } from "matrix-js-sdk/src/types";
 import {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { logger } from "matrix-js-sdk/src/logger";
-
-import { useMatrixRTCSessionMemberships } from "./useMatrixRTCSessionMemberships";
-import { useClientState } from "./ClientContext";
+  RelationType,
+  EventType,
+  RoomEvent as MatrixRoomEvent,
+} from "matrix-js-sdk/src/matrix";
 import {
-  type ECallReactionEventContent,
   ElementCallReactionEventType,
+  ECallReactionEventContent,
   GenericReaction,
-  type ReactionOption,
   ReactionSet,
-} from "./reactions";
-import { useLatest } from "./useLatest";
-import { CallViewModel } from "./state/CallViewModel";
-
-interface ReactionsContextType {
-  supportsReactions: boolean;
-  toggleRaisedHand: () => Promise<void>;
-  sendReaction: (reaction: ReactionOption) => Promise<void>;
-}
-
-const ReactionsContext = createContext<ReactionsContextType | undefined>(
-  undefined,
-);
-
-interface RaisedHandInfo {
-  /**
-   * Call membership event that was reacted to.
-   */
-  membershipEventId: string;
-  /**
-   * Event ID of the reaction itself.
-   */
-  reactionEventId: string;
-  /**
-   * The time when the reaction was raised.
-   */
-  time: Date;
-}
+  RaisedHandInfo,
+  ReactionInfo,
+} from ".";
+import { BehaviorSubject, Observable } from "rxjs";
 
 const REACTION_ACTIVE_TIME_MS = 3000;
 
-export const useReactions = (): ReactionsContextType => {
-  const context = useContext(ReactionsContext);
-  if (!context) {
-    throw new Error("useReactions must be used within a ReactionsProvider");
-  }
-  return context;
-};
-
 /**
- * HS plan:
- *  Provider should publish new hand raised, reaction events to CallViewModel
- *  Provider should listen for new events from CVM
+ * Listens for reactions from a RTCSession and populates subjects
+ * for consumption by the CallViewModel.
+ * @param rtcSession
  */
+export default function useReactionsReader(rtcSession: MatrixRTCSession): {
+  raisedHands: Observable<Record<string, RaisedHandInfo>>;
+  reactions: Observable<Record<string, ReactionInfo>>;
+} {
+  const raisedHandsSubject = useRef(
+    new BehaviorSubject<Record<string, RaisedHandInfo>>({}),
+  );
+  const reactionsSubject = useRef(
+    new BehaviorSubject<Record<string, ReactionInfo>>({}),
+  );
 
-/**
- * Provider that handles raised hand reactions for a given `rtcSession`.
- */
-export const ReactionsProvider = ({
-  children,
-  rtcSession,
-  vm,
-}: {
-  children: ReactNode;
-  rtcSession: MatrixRTCSession;
-  vm: CallViewModel;
-}): JSX.Element => {
-  const [raisedHands, setRaisedHands] = useState<
-    Record<string, RaisedHandInfo>
-  >({});
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
-  const clientState = useClientState();
-  const supportsReactions =
-    clientState?.state === "valid" && clientState.supportedFeatures.reactions;
-  const room = rtcSession.room;
-  const myUserId = room.client.getUserId();
-  const myDeviceId = room.client.getDeviceId();
-
   const latestMemberships = useLatest(memberships);
-  const latestRaisedHands = useLatest(raisedHands);
-
-  useEffect(() => {
-    vm.updateReactions({
-      raisedHands: Object.fromEntries(
-        Object.entries(raisedHands).map(([uid, data]) => [uid, data.time]),
-      ),
-      reactions,
-    });
-  }, [memberships, raisedHands]);
-
-  const myMembershipEvent = useMemo(
-    () =>
-      memberships.find(
-        (m) => m.sender === myUserId && m.deviceId === myDeviceId,
-      )?.eventId,
-    [memberships, myUserId, myDeviceId],
-  );
-  const myMembershipIdentifier = useMemo(() => {
-    const membership = memberships.find((m) => m.sender === myUserId);
-    return membership
-      ? `${membership.sender}:${membership.deviceId}`
-      : undefined;
-  }, [memberships, myUserId]);
-
-  const [reactions, setReactions] = useState<Record<string, ReactionOption>>(
-    {},
-  );
+  const latestRaisedHands = useLatest(raisedHandsSubject.current);
+  const room = rtcSession.room;
 
   const addRaisedHand = useCallback((userId: string, info: RaisedHandInfo) => {
-    setRaisedHands((prevRaisedHands) => ({
-      ...prevRaisedHands,
+    raisedHandsSubject.current.next({
+      ...raisedHandsSubject.current.value,
       [userId]: info,
-    }));
+    });
   }, []);
 
   const removeRaisedHand = useCallback((userId: string) => {
-    setRaisedHands(
-      ({ [userId]: _removed, ...remainingRaisedHands }) => remainingRaisedHands,
+    raisedHandsSubject.current.next(
+      Object.fromEntries(
+        Object.entries(raisedHandsSubject.current.value).filter(
+          ([uId]) => uId !== userId,
+        ),
+      ),
     );
   }, []);
 
@@ -166,7 +82,7 @@ export const ReactionsProvider = ({
     };
 
     // Remove any raised hands for users no longer joined to the call.
-    for (const identifier of Object.keys(raisedHands).filter(
+    for (const identifier of Object.keys(raisedHandsSubject).filter(
       (rhId) => !memberships.find((u) => u.sender == rhId),
     )) {
       removeRaisedHand(identifier);
@@ -180,8 +96,9 @@ export const ReactionsProvider = ({
       }
       const identifier = `${m.sender}:${m.deviceId}`;
       if (
-        raisedHands[identifier] &&
-        raisedHands[identifier].membershipEventId !== m.eventId
+        raisedHandsSubject.current.value[identifier] &&
+        raisedHandsSubject.current.value[identifier].membershipEventId !==
+          m.eventId
       ) {
         // Membership event for sender has changed since the hand
         // was raised, reset.
@@ -207,7 +124,7 @@ export const ReactionsProvider = ({
 
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
-    const reactionTimeouts = new Set<number>();
+    const reactionTimeouts = new Set<NodeJS.Timeout>();
     const handleReactionEvent = (event: MatrixEvent): void => {
       // Decrypted events might come from a different room
       if (event.getRoomId() !== room.roomId) return;
@@ -268,23 +185,29 @@ export const ReactionsProvider = ({
           ...ReactionSet.find((r) => r.name === content.name),
         };
 
-        setReactions((reactions) => {
-          if (reactions[identifier]) {
-            // We've still got a reaction from this user, ignore it to prevent spamming
-            return reactions;
-          }
-          const timeout = window.setTimeout(() => {
-            // Clear the reaction after some time.
-            setReactions(
-              ({ [identifier]: _unused, ...remaining }) => remaining,
-            );
-            reactionTimeouts.delete(timeout);
-          }, REACTION_ACTIVE_TIME_MS);
-          reactionTimeouts.add(timeout);
-          return {
-            ...reactions,
-            [identifier]: reaction,
-          };
+        const currentReactions = reactionsSubject.current.value;
+        if (currentReactions[identifier]) {
+          // We've still got a reaction from this user, ignore it to prevent spamming
+          return;
+        }
+        const timeout = globalThis.setTimeout(() => {
+          // Clear the reaction after some time.
+          reactionsSubject.current.next(
+            Object.fromEntries(
+              Object.entries(reactionsSubject.current.value).filter(
+                ([id]) => id !== identifier,
+              ),
+            ),
+          );
+          reactionTimeouts.delete(timeout);
+        }, REACTION_ACTIVE_TIME_MS);
+        reactionTimeouts.add(timeout);
+        reactionsSubject.current.next({
+          ...currentReactions,
+          [identifier]: {
+            reactionOption: reaction,
+            ttl: 0,
+          },
         });
       } else if (event.getType() === EventType.Reaction) {
         const content = event.getContent() as ReactionEventContent;
@@ -340,7 +263,7 @@ export const ReactionsProvider = ({
       room.off(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
       reactionTimeouts.forEach((t) => clearTimeout(t));
       // If we're clearing timeouts, we also clear all reactions.
-      setReactions({});
+      reactionsSubject.current.next({});
     };
   }, [
     room,
@@ -350,84 +273,8 @@ export const ReactionsProvider = ({
     latestRaisedHands,
   ]);
 
-  const toggleRaisedHand = useCallback(async () => {
-    console.log("toggleRaisedHand", myMembershipIdentifier);
-    if (!myMembershipIdentifier) {
-      return;
-    }
-    const myReactionId = raisedHands[myMembershipIdentifier]?.reactionEventId;
-
-    if (!myReactionId) {
-      try {
-        if (!myMembershipEvent) {
-          throw new Error("Cannot find own membership event");
-        }
-        const reaction = await room.client.sendEvent(
-          rtcSession.room.roomId,
-          EventType.Reaction,
-          {
-            "m.relates_to": {
-              rel_type: RelationType.Annotation,
-              event_id: myMembershipEvent,
-              key: "🖐️",
-            },
-          },
-        );
-        logger.debug("Sent raise hand event", reaction.event_id);
-      } catch (ex) {
-        logger.error("Failed to send raised hand", ex);
-      }
-    } else {
-      try {
-        await room.client.redactEvent(rtcSession.room.roomId, myReactionId);
-        logger.debug("Redacted raise hand event");
-      } catch (ex) {
-        logger.error("Failed to redact reaction event", myReactionId, ex);
-        throw ex;
-      }
-    }
-  }, [
-    myMembershipEvent,
-    myMembershipIdentifier,
-    raisedHands,
-    rtcSession,
-    room,
-  ]);
-
-  const sendReaction = useCallback(
-    async (reaction: ReactionOption) => {
-      if (!myMembershipIdentifier || reactions[myMembershipIdentifier]) {
-        // We're still reacting
-        return;
-      }
-      if (!myMembershipEvent) {
-        throw new Error("Cannot find own membership event");
-      }
-      await room.client.sendEvent(
-        rtcSession.room.roomId,
-        ElementCallReactionEventType,
-        {
-          "m.relates_to": {
-            rel_type: RelationType.Reference,
-            event_id: myMembershipEvent,
-          },
-          emoji: reaction.emoji,
-          name: reaction.name,
-        },
-      );
-    },
-    [myMembershipEvent, reactions, room, myMembershipIdentifier, rtcSession],
-  );
-
-  return (
-    <ReactionsContext.Provider
-      value={{
-        supportsReactions,
-        toggleRaisedHand,
-        sendReaction,
-      }}
-    >
-      {children}
-    </ReactionsContext.Provider>
-  );
-};
+  return {
+    reactions: reactionsSubject.current.asObservable(),
+    raisedHands: raisedHandsSubject.current.asObservable(),
+  };
+}

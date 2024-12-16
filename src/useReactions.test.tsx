@@ -10,7 +10,7 @@ import { act, type FC } from "react";
 import { describe, expect, test } from "vitest";
 import { RoomEvent } from "matrix-js-sdk/src/matrix";
 
-import { useReactions } from "./useReactions";
+import { useReactionsSender } from "./useReactionsSender";
 import {
   createHandRaisedReaction,
   createRedaction,
@@ -36,7 +36,7 @@ const membership: Record<string, string> = {
  */
 
 const TestComponent: FC = () => {
-  const { raisedHands } = useReactions();
+  const { raisedHands } = useReactionsSender();
   return (
     <div>
       <ul>

@@ -15,7 +15,7 @@ import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSess
 import { GridTile } from "./GridTile";
 import { mockRtcMembership, withRemoteMedia } from "../utils/test";
 import { GridTileViewModel } from "../state/TileViewModel";
-import { ReactionsProvider } from "../useReactions";
+import { ReactionsProvider } from "../useReactionsSender";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
