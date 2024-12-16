@@ -8,7 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { ConnectionState } from "livekit-client";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { type RoomMember } from "matrix-js-sdk/src/matrix";
-import { type CallMembership, type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import {
+  type CallMembership,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/src/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";

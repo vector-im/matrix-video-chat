@@ -47,7 +47,7 @@ import {
   type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
-import { RaisedHandInfo } from "../reactions";
+import type { RaisedHandInfo } from "../reactions";
 
 vi.mock("@livekit/components-core");
 
