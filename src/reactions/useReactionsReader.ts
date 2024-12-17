@@ -47,12 +47,13 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
   );
 
   reactionsSubject$.current
-    .pipe(delay(REACTION_ACTIVE_TIME_MS))
+    .pipe(delay(REACTION_ACTIVE_TIME_MS + 50))
     .subscribe((reactions) => {
       const date = new Date();
       const nextEntries = Object.fromEntries(
         Object.entries(reactions).filter(([_, hr]) => hr.expireAfter < date),
       );
+      console.log("Filtering", nextEntries);
       if (Object.keys(reactions).length === Object.keys(nextEntries).length) {
         return;
       }
