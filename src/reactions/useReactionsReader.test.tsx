@@ -259,14 +259,15 @@ test("handles a reaction", () => {
   const reactionEventId = "$my_event_id:example.org";
   const reaction = ReactionSet[1];
 
+  vitest.useFakeTimers();
   vitest.setSystemTime(0);
 
-  withTestScheduler(({ schedule, expectObservable }) => {
+  withTestScheduler(({ schedule, time, expectObservable }) => {
     renderHook(() => {
       const { reactions$ } = useReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
-      schedule("ab", {
+      schedule(`abc`, {
         a: () => {},
         b: () => {
           rtcSession.room.emit(
@@ -291,7 +292,7 @@ test("handles a reaction", () => {
           );
         },
         c: () => {
-          vitest.advanceTimersByTime(5000);
+          vitest.advanceTimersByTime(REACTION_ACTIVE_TIME_MS);
         },
       });
       expectObservable(reactions$).toBe(
@@ -440,6 +441,7 @@ test("that reactions cannot be spammed", () => {
   const reactionA = ReactionSet[1];
   const reactionB = ReactionSet[2];
 
+  vitest.useFakeTimers();
   vitest.setSystemTime(0);
 
   withTestScheduler(({ schedule, expectObservable }) => {
@@ -447,7 +449,7 @@ test("that reactions cannot be spammed", () => {
       const { reactions$ } = useReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
-      schedule("abc", {
+      schedule("abcd", {
         a: () => {},
         b: () => {
           rtcSession.room.emit(
@@ -493,9 +495,12 @@ test("that reactions cannot be spammed", () => {
             {} as IRoomTimelineData,
           );
         },
+        d: () => {
+          vitest.advanceTimersByTime(REACTION_ACTIVE_TIME_MS);
+        },
       });
       expectObservable(reactions$).toBe(
-        `ab ${REACTION_ACTIVE_TIME_MS - 1}ms c`,
+        `ab- ${REACTION_ACTIVE_TIME_MS - 2}ms d`,
         {
           a: {},
           b: {
@@ -504,7 +509,7 @@ test("that reactions cannot be spammed", () => {
               expireAfter: new Date(REACTION_ACTIVE_TIME_MS),
             },
           },
-          c: {},
+          d: {},
         },
       );
     });

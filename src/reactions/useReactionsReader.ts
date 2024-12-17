@@ -208,6 +208,9 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
         const currentReactions = reactionsSubject$.current.value;
         if (currentReactions[identifier]) {
           // We've still got a reaction from this user, ignore it to prevent spamming
+          logger.warn(
+            `Got reaction from ${identifier} but one is still playing`,
+          );
           return;
         }
         reactionsSubject$.current.next({
