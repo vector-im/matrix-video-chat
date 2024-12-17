@@ -17,6 +17,7 @@ interface Props {
   video?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
 }
 
+// This is only used in developer mode for debugging purposes, so we don't need full localization
 export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
   return (
     <div>
