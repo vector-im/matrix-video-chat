@@ -42,7 +42,7 @@ test("shows a reaction when sent", () => {
   const reaction = ReactionSet[0];
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
+      [aliceRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
     });
   });
   const span = getByRole("presentation");
@@ -60,8 +60,8 @@ test("shows two of the same reaction when sent", () => {
   const { getAllByRole } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
-      [bobRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
+      [aliceRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
+      [bobRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
     });
   });
   expect(getAllByRole("presentation")).toHaveLength(2);
@@ -77,8 +77,8 @@ test("shows two different reactions when sent", () => {
   const { getAllByRole } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reactionA, ttl: 0 },
-      [bobRtcMember.deviceId]: { reactionOption: reactionB, ttl: 0 },
+      [aliceRtcMember.deviceId]: { reactionOption: reactionA, expireAfter: 0 },
+      [bobRtcMember.deviceId]: { reactionOption: reactionB, expireAfter: 0 },
     });
   });
   const [reactionElementA, reactionElementB] = getAllByRole("presentation");
@@ -96,7 +96,7 @@ test("hides reactions when reaction animations are disabled", () => {
   const { container } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
+      [aliceRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
     });
   });
   expect(container.getElementsByTagName("span")).toHaveLength(0);

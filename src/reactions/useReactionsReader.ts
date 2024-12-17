@@ -15,7 +15,7 @@ import {
   EventType,
   RoomEvent as MatrixRoomEvent,
 } from "matrix-js-sdk/src/matrix";
-import { BehaviorSubject, type Observable } from "rxjs";
+import { BehaviorSubject, delay, type Observable } from "rxjs";
 
 import {
   ElementCallReactionEventType,
@@ -28,7 +28,7 @@ import {
 import { useLatest } from "../useLatest";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 
-const REACTION_ACTIVE_TIME_MS = 3000;
+export const REACTION_ACTIVE_TIME_MS = 3000;
 
 /**
  * Listens for reactions from a RTCSession and populates subjects
@@ -45,6 +45,19 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
   const reactionsSubject$ = useRef(
     new BehaviorSubject<Record<string, ReactionInfo>>({}),
   );
+
+  reactionsSubject$.current
+    .pipe(delay(REACTION_ACTIVE_TIME_MS))
+    .subscribe((reactions) => {
+      const date = new Date();
+      const nextEntries = Object.fromEntries(
+        Object.entries(reactions).filter(([_, hr]) => hr.expireAfter < date),
+      );
+      if (Object.keys(reactions).length === Object.keys(nextEntries).length) {
+        return;
+      }
+      reactionsSubject$.current.next(nextEntries);
+    });
 
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const latestMemberships = useLatest(memberships);
@@ -132,7 +145,6 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
 
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
-    const reactionTimeouts = new Set<NodeJS.Timeout>();
     const handleReactionEvent = (event: MatrixEvent): void => {
       // Decrypted events might come from a different room
       if (event.getRoomId() !== room.roomId) return;
@@ -178,7 +190,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
           [Symbol.iterator]();
         const emoji = segment.next().value?.segment;
 
-        if (!emoji) {
+        if (!emoji?.trim()) {
           logger.warn(
             `Reaction had no emoji from ${reactionEventId} after splitting`,
           );
@@ -198,23 +210,11 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
           // We've still got a reaction from this user, ignore it to prevent spamming
           return;
         }
-        const timeout = globalThis.setTimeout(() => {
-          // Clear the reaction after some time.
-          reactionsSubject$.current.next(
-            Object.fromEntries(
-              Object.entries(reactionsSubject$.current.value).filter(
-                ([id]) => id !== identifier,
-              ),
-            ),
-          );
-          reactionTimeouts.delete(timeout);
-        }, REACTION_ACTIVE_TIME_MS);
-        reactionTimeouts.add(timeout);
         reactionsSubject$.current.next({
           ...currentReactions,
           [identifier]: {
             reactionOption: reaction,
-            ttl: 0,
+            expireAfter: new Date(Date.now() + REACTION_ACTIVE_TIME_MS),
           },
         });
       } else if (event.getType() === EventType.Reaction) {
@@ -264,15 +264,11 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
     // may still be sending.
     room.on(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
 
-    const innerReactionsSubject$ = reactionsSubject$.current;
     return (): void => {
       room.off(MatrixRoomEvent.Timeline, handleReactionEvent);
       room.off(MatrixRoomEvent.Redaction, handleReactionEvent);
       room.client.off(MatrixEventEvent.Decrypted, handleReactionEvent);
       room.off(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
-      reactionTimeouts.forEach((t) => clearTimeout(t));
-      // If we're clearing timeouts, we also clear all reactions.
-      innerReactionsSubject$.next({});
     };
   }, [
     room,

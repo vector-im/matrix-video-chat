@@ -198,10 +198,6 @@ export interface RaisedHandInfo {
 }
 
 export interface ReactionInfo {
-  /**
-   * ...
-   */
-  ttl: number;
-
+  expireAfter: Date;
   reactionOption: ReactionOption;
 }
