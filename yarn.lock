@@ -6571,7 +6571,7 @@ matrix-js-sdk@matrix-org/matrix-js-sdk#develop:
   resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/d1de32ea2773df4c6f8a956678bbd19b6d022475"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^9.0.0"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^11.0.0"
     "@matrix-org/olm" "3.2.15"
     another-json "^0.2.0"
     bs58 "^6.0.0"
