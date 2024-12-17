@@ -139,8 +139,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         livekitRoom,
         props.e2eeSystem,
         connStateObservable$,
-        reader.current.raisedHands,
-        reader.current.reactions,
+        reader.current.raisedHands$,
+        reader.current.reactions$,
       );
       setVm(vm);
       return (): void => vm.destroy();

@@ -48,7 +48,7 @@ export function ReactionsAudioRenderer({
   }, [soundCache, shouldPlay]);
 
   useEffect(() => {
-    const sub = vm.audibleReactions.subscribe((newReactions) => {
+    const sub = vm.audibleReactions$.subscribe((newReactions) => {
       for (const reactionName of newReactions) {
         if (soundMap[reactionName]) {
           void audioEngineRef.current?.playSound(reactionName);

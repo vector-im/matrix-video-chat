@@ -76,7 +76,7 @@ export const ReactionsSenderProvider = ({
   }, [memberships, myUserId]);
 
   const myReaction = useObservableEagerState(
-    vm.reactions.pipe(
+    vm.reactions$.pipe(
       map((v) =>
         myMembershipIdentifier !== undefined
           ? v[myMembershipIdentifier]
@@ -86,7 +86,7 @@ export const ReactionsSenderProvider = ({
   );
 
   const myRaisedHand = useObservableEagerState(
-    vm.handsRaised.pipe(
+    vm.handsRaised$.pipe(
       map((v) =>
         myMembershipIdentifier !== undefined
           ? v[myMembershipIdentifier]

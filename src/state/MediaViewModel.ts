@@ -372,8 +372,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    public readonly handRaised: Observable<Date | null>,
-    public readonly reaction: Observable<ReactionOption | null>,
+    public readonly handRaised$: Observable<Date | null>,
+    public readonly reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -440,8 +440,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    handRaised: Observable<Date | null>,
-    reaction: Observable<ReactionOption | null>,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -449,8 +449,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       participant$,
       encryptionSystem,
       livekitRoom,
-      handRaised,
-      reaction,
+      handRaised$,
+      reaction$,
     );
   }
 }
@@ -511,8 +511,8 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    handRaised: Observable<Date | null>,
-    reaction: Observable<ReactionOption | null>,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -520,8 +520,8 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       participant$,
       encryptionSystem,
       livekitRoom,
-      handRaised,
-      reaction,
+      handRaised$,
+      reaction$,
     );
 
     // Sync the local volume with LiveKit

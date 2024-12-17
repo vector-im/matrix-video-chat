@@ -194,7 +194,7 @@ function withCallViewModel(
   speaking: Map<Participant, Observable<boolean>>,
   continuation: (
     vm: CallViewModel,
-    subjects: { raisedHands: BehaviorSubject<Record<string, RaisedHandInfo>> },
+    subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
   ) => void,
 ): void {
   const room = mockMatrixRoom({
@@ -240,7 +240,7 @@ function withCallViewModel(
     { remoteParticipants$ },
   );
 
-  const raisedHands = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
+  const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
 
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
@@ -249,7 +249,7 @@ function withCallViewModel(
       kind: E2eeType.PER_PARTICIPANT,
     },
     connectionState$,
-    raisedHands,
+    raisedHands$,
     new BehaviorSubject({}),
   );
 
@@ -261,7 +261,7 @@ function withCallViewModel(
     roomEventSelectorSpy!.mockRestore();
   });
 
-  continuation(vm, { raisedHands });
+  continuation(vm, { raisedHands$: raisedHands$ });
 }
 
 test("participants are retained during a focus switch", () => {
@@ -802,7 +802,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
       of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
-      (vm, { raisedHands }) => {
+      (vm, { raisedHands$ }) => {
         schedule("ab", {
           a: () => {
             // We imagine that only three tiles (the first three) will be visible
@@ -814,7 +814,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
             });
           },
           b: () => {
-            raisedHands.next({
+            raisedHands$.next({
               [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: {
                 time: new Date(),
                 reactionEventId: "",

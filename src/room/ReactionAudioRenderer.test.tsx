@@ -80,8 +80,10 @@ test("preloads all audio elements", () => {
 });
 
 test("will play an audio sound when there is a reaction", () => {
-  const { vm, reactionsSubject$: reactionsSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -93,7 +95,7 @@ test("will play an audio sound when there is a reaction", () => {
     );
   }
   act(() => {
-    reactionsSubject.next({
+    reactionsSubject$.next({
       [aliceRtcMember.deviceId]: { reactionOption: chosenReaction, ttl: 0 },
     });
   });
@@ -101,8 +103,10 @@ test("will play an audio sound when there is a reaction", () => {
 });
 
 test("will play the generic audio sound when there is soundless reaction", () => {
-  const { vm, reactionsSubject$: reactionsSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -114,7 +118,7 @@ test("will play the generic audio sound when there is soundless reaction", () =>
     );
   }
   act(() => {
-    reactionsSubject.next({
+    reactionsSubject$.next({
       [aliceRtcMember.deviceId]: { reactionOption: chosenReaction, ttl: 0 },
     });
   });
@@ -122,8 +126,10 @@ test("will play the generic audio sound when there is soundless reaction", () =>
 });
 
 test("will play multiple audio sounds when there are multiple different reactions", () => {
-  const { vm, reactionsSubject$: reactionsSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -135,7 +141,7 @@ test("will play multiple audio sounds when there are multiple different reaction
     );
   }
   act(() => {
-    reactionsSubject.next({
+    reactionsSubject$.next({
       [aliceRtcMember.deviceId]: { reactionOption: reaction1, ttl: 0 },
       [bobRtcMember.deviceId]: { reactionOption: reaction2, ttl: 0 },
       [localRtcMember.deviceId]: { reactionOption: reaction1, ttl: 0 },

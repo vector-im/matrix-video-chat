@@ -258,8 +258,8 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
-    handRaised: Observable<Date | null>,
-    reaction: Observable<ReactionOption | null>,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
     this.participant$ = new BehaviorSubject(participant);
 
@@ -270,8 +270,8 @@ class UserMedia {
         this.participant$.asObservable() as Observable<LocalParticipant>,
         encryptionSystem,
         livekitRoom,
-        handRaised,
-        reaction,
+        handRaised$,
+        reaction$,
       );
     } else {
       this.vm = new RemoteUserMediaViewModel(
@@ -282,8 +282,8 @@ class UserMedia {
         >,
         encryptionSystem,
         livekitRoom,
-        handRaised,
-        reaction,
+        handRaised$,
+        reaction$,
       );
     }
 
@@ -544,10 +544,10 @@ export class CallViewModel extends ViewModel {
                       participant,
                       this.encryptionSystem,
                       this.livekitRoom,
-                      this.handsRaised.pipe(
+                      this.handsRaised$.pipe(
                         map((v) => v[matrixIdentifier]?.time ?? null),
                       ),
-                      this.reactions.pipe(
+                      this.reactions$.pipe(
                         map((v) => v[matrixIdentifier] ?? undefined),
                       ),
                     ),
@@ -711,7 +711,7 @@ export class CallViewModel extends ViewModel {
               m.speaker$,
               m.presenter$,
               m.vm.videoEnabled$,
-              m.vm.handRaised,
+              m.vm.handRaised$,
               m.vm instanceof LocalUserMediaViewModel
                 ? m.vm.alwaysShow$
                 : of(false),
@@ -1203,7 +1203,7 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  public readonly reactions = this.reactionsSubject.pipe(
+  public readonly reactions$ = this.reactionsSubject$.pipe(
     map((v) =>
       Object.fromEntries(
         Object.entries(v).map(([a, { reactionOption }]) => [a, reactionOption]),
@@ -1211,13 +1211,13 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  public readonly handsRaised = this.handsRaisedSubject.pipe();
+  public readonly handsRaised$ = this.handsRaisedSubject$.pipe();
 
   /**
    * Emits an array of reactions that should be visible on the screen.
    */
-  public readonly visibleReactions = showReactions.value$
-    .pipe(switchMap((show) => (show ? this.reactions : of({}))))
+  public readonly visibleReactions$ = showReactions.value$
+    .pipe(switchMap((show) => (show ? this.reactions$ : of({}))))
     .pipe(
       scan<
         Record<string, ReactionOption>,
@@ -1238,10 +1238,10 @@ export class CallViewModel extends ViewModel {
   /**
    * Emits an array of reactions that should be played.
    */
-  public readonly audibleReactions = playReactionsSound.value$
+  public readonly audibleReactions$ = playReactionsSound.value$
     .pipe(
       switchMap((show) =>
-        show ? this.reactions : of<Record<string, ReactionOption>>({}),
+        show ? this.reactions$ : of<Record<string, ReactionOption>>({}),
       ),
     )
     .pipe(
@@ -1267,7 +1267,7 @@ export class CallViewModel extends ViewModel {
    * Emits an event every time a new hand is raised in
    * the call.
    */
-  public readonly newHandRaised = this.handsRaised.pipe(
+  public readonly newHandRaised$ = this.handsRaised$.pipe(
     map((v) => Object.keys(v).length),
     scan(
       (acc, newValue) => ({
@@ -1285,10 +1285,12 @@ export class CallViewModel extends ViewModel {
     private readonly livekitRoom: LivekitRoom,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly connectionState$: Observable<ECConnectionState>,
-    private readonly handsRaisedSubject: Observable<
+    private readonly handsRaisedSubject$: Observable<
       Record<string, RaisedHandInfo>
     >,
-    private readonly reactionsSubject: Observable<Record<string, ReactionInfo>>,
+    private readonly reactionsSubject$: Observable<
+      Record<string, ReactionInfo>
+    >,
   ) {
     super();
   }

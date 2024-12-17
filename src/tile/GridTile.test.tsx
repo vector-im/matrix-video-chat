@@ -53,8 +53,8 @@ test("GridTile is accessible", async () => {
         memberships: [],
       } as unknown as MatrixRTCSession;
       const cVm = {
-        reactions: of({}),
-        handsRaised: of({}),
+        reactions$: of({}),
+        handsRaised$: of({}),
       } as Partial<CallViewModel> as CallViewModel;
       const { container } = render(
         <ReactionsSenderProvider vm={cVm} rtcSession={fakeRtcSession}>

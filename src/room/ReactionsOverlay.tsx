@@ -12,7 +12,7 @@ import styles from "./ReactionsOverlay.module.css";
 import { type CallViewModel } from "../state/CallViewModel";
 
 export function ReactionsOverlay({ vm }: { vm: CallViewModel }): ReactNode {
-  const reactionsIcons = useObservableState(vm.visibleReactions);
+  const reactionsIcons = useObservableState(vm.visibleReactions$);
   return (
     <div className={styles.container}>
       {reactionsIcons?.map(({ sender, emoji, startX }) => (

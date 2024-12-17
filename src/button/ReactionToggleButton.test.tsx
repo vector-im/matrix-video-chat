@@ -53,11 +53,8 @@ test("Can open menu", async () => {
 
 test("Can raise hand", async () => {
   const user = userEvent.setup();
-  const {
-    vm,
-    rtcSession,
-    handRaisedSubject$: handRaisedSubject,
-  } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, rtcSession, handRaisedSubject$ } =
+    getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
@@ -76,7 +73,7 @@ test("Can raise hand", async () => {
   );
   act(() => {
     // Mock receiving a reaction.
-    handRaisedSubject.next({
+    handRaisedSubject$.next({
       [localIdent]: {
         time: new Date(),
         reactionEventId: "",
@@ -90,18 +87,15 @@ test("Can raise hand", async () => {
 test("Can lower hand", async () => {
   const reactionEventId = "$my-reaction-event:example.org";
   const user = userEvent.setup();
-  const {
-    vm,
-    rtcSession,
-    handRaisedSubject$: handRaisedSubject,
-  } = getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, rtcSession, handRaisedSubject$ } =
+    getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
   await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.raise_hand"));
   act(() => {
-    handRaisedSubject.next({
+    handRaisedSubject$.next({
       [localIdent]: {
         time: new Date(),
         reactionEventId,
@@ -117,7 +111,7 @@ test("Can lower hand", async () => {
   );
   act(() => {
     // Mock receiving a redacted reaction.
-    handRaisedSubject.next({});
+    handRaisedSubject$.next({});
   });
   expect(container).toMatchSnapshot();
 });

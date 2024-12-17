@@ -34,12 +34,14 @@ test("defaults to showing no reactions", () => {
 
 test("shows a reaction when sent", () => {
   showReactions.setValue(true);
-  const { vm, reactionsSubject$: reactionsSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   const { getByRole } = render(<ReactionsOverlay vm={vm} />);
   const reaction = ReactionSet[0];
   act(() => {
-    reactionsSubject.next({
+    reactionsSubject$.next({
       [aliceRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
     });
   });
@@ -51,11 +53,13 @@ test("shows a reaction when sent", () => {
 test("shows two of the same reaction when sent", () => {
   showReactions.setValue(true);
   const reaction = ReactionSet[0];
-  const { vm, reactionsSubject$: reactionsSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   const { getAllByRole } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
-    reactionsSubject.next({
+    reactionsSubject$.next({
       [aliceRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
       [bobRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
     });
@@ -66,11 +70,13 @@ test("shows two of the same reaction when sent", () => {
 test("shows two different reactions when sent", () => {
   showReactions.setValue(true);
   const [reactionA, reactionB] = ReactionSet;
-  const { vm, reactionsSubject$: reactionsSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   const { getAllByRole } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
-    reactionsSubject.next({
+    reactionsSubject$.next({
       [aliceRtcMember.deviceId]: { reactionOption: reactionA, ttl: 0 },
       [bobRtcMember.deviceId]: { reactionOption: reactionB, ttl: 0 },
     });
@@ -83,11 +89,13 @@ test("shows two different reactions when sent", () => {
 test("hides reactions when reaction animations are disabled", () => {
   showReactions.setValue(false);
   const reaction = ReactionSet[0];
-  const { vm, reactionsSubject$: reactionsSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   const { container } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
-    reactionsSubject.next({
+    reactionsSubject$.next({
       [aliceRtcMember.deviceId]: { reactionOption: reaction, ttl: 0 },
     });
   });

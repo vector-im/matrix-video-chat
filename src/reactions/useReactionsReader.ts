@@ -36,32 +36,32 @@ const REACTION_ACTIVE_TIME_MS = 3000;
  * @param rtcSession
  */
 export default function useReactionsReader(rtcSession: MatrixRTCSession): {
-  raisedHands: Observable<Record<string, RaisedHandInfo>>;
-  reactions: Observable<Record<string, ReactionInfo>>;
+  raisedHands$: Observable<Record<string, RaisedHandInfo>>;
+  reactions$: Observable<Record<string, ReactionInfo>>;
 } {
-  const raisedHandsSubject = useRef(
+  const raisedHandsSubject$ = useRef(
     new BehaviorSubject<Record<string, RaisedHandInfo>>({}),
   );
-  const reactionsSubject = useRef(
+  const reactionsSubject$ = useRef(
     new BehaviorSubject<Record<string, ReactionInfo>>({}),
   );
 
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const latestMemberships = useLatest(memberships);
-  const latestRaisedHands = useLatest(raisedHandsSubject.current);
+  const latestRaisedHands = useLatest(raisedHandsSubject$.current);
   const room = rtcSession.room;
 
   const addRaisedHand = useCallback((userId: string, info: RaisedHandInfo) => {
-    raisedHandsSubject.current.next({
-      ...raisedHandsSubject.current.value,
+    raisedHandsSubject$.current.next({
+      ...raisedHandsSubject$.current.value,
       [userId]: info,
     });
   }, []);
 
   const removeRaisedHand = useCallback((userId: string) => {
-    raisedHandsSubject.current.next(
+    raisedHandsSubject$.current.next(
       Object.fromEntries(
-        Object.entries(raisedHandsSubject.current.value).filter(
+        Object.entries(raisedHandsSubject$.current.value).filter(
           ([uId]) => uId !== userId,
         ),
       ),
@@ -90,7 +90,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
     };
 
     // Remove any raised hands for users no longer joined to the call.
-    for (const identifier of Object.keys(raisedHandsSubject).filter(
+    for (const identifier of Object.keys(raisedHandsSubject$).filter(
       (rhId) => !memberships.find((u) => u.sender == rhId),
     )) {
       removeRaisedHand(identifier);
@@ -104,8 +104,8 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
       }
       const identifier = `${m.sender}:${m.deviceId}`;
       if (
-        raisedHandsSubject.current.value[identifier] &&
-        raisedHandsSubject.current.value[identifier].membershipEventId !==
+        raisedHandsSubject$.current.value[identifier] &&
+        raisedHandsSubject$.current.value[identifier].membershipEventId !==
           m.eventId
       ) {
         // Membership event for sender has changed since the hand
@@ -193,16 +193,16 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
           ...ReactionSet.find((r) => r.name === content.name),
         };
 
-        const currentReactions = reactionsSubject.current.value;
+        const currentReactions = reactionsSubject$.current.value;
         if (currentReactions[identifier]) {
           // We've still got a reaction from this user, ignore it to prevent spamming
           return;
         }
         const timeout = globalThis.setTimeout(() => {
           // Clear the reaction after some time.
-          reactionsSubject.current.next(
+          reactionsSubject$.current.next(
             Object.fromEntries(
-              Object.entries(reactionsSubject.current.value).filter(
+              Object.entries(reactionsSubject$.current.value).filter(
                 ([id]) => id !== identifier,
               ),
             ),
@@ -210,7 +210,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
           reactionTimeouts.delete(timeout);
         }, REACTION_ACTIVE_TIME_MS);
         reactionTimeouts.add(timeout);
-        reactionsSubject.current.next({
+        reactionsSubject$.current.next({
           ...currentReactions,
           [identifier]: {
             reactionOption: reaction,
@@ -264,7 +264,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
     // may still be sending.
     room.on(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
 
-    const innerReactionsSubject = reactionsSubject.current;
+    const innerReactionsSubject$ = reactionsSubject$.current;
     return (): void => {
       room.off(MatrixRoomEvent.Timeline, handleReactionEvent);
       room.off(MatrixRoomEvent.Redaction, handleReactionEvent);
@@ -272,7 +272,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
       room.off(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
       reactionTimeouts.forEach((t) => clearTimeout(t));
       // If we're clearing timeouts, we also clear all reactions.
-      innerReactionsSubject.next({});
+      innerReactionsSubject$.next({});
     };
   }, [
     room,
@@ -283,7 +283,7 @@ export default function useReactionsReader(rtcSession: MatrixRTCSession): {
   ]);
 
   return {
-    reactions: reactionsSubject.current.asObservable(),
-    raisedHands: raisedHandsSubject.current.asObservable(),
+    reactions$: reactionsSubject$.current.asObservable(),
+    raisedHands$: raisedHandsSubject$.current.asObservable(),
   };
 }

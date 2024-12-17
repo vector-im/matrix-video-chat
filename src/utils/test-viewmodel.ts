@@ -66,17 +66,17 @@ export function getBasicCallViewModelEnvironment(
     roomId: matrixRoomId,
   });
 
-  const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>(
+  const remoteRtcMemberships$ = new BehaviorSubject<CallMembership[]>(
     initialRemoteRtcMemberships,
   );
 
-  const handRaisedSubject = new BehaviorSubject({});
-  const reactionsSubject = new BehaviorSubject({});
+  const handRaisedSubject$ = new BehaviorSubject({});
+  const reactionsSubject$ = new BehaviorSubject({});
 
   const rtcSession = new MockRTCSession(
     matrixRoom,
     localRtcMember,
-  ).withMemberships(remoteRtcMemberships);
+  ).withMemberships(remoteRtcMemberships$);
 
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
@@ -85,14 +85,14 @@ export function getBasicCallViewModelEnvironment(
       kind: E2eeType.PER_PARTICIPANT,
     },
     of(ConnectionState.Connected),
-    handRaisedSubject,
-    reactionsSubject,
+    handRaisedSubject$,
+    reactionsSubject$,
   );
   return {
     vm,
-    remoteRtcMemberships$: remoteRtcMemberships,
+    remoteRtcMemberships$: remoteRtcMemberships$,
     rtcSession,
-    handRaisedSubject$: handRaisedSubject,
-    reactionsSubject$: reactionsSubject,
+    handRaisedSubject$: handRaisedSubject$,
+    reactionsSubject$: reactionsSubject$,
   };
 }

@@ -97,8 +97,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
-    const handRaised = useObservableState(vm.handRaised);
-    const reaction = useObservableState(vm.reaction);
+    const handRaised = useObservableState(vm.handRaised$);
+    const reaction = useObservableState(vm.reaction$);
 
     const AudioIcon = locallyMuted
       ? VolumeOffSolidIcon

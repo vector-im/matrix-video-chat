@@ -66,36 +66,42 @@ beforeEach(() => {
  * a noise every time.
  */
 test("plays one sound when entering a call", () => {
-  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   // Joining a call usually means remote participants are added later.
   act(() => {
-    remoteRtcMemberships.next([aliceRtcMember, bobRtcMember]);
+    remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
   });
   expect(playSound).toHaveBeenCalledOnce();
 });
 
 test("plays a sound when a user joins", () => {
-  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    remoteRtcMemberships.next([aliceRtcMember, bobRtcMember]);
+    remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
   });
   // Play a sound when joining a call.
   expect(playSound).toBeCalledWith("join");
 });
 
 test("plays a sound when a user leaves", () => {
-  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    remoteRtcMemberships.next([]);
+    remoteRtcMemberships$.next([]);
   });
   expect(playSound).toBeCalledWith("left");
 });
@@ -108,13 +114,15 @@ test("plays no sound when the participant list is more than the maximum size", (
     );
   }
 
-  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
-    getBasicCallViewModelEnvironment([local, alice], mockRtcMemberships);
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment(
+    [local, alice],
+    mockRtcMemberships,
+  );
 
   render(<CallEventAudioRenderer vm={vm} />);
   expect(playSound).not.toBeCalled();
   act(() => {
-    remoteRtcMemberships.next(
+    remoteRtcMemberships$.next(
       mockRtcMemberships.slice(0, MAX_PARTICIPANT_COUNT_FOR_SOUND - 1),
     );
   });
@@ -122,12 +130,14 @@ test("plays no sound when the participant list is more than the maximum size", (
 });
 
 test("plays one sound when a hand is raised", () => {
-  const { vm, handRaisedSubject$: handRaisedSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, handRaisedSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    handRaisedSubject.next({
+    handRaisedSubject$.next({
       [bobRtcMember.callId]: {
         time: new Date(),
         membershipEventId: "",
@@ -139,12 +149,14 @@ test("plays one sound when a hand is raised", () => {
 });
 
 test("should not play a sound when a hand raise is retracted", () => {
-  const { vm, handRaisedSubject$: handRaisedSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const { vm, handRaisedSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
-    handRaisedSubject.next({
+    handRaisedSubject$.next({
       ["foo"]: {
         time: new Date(),
         membershipEventId: "",
@@ -159,7 +171,7 @@ test("should not play a sound when a hand raise is retracted", () => {
   });
   expect(playSound).toHaveBeenCalledTimes(2);
   act(() => {
-    handRaisedSubject.next({
+    handRaisedSubject$.next({
       ["foo"]: {
         time: new Date(),
         membershipEventId: "",

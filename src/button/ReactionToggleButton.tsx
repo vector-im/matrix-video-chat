@@ -181,10 +181,10 @@ export function ReactionToggleButton({
   const [errorText, setErrorText] = useState<string>();
 
   const isHandRaised = useObservableState(
-    vm.handsRaised.pipe(map((v) => !!v[identifier])),
+    vm.handsRaised$.pipe(map((v) => !!v[identifier])),
   );
   const canReact = useObservableState(
-    vm.reactions.pipe(map((v) => !v[identifier])),
+    vm.reactions$.pipe(map((v) => !v[identifier])),
   );
 
   useEffect(() => {
