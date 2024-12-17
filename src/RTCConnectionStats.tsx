@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC } from "react";
-import { Text, Tooltip, TooltipProvider } from "@vector-im/compound-web";
+import { IconButton, Text } from "@vector-im/compound-web";
 import {
   MicOnSolidIcon,
   VideoCallSolidIcon,
@@ -21,54 +21,56 @@ interface Props {
 export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
   return (
     <div>
-      <TooltipProvider>
-        {audio && (
-          <div>
-            <Tooltip label={JSON.stringify(audio, null, 2)}>
-              <MicOnSolidIcon />
-            </Tooltip>
-            {"jitter" in audio && typeof audio.jitter === "number" && (
-              <Text as="span" size="xs" title="jitter">
-                &nbsp;{(audio.jitter * 1000).toFixed(0)}ms
+      {audio && (
+        <div>
+          <IconButton
+            onClick={() => alert(JSON.stringify(audio, null, 2))}
+            size="sm"
+          >
+            <MicOnSolidIcon />
+          </IconButton>
+          {"jitter" in audio && typeof audio.jitter === "number" && (
+            <Text as="span" size="xs" title="jitter">
+              &nbsp;{(audio.jitter * 1000).toFixed(0)}ms
+            </Text>
+          )}
+        </div>
+      )}
+      {video && (
+        <div>
+          <IconButton
+            onClick={() => alert(JSON.stringify(video, null, 2))}
+            size="sm"
+          >
+            <VideoCallSolidIcon />
+          </IconButton>
+          {video?.framesPerSecond && (
+            <Text as="span" size="xs" title="frame rate">
+              &nbsp;{video.framesPerSecond.toFixed(0)}fps
+            </Text>
+          )}
+          {"jitter" in video && typeof video.jitter === "number" && (
+            <Text as="span" size="xs" title="jitter">
+              &nbsp;{(video.jitter * 1000).toFixed(0)}ms
+            </Text>
+          )}
+          {"frameHeight" in video &&
+            typeof video.frameHeight === "number" &&
+            "frameWidth" in video &&
+            typeof video.frameWidth === "number" && (
+              <Text as="span" size="xs" title="frame size">
+                &nbsp;{video.frameWidth}x{video.frameHeight}
               </Text>
             )}
-          </div>
-        )}
-        {video && (
-          <div>
-            {video && (
-              <Tooltip label={JSON.stringify(video, null, 2)}>
-                <VideoCallSolidIcon />
-              </Tooltip>
-            )}
-            {video?.framesPerSecond && (
-              <Text as="span" size="xs" title="frame rate">
-                &nbsp;{video.framesPerSecond.toFixed(0)}fps
+          {"qualityLimitationReason" in video &&
+            typeof video.qualityLimitationReason === "string" &&
+            video.qualityLimitationReason !== "none" && (
+              <Text as="span" size="xs" title="quality limitation reason">
+                &nbsp;{video.qualityLimitationReason}
               </Text>
             )}
-            {"jitter" in video && typeof video.jitter === "number" && (
-              <Text as="span" size="xs" title="jitter">
-                &nbsp;{(video.jitter * 1000).toFixed(0)}ms
-              </Text>
-            )}
-            {"frameHeight" in video &&
-              typeof video.frameHeight === "number" &&
-              "frameWidth" in video &&
-              typeof video.frameWidth === "number" && (
-                <Text as="span" size="xs" title="frame size">
-                  &nbsp;{video.frameWidth}x{video.frameHeight}
-                </Text>
-              )}
-            {"qualityLimitationReason" in video &&
-              typeof video.qualityLimitationReason === "string" &&
-              video.qualityLimitationReason !== "none" && (
-                <Text as="span" size="xs" title="quality limitation reason">
-                  &nbsp;{video.qualityLimitationReason}
-                </Text>
-              )}
-          </div>
-        )}
-      </TooltipProvider>
+        </div>
+      )}
     </div>
   );
 };
