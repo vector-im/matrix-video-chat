@@ -126,15 +126,15 @@ export type LayoutSummary =
   | OneOnOneLayoutSummary
   | PipLayoutSummary;
 
-function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
-  return l.pipe(
+function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
+  return l$.pipe(
     switchMap((l) => {
       switch (l.type) {
         case "grid":
           return combineLatest(
             [
-              l.spotlight?.media ?? of(undefined),
-              ...l.grid.map((vm) => vm.media),
+              l.spotlight?.media$ ?? of(undefined),
+              ...l.grid.map((vm) => vm.media$),
             ],
             (spotlight, ...grid) => ({
               type: l.type,
@@ -145,7 +145,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
         case "spotlight-landscape":
         case "spotlight-portrait":
           return combineLatest(
-            [l.spotlight.media, ...l.grid.map((vm) => vm.media)],
+            [l.spotlight.media$, ...l.grid.map((vm) => vm.media$)],
             (spotlight, ...grid) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -154,7 +154,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "spotlight-expanded":
           return combineLatest(
-            [l.spotlight.media, l.pip?.media ?? of(undefined)],
+            [l.spotlight.media$, l.pip?.media$ ?? of(undefined)],
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -163,7 +163,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "one-on-one":
           return combineLatest(
-            [l.local.media, l.remote.media],
+            [l.local.media$, l.remote.media$],
             (local, remote) => ({
               type: l.type,
               local: local.id,
@@ -171,7 +171,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
             }),
           );
         case "pip":
-          return l.spotlight.media.pipe(
+          return l.spotlight.media$.pipe(
             map((spotlight) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -188,9 +188,9 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
 }
 
 function withCallViewModel(
-  remoteParticipants: Observable<RemoteParticipant[]>,
-  rtcMembers: Observable<Partial<CallMembership>[]>,
-  connectionState: Observable<ECConnectionState>,
+  remoteParticipants$: Observable<RemoteParticipant[]>,
+  rtcMembers$: Observable<Partial<CallMembership>[]>,
+  connectionState$: Observable<ECConnectionState>,
   speaking: Map<Participant, Observable<boolean>>,
   continuation: (
     vm: CallViewModel,
@@ -208,10 +208,10 @@ function withCallViewModel(
     room,
     localRtcMember,
     [],
-  ).withMemberships(rtcMembers);
+  ).withMemberships(rtcMembers$);
   const participantsSpy = vi
     .spyOn(ComponentsCore, "connectedParticipantsObserver")
-    .mockReturnValue(remoteParticipants);
+    .mockReturnValue(remoteParticipants$);
   const mediaSpy = vi
     .spyOn(ComponentsCore, "observeParticipantMedia")
     .mockImplementation((p) =>
@@ -237,7 +237,7 @@ function withCallViewModel(
 
   const liveKitRoom = mockLivekitRoom(
     { localParticipant },
-    { remoteParticipants },
+    { remoteParticipants$ },
   );
 
   const raisedHands = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
@@ -248,7 +248,7 @@ function withCallViewModel(
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    connectionState,
+    connectionState$,
     raisedHands,
     new BehaviorSubject({}),
   );
@@ -285,7 +285,7 @@ test("participants are retained during a focus switch", () => {
       }),
       new Map(),
       (vm) => {
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -329,7 +329,7 @@ test("screen sharing activates spotlight layout", () => {
           g: () => vm.setGridMode("grid"),
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -372,7 +372,7 @@ test("screen sharing activates spotlight layout", () => {
             },
           },
         );
-        expectObservable(vm.showSpeakingIndicators).toBe(
+        expectObservable(vm.showSpeakingIndicators$).toBe(
           expectedShowSpeakingMarbles,
           {
             y: true,
@@ -411,13 +411,13 @@ test("participants stay in the same order unless to appear/disappear", () => {
           a: () => {
             // We imagine that only three tiles (the first three) will be visible
             // on screen at a time
-            vm.layout.subscribe((layout) => {
+            vm.layout$.subscribe((layout) => {
               if (layout.type === "grid") layout.setVisibleTiles(3);
             });
           },
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -464,7 +464,7 @@ test("participants adjust order when space becomes constrained", () => {
       ]),
       (vm) => {
         let setVisibleTiles: ((value: number) => void) | null = null;
-        vm.layout.subscribe((layout) => {
+        vm.layout$.subscribe((layout) => {
           if (layout.type === "grid") setVisibleTiles = layout.setVisibleTiles;
         });
         schedule(visibilityInputMarbles, {
@@ -472,7 +472,7 @@ test("participants adjust order when space becomes constrained", () => {
           b: () => setVisibleTiles!(3),
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -518,7 +518,7 @@ test("spotlight speakers swap places", () => {
       (vm) => {
         schedule(modeInputMarbles, { s: () => vm.setGridMode("spotlight") });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -566,7 +566,7 @@ test("layout enters picture-in-picture mode when requested", () => {
           d: () => window.controls.disablePip(),
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -609,12 +609,12 @@ test("spotlight remembers whether it's expanded", () => {
         schedule(expandInputMarbles, {
           a: () => {
             let toggle: () => void;
-            vm.toggleSpotlightExpanded.subscribe((val) => (toggle = val!));
+            vm.toggleSpotlightExpanded$.subscribe((val) => (toggle = val!));
             toggle!();
           },
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -671,7 +671,7 @@ test("participants must have a MatrixRTCSession to be visible", () => {
       new Map(),
       (vm) => {
         vm.setGridMode("grid");
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -715,7 +715,7 @@ test("shows participants without MatrixRTCSession when enabled in settings", () 
         new Map(),
         (vm) => {
           vm.setGridMode("grid");
-          expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
             expectedLayoutMarbles,
             {
               a: {
@@ -762,7 +762,7 @@ it("should show at least one tile per MatrixRTCSession", () => {
       new Map(),
       (vm) => {
         vm.setGridMode("grid");
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -807,7 +807,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
           a: () => {
             // We imagine that only three tiles (the first three) will be visible
             // on screen at a time
-            vm.layout.subscribe((layout) => {
+            vm.layout$.subscribe((layout) => {
               if (layout.type === "grid") {
                 layout.setVisibleTiles(2);
               }
@@ -823,7 +823,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
             });
           },
         });
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {

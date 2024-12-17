@@ -115,8 +115,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     sfuConfig,
     props.e2eeSystem,
   );
-  const connStateObservable = useObservable(
-    (inputs) => inputs.pipe(map(([connState]) => connState)),
+  const connStateObservable$ = useObservable(
+    (inputs$) => inputs$.pipe(map(([connState]) => connState)),
     [connState],
   );
   const [vm, setVm] = useState<CallViewModel | null>(null);
@@ -138,7 +138,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
         props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
-        connStateObservable,
+        connStateObservable$,
         reader.current.raisedHands,
         reader.current.reactions,
       );
@@ -146,11 +146,11 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       return (): void => vm.destroy();
     }
   }, [
-    reader,
     props.rtcSession,
     livekitRoom,
     props.e2eeSystem,
-    connStateObservable,
+    connStateObservable$,
+    reader,
   ]);
 
   if (livekitRoom === undefined || vm === null) return null;
@@ -241,14 +241,14 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  const windowMode = useObservableEagerState(vm.windowMode);
-  const layout = useObservableEagerState(vm.layout);
-  const tileStoreGeneration = useObservableEagerState(vm.tileStoreGeneration);
+  const windowMode = useObservableEagerState(vm.windowMode$);
+  const layout = useObservableEagerState(vm.layout$);
+  const tileStoreGeneration = useObservableEagerState(vm.tileStoreGeneration$);
   const [debugTileLayout] = useSetting(debugTileLayoutSetting);
-  const gridMode = useObservableEagerState(vm.gridMode);
-  const showHeader = useObservableEagerState(vm.showHeader);
-  const showFooter = useObservableEagerState(vm.showFooter);
-  const switchCamera = useSwitchCamera(vm.localVideo);
+  const gridMode = useObservableEagerState(vm.gridMode$);
+  const showHeader = useObservableEagerState(vm.showHeader$);
+  const showFooter = useObservableEagerState(vm.showFooter$);
+  const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -333,15 +333,15 @@ export const InCallView: FC<InCallViewProps> = ({
       windowMode,
     ],
   );
-  const gridBoundsObservable = useObservable(
-    (inputs) => inputs.pipe(map(([gridBounds]) => gridBounds)),
+  const gridBoundsObservable$ = useObservable(
+    (inputs$) => inputs$.pipe(map(([gridBounds]) => gridBounds)),
     [gridBounds],
   );
 
-  const spotlightAlignment = useInitial(
+  const spotlightAlignment$ = useInitial(
     () => new BehaviorSubject(defaultSpotlightAlignment),
   );
-  const pipAlignment = useInitial(
+  const pipAlignment$ = useInitial(
     () => new BehaviorSubject(defaultPipAlignment),
   );
 
@@ -399,15 +399,17 @@ export const InCallView: FC<InCallViewProps> = ({
         { className, style, targetWidth, targetHeight, model },
         ref,
       ) {
-        const spotlightExpanded = useObservableEagerState(vm.spotlightExpanded);
+        const spotlightExpanded = useObservableEagerState(
+          vm.spotlightExpanded$,
+        );
         const onToggleExpanded = useObservableEagerState(
-          vm.toggleSpotlightExpanded,
+          vm.toggleSpotlightExpanded$,
         );
         const showSpeakingIndicatorsValue = useObservableEagerState(
-          vm.showSpeakingIndicators,
+          vm.showSpeakingIndicators$,
         );
         const showSpotlightIndicatorsValue = useObservableEagerState(
-          vm.showSpotlightIndicators,
+          vm.showSpotlightIndicators$,
         );
 
         return model instanceof GridTileViewModel ? (
@@ -440,9 +442,9 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const layouts = useMemo(() => {
     const inputs = {
-      minBounds: gridBoundsObservable,
-      spotlightAlignment,
-      pipAlignment,
+      minBounds$: gridBoundsObservable$,
+      spotlightAlignment$,
+      pipAlignment$,
     };
     return {
       grid: makeGridLayout(inputs),
@@ -451,7 +453,7 @@ export const InCallView: FC<InCallViewProps> = ({
       "spotlight-expanded": makeSpotlightExpandedLayout(inputs),
       "one-on-one": makeOneOnOneLayout(inputs),
     };
-  }, [gridBoundsObservable, spotlightAlignment, pipAlignment]);
+  }, [gridBoundsObservable$, spotlightAlignment$, pipAlignment$]);
 
   const renderContent = (): JSX.Element => {
     if (layout.type === "pip") {
