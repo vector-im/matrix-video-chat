@@ -98,7 +98,7 @@ test("will play an audio sound when there is a reaction", () => {
     reactionsSubject$.next({
       [aliceRtcMember.deviceId]: {
         reactionOption: chosenReaction,
-        expireAfter: 0,
+        expireAfter: new Date(0),
       },
     });
   });
@@ -124,7 +124,7 @@ test("will play the generic audio sound when there is soundless reaction", () =>
     reactionsSubject$.next({
       [aliceRtcMember.deviceId]: {
         reactionOption: chosenReaction,
-        expireAfter: 0,
+        expireAfter: new Date(0),
       },
     });
   });
@@ -148,9 +148,18 @@ test("will play multiple audio sounds when there are multiple different reaction
   }
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reaction1, expireAfter: 0 },
-      [bobRtcMember.deviceId]: { reactionOption: reaction2, expireAfter: 0 },
-      [localRtcMember.deviceId]: { reactionOption: reaction1, expireAfter: 0 },
+      [aliceRtcMember.deviceId]: {
+        reactionOption: reaction1,
+        expireAfter: new Date(0),
+      },
+      [bobRtcMember.deviceId]: {
+        reactionOption: reaction2,
+        expireAfter: new Date(0),
+      },
+      [localRtcMember.deviceId]: {
+        reactionOption: reaction1,
+        expireAfter: new Date(0),
+      },
     });
   });
   expect(playSound).toHaveBeenCalledWith(reaction1.name);
