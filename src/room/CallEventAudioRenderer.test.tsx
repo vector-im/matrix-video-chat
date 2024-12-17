@@ -13,8 +13,8 @@ import {
   type MockedFunction,
   test,
   vitest,
+  afterEach,
 } from "vitest";
-import { afterEach } from "node:test";
 import { act } from "react";
 import { type CallMembership } from "matrix-js-sdk/src/matrixrtc";
 

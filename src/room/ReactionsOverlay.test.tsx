@@ -6,9 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, afterEach } from "vitest";
 import { act } from "react";
-import { afterEach } from "node:test";
 
 import { showReactions } from "../settings/settings";
 import { ReactionsOverlay } from "./ReactionsOverlay";
@@ -42,7 +41,10 @@ test("shows a reaction when sent", () => {
   const reaction = ReactionSet[0];
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
+      [aliceRtcMember.deviceId]: {
+        reactionOption: reaction,
+        expireAfter: new Date(0),
+      },
     });
   });
   const span = getByRole("presentation");
@@ -60,8 +62,14 @@ test("shows two of the same reaction when sent", () => {
   const { getAllByRole } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
-      [bobRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
+      [aliceRtcMember.deviceId]: {
+        reactionOption: reaction,
+        expireAfter: new Date(0),
+      },
+      [bobRtcMember.deviceId]: {
+        reactionOption: reaction,
+        expireAfter: new Date(0),
+      },
     });
   });
   expect(getAllByRole("presentation")).toHaveLength(2);
@@ -77,8 +85,14 @@ test("shows two different reactions when sent", () => {
   const { getAllByRole } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reactionA, expireAfter: 0 },
-      [bobRtcMember.deviceId]: { reactionOption: reactionB, expireAfter: 0 },
+      [aliceRtcMember.deviceId]: {
+        reactionOption: reactionA,
+        expireAfter: new Date(0),
+      },
+      [bobRtcMember.deviceId]: {
+        reactionOption: reactionB,
+        expireAfter: new Date(0),
+      },
     });
   });
   const [reactionElementA, reactionElementB] = getAllByRole("presentation");
@@ -96,7 +110,10 @@ test("hides reactions when reaction animations are disabled", () => {
   const { container } = render(<ReactionsOverlay vm={vm} />);
   act(() => {
     reactionsSubject$.next({
-      [aliceRtcMember.deviceId]: { reactionOption: reaction, expireAfter: 0 },
+      [aliceRtcMember.deviceId]: {
+        reactionOption: reaction,
+        expireAfter: new Date(0),
+      },
     });
   });
   expect(container.getElementsByTagName("span")).toHaveLength(0);
