@@ -80,10 +80,8 @@ test("preloads all audio elements", () => {
 });
 
 test("will play an audio sound when there is a reaction", () => {
-  const { vm, reactionsSubject } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, reactionsSubject$: reactionsSubject } =
+    getBasicCallViewModelEnvironment([local, alice]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -103,10 +101,8 @@ test("will play an audio sound when there is a reaction", () => {
 });
 
 test("will play the generic audio sound when there is soundless reaction", () => {
-  const { vm, reactionsSubject } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, reactionsSubject$: reactionsSubject } =
+    getBasicCallViewModelEnvironment([local, alice]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 
@@ -126,10 +122,8 @@ test("will play the generic audio sound when there is soundless reaction", () =>
 });
 
 test("will play multiple audio sounds when there are multiple different reactions", () => {
-  const { vm, reactionsSubject } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, reactionsSubject$: reactionsSubject } =
+    getBasicCallViewModelEnvironment([local, alice]);
   playReactionsSound.setValue(true);
   render(<TestComponent vm={vm} />);
 

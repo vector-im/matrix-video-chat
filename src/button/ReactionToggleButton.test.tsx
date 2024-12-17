@@ -53,8 +53,11 @@ test("Can open menu", async () => {
 
 test("Can raise hand", async () => {
   const user = userEvent.setup();
-  const { vm, rtcSession, handRaisedSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const {
+    vm,
+    rtcSession,
+    handRaisedSubject$: handRaisedSubject,
+  } = getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
@@ -87,8 +90,11 @@ test("Can raise hand", async () => {
 test("Can lower hand", async () => {
   const reactionEventId = "$my-reaction-event:example.org";
   const user = userEvent.setup();
-  const { vm, rtcSession, handRaisedSubject } =
-    getBasicCallViewModelEnvironment([local, alice]);
+  const {
+    vm,
+    rtcSession,
+    handRaisedSubject$: handRaisedSubject,
+  } = getBasicCallViewModelEnvironment([local, alice]);
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );

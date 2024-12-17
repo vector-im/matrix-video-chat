@@ -38,17 +38,17 @@ export function getBasicCallViewModelEnvironment(
   initialRemoteRtcMemberships: CallMembership[] = [aliceRtcMember],
 ): {
   vm: CallViewModel;
-  remoteRtcMemberships: BehaviorSubject<CallMembership[]>;
+  remoteRtcMemberships$: BehaviorSubject<CallMembership[]>;
   rtcSession: MockRTCSession;
-  handRaisedSubject: BehaviorSubject<Record<string, RaisedHandInfo>>;
-  reactionsSubject: BehaviorSubject<Record<string, ReactionInfo>>;
+  handRaisedSubject$: BehaviorSubject<Record<string, RaisedHandInfo>>;
+  reactionsSubject$: BehaviorSubject<Record<string, ReactionInfo>>;
 } {
   const matrixRoomId = "!myRoomId:example.com";
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
-  const remoteParticipants = of([aliceParticipant]);
+  const remoteParticipants$ = of([aliceParticipant]);
   const liveKitRoom = mockLivekitRoom(
     { localParticipant },
-    { remoteParticipants },
+    { remoteParticipants$ },
   );
   const matrixRoom = mockMatrixRoom({
     relations: {
@@ -90,9 +90,9 @@ export function getBasicCallViewModelEnvironment(
   );
   return {
     vm,
-    remoteRtcMemberships,
+    remoteRtcMemberships$: remoteRtcMemberships,
     rtcSession,
-    handRaisedSubject,
-    reactionsSubject,
+    handRaisedSubject$: handRaisedSubject,
+    reactionsSubject$: reactionsSubject,
   };
 }

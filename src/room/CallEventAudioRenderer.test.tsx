@@ -66,10 +66,8 @@ beforeEach(() => {
  * a noise every time.
  */
 test("plays one sound when entering a call", () => {
-  const { vm, remoteRtcMemberships } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
+    getBasicCallViewModelEnvironment([local, alice]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   // Joining a call usually means remote participants are added later.
@@ -80,10 +78,8 @@ test("plays one sound when entering a call", () => {
 });
 
 test("plays a sound when a user joins", () => {
-  const { vm, remoteRtcMemberships } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
+    getBasicCallViewModelEnvironment([local, alice]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
@@ -94,10 +90,8 @@ test("plays a sound when a user joins", () => {
 });
 
 test("plays a sound when a user leaves", () => {
-  const { vm, remoteRtcMemberships } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
+    getBasicCallViewModelEnvironment([local, alice]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
@@ -114,10 +108,8 @@ test("plays no sound when the participant list is more than the maximum size", (
     );
   }
 
-  const { vm, remoteRtcMemberships } = getBasicCallViewModelEnvironment(
-    [local, alice],
-    mockRtcMemberships,
-  );
+  const { vm, remoteRtcMemberships$: remoteRtcMemberships } =
+    getBasicCallViewModelEnvironment([local, alice], mockRtcMemberships);
 
   render(<CallEventAudioRenderer vm={vm} />);
   expect(playSound).not.toBeCalled();
@@ -130,10 +122,8 @@ test("plays no sound when the participant list is more than the maximum size", (
 });
 
 test("plays one sound when a hand is raised", () => {
-  const { vm, handRaisedSubject } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, handRaisedSubject$: handRaisedSubject } =
+    getBasicCallViewModelEnvironment([local, alice]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
@@ -149,10 +139,8 @@ test("plays one sound when a hand is raised", () => {
 });
 
 test("should not play a sound when a hand raise is retracted", () => {
-  const { vm, handRaisedSubject } = getBasicCallViewModelEnvironment([
-    local,
-    alice,
-  ]);
+  const { vm, handRaisedSubject$: handRaisedSubject } =
+    getBasicCallViewModelEnvironment([local, alice]);
   render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
