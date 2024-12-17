@@ -28,7 +28,7 @@ export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
               <MicOnSolidIcon />
             </Tooltip>
             {"jitter" in audio && typeof audio.jitter === "number" && (
-              <Text as="span" size="xs">
+              <Text as="span" size="xs" title="jitter">
                 &nbsp;{(audio.jitter * 1000).toFixed(0)}ms
               </Text>
             )}
@@ -42,12 +42,12 @@ export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
               </Tooltip>
             )}
             {video?.framesPerSecond && (
-              <Text as="span" size="xs">
+              <Text as="span" size="xs" title="frame rate">
                 &nbsp;{video.framesPerSecond.toFixed(0)}fps
               </Text>
             )}
             {"jitter" in video && typeof video.jitter === "number" && (
-              <Text as="span" size="xs">
+              <Text as="span" size="xs" title="jitter">
                 &nbsp;{(video.jitter * 1000).toFixed(0)}ms
               </Text>
             )}
@@ -55,14 +55,14 @@ export const RTCConnectionStats: FC<Props> = ({ audio, video, ...rest }) => {
               typeof video.frameHeight === "number" &&
               "frameWidth" in video &&
               typeof video.frameWidth === "number" && (
-                <Text as="span" size="xs">
+                <Text as="span" size="xs" title="frame size">
                   &nbsp;{video.frameWidth}x{video.frameHeight}
                 </Text>
               )}
             {"qualityLimitationReason" in video &&
               typeof video.qualityLimitationReason === "string" &&
               video.qualityLimitationReason !== "none" && (
-                <Text as="span" size="xs">
+                <Text as="span" size="xs" title="quality limitation reason">
                   &nbsp;{video.qualityLimitationReason}
                 </Text>
               )}
