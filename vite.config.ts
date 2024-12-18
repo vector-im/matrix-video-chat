@@ -55,7 +55,6 @@ export default defineConfig(({ mode }) => {
     plugins.push(
       sentryVitePlugin({
         release: {
-          dist: process.env.VITE_APP_VERSION,
           name: process.env.VITE_APP_VERSION,
         },
       }),
