@@ -1216,52 +1216,46 @@ export class CallViewModel extends ViewModel {
   /**
    * Emits an array of reactions that should be visible on the screen.
    */
-  public readonly visibleReactions$ = showReactions.value$
-    .pipe(switchMap((show) => (show ? this.reactions$ : of({}))))
-    .pipe(
-      scan<
-        Record<string, ReactionOption>,
-        { sender: string; emoji: string; startX: number }[]
-      >((acc, latest) => {
-        const newSet: { sender: string; emoji: string; startX: number }[] = [];
-        for (const [sender, reaction] of Object.entries(latest)) {
-          const startX =
-            acc.find((v) => v.sender === sender && v.emoji)?.startX ??
-            Math.ceil(Math.random() * 80) + 10;
-          newSet.push({ sender, emoji: reaction.emoji, startX });
-        }
-        return newSet;
-      }, []),
-    )
-    .pipe(this.scope.state());
+  public readonly visibleReactions$ = showReactions.value$.pipe(
+    switchMap((show) => (show ? this.reactions$ : of({}))),
+    scan<
+      Record<string, ReactionOption>,
+      { sender: string; emoji: string; startX: number }[]
+    >((acc, latest) => {
+      const newSet: { sender: string; emoji: string; startX: number }[] = [];
+      for (const [sender, reaction] of Object.entries(latest)) {
+        const startX =
+          acc.find((v) => v.sender === sender && v.emoji)?.startX ??
+          Math.ceil(Math.random() * 80) + 10;
+        newSet.push({ sender, emoji: reaction.emoji, startX });
+      }
+      return newSet;
+    }, []),
+  );
 
   /**
    * Emits an array of reactions that should be played.
    */
-  public readonly audibleReactions$ = playReactionsSound.value$
-    .pipe(
-      switchMap((show) =>
-        show ? this.reactions$ : of<Record<string, ReactionOption>>({}),
-      ),
-    )
-    .pipe(
-      map((reactions) => Object.values(reactions).map((v) => v.name)),
-      scan<string[], { playing: string[]; newSounds: string[] }>(
-        (acc, latest) => {
-          return {
-            playing: latest.filter(
-              (v) => acc.playing.includes(v) || acc.newSounds.includes(v),
-            ),
-            newSounds: latest.filter(
-              (v) => !acc.playing.includes(v) && !acc.newSounds.includes(v),
-            ),
-          };
-        },
-        { playing: [], newSounds: [] },
-      ),
-      map((v) => v.newSounds),
-    )
-    .pipe(this.scope.state());
+  public readonly audibleReactions$ = playReactionsSound.value$.pipe(
+    switchMap((show) =>
+      show ? this.reactions$ : of<Record<string, ReactionOption>>({}),
+    ),
+    map((reactions) => Object.values(reactions).map((v) => v.name)),
+    scan<string[], { playing: string[]; newSounds: string[] }>(
+      (acc, latest) => {
+        return {
+          playing: latest.filter(
+            (v) => acc.playing.includes(v) || acc.newSounds.includes(v),
+          ),
+          newSounds: latest.filter(
+            (v) => !acc.playing.includes(v) && !acc.newSounds.includes(v),
+          ),
+        };
+      },
+      { playing: [], newSounds: [] },
+    ),
+    map((v) => v.newSounds),
+  );
 
   /**
    * Emits an event every time a new hand is raised in

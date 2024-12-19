@@ -805,8 +805,7 @@ it("should rank raised hands above video feeds and below speakers and presenters
       (vm, { raisedHands$ }) => {
         schedule("ab", {
           a: () => {
-            // We imagine that only three tiles (the first three) will be visible
-            // on screen at a time
+            // We imagine that only two tiles (the first two) will be visible on screen at a time
             vm.layout$.subscribe((layout) => {
               if (layout.type === "grid") {
                 layout.setVisibleTiles(2);

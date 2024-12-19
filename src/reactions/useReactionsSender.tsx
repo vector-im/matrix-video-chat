@@ -16,7 +16,6 @@ import {
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useObservableEagerState } from "observable-hooks";
-import { map } from "rxjs";
 
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { useClientState } from "../ClientContext";
@@ -75,24 +74,22 @@ export const ReactionsSenderProvider = ({
       : undefined;
   }, [memberships, myUserId]);
 
-  const myReaction = useObservableEagerState(
-    vm.reactions$.pipe(
-      map((v) =>
-        myMembershipIdentifier !== undefined
-          ? v[myMembershipIdentifier]
-          : undefined,
-      ),
-    ),
+  const reactions = useObservableEagerState(vm.reactions$);
+  const myReaction = useMemo(
+    () =>
+      myMembershipIdentifier !== undefined
+        ? reactions[myMembershipIdentifier]
+        : undefined,
+    [myMembershipIdentifier, reactions],
   );
 
-  const myRaisedHand = useObservableEagerState(
-    vm.handsRaised$.pipe(
-      map((v) =>
-        myMembershipIdentifier !== undefined
-          ? v[myMembershipIdentifier]
-          : undefined,
-      ),
-    ),
+  const handsRaised = useObservableEagerState(vm.handsRaised$);
+  const myRaisedHand = useMemo(
+    () =>
+      myMembershipIdentifier !== undefined
+        ? handsRaised[myMembershipIdentifier]
+        : undefined,
+    [myMembershipIdentifier, handsRaised],
   );
 
   const toggleRaisedHand = useCallback(async () => {
