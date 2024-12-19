@@ -28,7 +28,8 @@ export default defineConfig(({ mode }) => {
         ref: true,
       },
     }),
-    htmlTemplate.default({
+    // types workaround for https://github.com/IndexXuan/vite-plugin-html-template/issues/37
+    (htmlTemplate as unknown as { default: typeof htmlTemplate }).default({
       data: {
         title: env.VITE_PRODUCT_NAME || "Element Call",
       },
@@ -53,8 +54,9 @@ export default defineConfig(({ mode }) => {
   ) {
     plugins.push(
       sentryVitePlugin({
-        include: "./dist",
-        release: process.env.VITE_APP_VERSION,
+        release: {
+          name: process.env.VITE_APP_VERSION,
+        },
       }),
     );
   }
@@ -67,7 +69,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       rollupOptions: {
         output: {
-          assetFileNames: ({ originalFileNames }) => {
+          assetFileNames: ({ originalFileNames }): string => {
             if (originalFileNames) {
               for (const name of originalFileNames) {
                 // Custom asset name for locales to include the locale code in the filename
