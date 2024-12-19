@@ -1954,10 +1954,10 @@
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
-"@matrix-org/matrix-sdk-crypto-wasm@^9.0.0":
-  version "9.1.0"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-9.1.0.tgz#f889653eb4fafaad2a963654d586bd34de62acd5"
-  integrity sha512-CtPoNcoRW6ehwxpRQAksG3tR+NJ7k4DV02nMFYTDwQtie1V4R8OTY77BjEIs97NOblhtS26jU8m1lWsOBEz0Og==
+"@matrix-org/matrix-sdk-crypto-wasm@^12.0.0":
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-12.0.0.tgz#e3a5150ccbb21d5e98ee3882e7057b9f17fb962a"
+  integrity sha512-nkkXAxUIk9UTso4TbU6Bgqsv/rJShXQXRx0ti/W+AWXHJ2HoH4sL5LsXkc7a8yYGn8tyXqxGPsYA1UeHqLwm0Q==
 
 "@matrix-org/olm@3.2.15":
   version "3.2.15"
@@ -3358,9 +3358,9 @@
   integrity sha512-bq0hMV9opAcrmE0Byyo0fY3Ew4tgOevJmQ9grUhpXQhYfyLJ1Kqg3P33JT5fdbT2AjeAjR51zqqVjAL/HMkx7Q==
 
 "@types/prop-types@*":
-  version "15.7.14"
-  resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.14.tgz#1433419d73b2a7ebfc6918dcefd2ec0d5cd698f2"
-  integrity sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==
+  version "15.7.13"
+  resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.13.tgz#2af91918ee12d9d32914feb13f5326658461b451"
+  integrity sha512-hCZTSvwbzWGvhqxp/RqVqwU999pBf2vp7hzIjiYOsl8wqOmUxkQ6ddw1cV3l8811+kdUFus/q4d1Y3E3SyEifA==
 
 "@types/qrcode@^1.5.5":
   version "1.5.5"
@@ -6530,7 +6530,7 @@ matrix-js-sdk@matrix-org/matrix-js-sdk#develop:
   resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/e4182eb75227c283a18704727021e99ced72868d"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^9.0.0"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^12.0.0"
     "@matrix-org/olm" "3.2.15"
     another-json "^0.2.0"
     bs58 "^6.0.0"
