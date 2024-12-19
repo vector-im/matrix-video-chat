@@ -18,7 +18,7 @@ import {
   EventType,
   RoomEvent as MatrixRoomEvent,
 } from "matrix-js-sdk/src/matrix";
-import { BehaviorSubject, delay, Subscription } from "rxjs";
+import { BehaviorSubject, delay, type Subscription } from "rxjs";
 
 import {
   ElementCallReactionEventType,
