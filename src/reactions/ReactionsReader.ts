@@ -18,7 +18,7 @@ import {
   EventType,
   RoomEvent as MatrixRoomEvent,
 } from "matrix-js-sdk/src/matrix";
-import { BehaviorSubject, delay } from "rxjs";
+import { BehaviorSubject, delay, Subscription } from "rxjs";
 
 import {
   ElementCallReactionEventType,
@@ -54,9 +54,11 @@ export class ReactionsReader {
    */
   public readonly reactions$ = this.reactionsSubject$.asObservable();
 
+  private readonly reactionsSub: Subscription;
+
   public constructor(private readonly rtcSession: MatrixRTCSession) {
     // Hide reactions after a given time.
-    this.reactionsSubject$
+    this.reactionsSub = this.reactionsSubject$
       .pipe(delay(REACTION_ACTIVE_TIME_MS))
       .subscribe((reactions) => {
         const date = new Date();
@@ -332,5 +334,6 @@ export class ReactionsReader {
       MatrixRoomEvent.LocalEchoUpdated,
       this.handleReactionEvent,
     );
+    this.reactionsSub.unsubscribe();
   }
 }
