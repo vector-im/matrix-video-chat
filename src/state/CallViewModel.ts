@@ -389,12 +389,10 @@ function shouldDisambiguate(
   // Also show mxid if there are other people with the same or similar
   // displayname, after hidden character removal.
   return memberships
-      .map((m) => findMatrixRoomMember(room, `${m.sender}:${m.deviceId}`))
-      .some(
-        (m) =>
-          m?.userId !== userId && m?.rawDisplayName === strippedDisplayName,
-      )
-  );
+    .map((m) => findMatrixRoomMember(room, `${m.sender}:${m.deviceId}`))
+    .some(
+      (m) => m?.userId !== userId && m?.rawDisplayName === strippedDisplayName,
+    );
 }
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
@@ -483,7 +481,7 @@ export class CallViewModel extends ViewModel {
    * any displaynames that clashes with another member. Only members
    * joined to the call are considered here.
    */
-  private readonly memberDisplaynames$ = fromEvent(
+  public readonly memberDisplaynames$ = fromEvent(
     this.matrixRTCSession,
     MatrixRTCSessionEvent.MembershipsChanged,
   ).pipe(

@@ -13,6 +13,7 @@ import {
   map,
   type Observable,
   of,
+  skip,
   switchMap,
 } from "rxjs";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
@@ -52,15 +53,23 @@ vi.mock("@livekit/components-core");
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
 const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
+const aliceDopplegangerRtcMember = mockRtcMembership(
+  "@alice2:example.org",
+  "AAAA",
+);
 const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
-const alice = mockMatrixRoomMember(aliceRtcMember);
+const alice = mockMatrixRoomMember(aliceRtcMember, { rawDisplayName: "Alice" });
+const aliceDoppleganger = mockMatrixRoomMember(aliceDopplegangerRtcMember, {
+  rawDisplayName: "Alice",
+});
 const bob = mockMatrixRoomMember(bobRtcMember);
 const carol = mockMatrixRoomMember(localRtcMember);
 const dave = mockMatrixRoomMember(daveRtcMember);
 
 const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
+const aliceDopplegangerId = `${aliceDoppleganger.userId}:${aliceRtcMember.deviceId}`;
 const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
@@ -78,7 +87,7 @@ const bobSharingScreen = mockRemoteParticipant({
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
 const roomMembers = new Map(
-  [alice, bob, carol, dave].map((p) => [p.userId, p]),
+  [alice, aliceDoppleganger, bob, carol, dave].map((p) => [p.userId, p]),
 );
 
 export interface GridLayoutSummary {
@@ -776,6 +785,55 @@ it("should show at least one tile per MatrixRTCSession", () => {
               local: "local:0",
               remote: `${daveId}:0`,
             },
+          },
+        );
+      },
+    );
+  });
+});
+
+it("should disambiguate users with the same displayname", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    const scenarioInputMarbles = "abcd";
+    const expectedLayoutMarbles = "abcd";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [aliceRtcMember],
+        c: [aliceRtcMember, aliceDopplegangerRtcMember],
+        d: [aliceRtcMember, aliceDopplegangerRtcMember, bobRtcMember],
+        e: [aliceDopplegangerRtcMember, bobRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        // Skip the null state.
+        expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
+          expectedLayoutMarbles,
+          {
+            a: new Map([["local", undefined]]),
+            b: new Map([
+              ["local", undefined],
+              [aliceId, "Alice"],
+            ]),
+            c: new Map([
+              ["local", undefined],
+              [aliceId, "Alice (@alice:example.org)"],
+              [aliceDopplegangerId, "Alice (@alice2:example.org)"],
+            ]),
+            d: new Map([
+              ["local", undefined],
+              [aliceId, "Alice (@alice:example.org)"],
+              [aliceDopplegangerId, "Alice (@alice2:example.org)"],
+              [bobId, undefined],
+            ]),
+            e: new Map([
+              ["local", undefined],
+              [aliceDopplegangerId, "Alice"],
+              [bobId, undefined],
+            ]),
           },
         );
       },
