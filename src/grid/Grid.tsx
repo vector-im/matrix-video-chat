@@ -272,7 +272,7 @@ export function Grid<
 
   const Slot: FC<SlotProps<TileModel>> = useMemo(
     () =>
-      function Slot({ id, model, onDrag, style, className, ...props }) {
+      (function Slot({ id, model, onDrag, style, className, ...props }) {
         const ref = useRef<HTMLDivElement | null>(null);
 
         useEffect(() => {
@@ -289,7 +289,7 @@ export function Grid<
             {...props}
           />
         );
-      },
+      }),
     [tiles],
   );
 
