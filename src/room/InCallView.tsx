@@ -95,8 +95,7 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   useSetting,
 } from "../settings/settings";
-import useReactionsReader from "../reactions/useReactionsReader";
-import { useLatest } from "../useLatest";
+import { ReactionsReader } from "../reactions/ReactionsReader";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -130,28 +129,24 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const reader = useLatest(useReactionsReader(props.rtcSession));
-
   useEffect(() => {
-    if (livekitRoom !== undefined && reader !== undefined) {
+    if (livekitRoom !== undefined) {
+      const reactionsReader = new ReactionsReader(props.rtcSession);
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
         connStateObservable$,
-        reader.current.raisedHands$,
-        reader.current.reactions$,
+        reactionsReader.raisedHands$,
+        reactionsReader.reactions$,
       );
       setVm(vm);
-      return (): void => vm.destroy();
+      return (): void => {
+        vm.destroy();
+        reactionsReader.destroy();
+      };
     }
-  }, [
-    props.rtcSession,
-    livekitRoom,
-    props.e2eeSystem,
-    connStateObservable$,
-    reader,
-  ]);
+  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable$]);
 
   if (livekitRoom === undefined || vm === null) return null;
 

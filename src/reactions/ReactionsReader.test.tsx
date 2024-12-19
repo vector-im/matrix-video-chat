@@ -16,9 +16,7 @@ import {
   MatrixEventEvent,
 } from "matrix-js-sdk/src/matrix";
 
-import useReactionsReader, {
-  REACTION_ACTIVE_TIME_MS,
-} from "./useReactionsReader";
+import { ReactionsReader, REACTION_ACTIVE_TIME_MS } from "./ReactionsReader";
 import {
   alice,
   aliceRtcMember,
@@ -39,7 +37,7 @@ test("handles a hand raised reaction", () => {
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { raisedHands$ } = useReactionsReader(
+      const { raisedHands$ } = new ReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
       schedule("ab", {
@@ -87,7 +85,7 @@ test("handles a redaction", () => {
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { raisedHands$ } = useReactionsReader(
+      const { raisedHands$ } = new ReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
       schedule("abc", {
@@ -150,7 +148,7 @@ test("handles waiting for event decryption", () => {
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { raisedHands$ } = useReactionsReader(
+      const { raisedHands$ } = new ReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
       schedule("abc", {
@@ -219,7 +217,7 @@ test("hands rejecting events without a proper membership", () => {
   const localTimestamp = new Date();
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { raisedHands$ } = useReactionsReader(
+      const { raisedHands$ } = new ReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
       schedule("ab", {
@@ -264,7 +262,7 @@ test("handles a reaction", () => {
 
   withTestScheduler(({ schedule, time, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = useReactionsReader(
+      const { reactions$ } = new ReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
       schedule(`abc`, {
@@ -322,7 +320,7 @@ test("ignores bad reaction events", () => {
 
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = useReactionsReader(
+      const { reactions$ } = new ReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
       schedule("ab", {
@@ -446,7 +444,7 @@ test("that reactions cannot be spammed", () => {
 
   withTestScheduler(({ schedule, expectObservable }) => {
     renderHook(() => {
-      const { reactions$ } = useReactionsReader(
+      const { reactions$ } = new ReactionsReader(
         rtcSession as unknown as MatrixRTCSession,
       );
       schedule("abcd", {
