@@ -13,7 +13,7 @@ import {
   useMemo,
 } from "react";
 import { Link as CpdLink } from "@vector-im/compound-web";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createPath, type LocationDescriptor, type Path } from "history";
 import classNames from "classnames";
 
@@ -25,7 +25,7 @@ export function useLink(
   state?: unknown,
 ): [Path, (e: MouseEvent) => void] {
   const latestState = useLatest(state);
-  const history = useHistory();
+  const navigate = useNavigate();
   const path = useMemo(
     () => (typeof to === "string" ? to : createPath(to)),
     [to],
@@ -33,9 +33,9 @@ export function useLink(
   const onClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
-      history.push(to, latestState.current);
+      navigate(to, { state: latestState.current });
     },
-    [history, to, latestState],
+    [navigate, to, latestState],
   );
 
   return [path, onClick];
