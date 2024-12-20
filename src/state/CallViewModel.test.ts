@@ -224,7 +224,7 @@ function withCallViewModel(
     .mockImplementation((p, ...eventTypes) => {
       if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
         return (speaking.get(p) ?? of(false)).pipe(
-          map((s) => ({ ...p, isSpeaking: s } as Participant)),
+          map((s) => ({ ...p, isSpeaking: s }) as Participant),
         );
       } else {
         return of(p);
