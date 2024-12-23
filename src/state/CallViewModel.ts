@@ -71,7 +71,12 @@ import {
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
-import { duplicateTiles, showNonMemberTiles } from "../settings/settings";
+import {
+  duplicateTiles,
+  playReactionsSound,
+  showReactions,
+  showNonMemberTiles,
+} from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled$ } from "../controls";
 import {
@@ -84,6 +89,11 @@ import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
 import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  type RaisedHandInfo,
+  type ReactionInfo,
+  type ReactionOption,
+} from "../reactions";
 import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
 
@@ -213,6 +223,10 @@ enum SortingBin {
    */
   Speakers,
   /**
+   * Participants that have their hand raised.
+   */
+  HandRaised,
+  /**
    * Participants with video.
    */
   Video,
@@ -247,6 +261,8 @@ class UserMedia {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayname$: Observable<string>,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
     this.participant$ = new BehaviorSubject(participant);
 
@@ -258,6 +274,8 @@ class UserMedia {
         encryptionSystem,
         livekitRoom,
         displayname$,
+        handRaised$,
+        reaction$,
       );
     } else {
       this.vm = new RemoteUserMediaViewModel(
@@ -269,6 +287,8 @@ class UserMedia {
         encryptionSystem,
         livekitRoom,
         displayname$,
+        handRaised$,
+        reaction$,
       );
     }
 
@@ -563,6 +583,8 @@ export class CallViewModel extends ViewModel {
               let livekitParticipantId =
                 rtcMember.sender + ":" + rtcMember.deviceId;
 
+              const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+
               let participant:
                 | LocalParticipant
                 | RemoteParticipant
@@ -614,6 +636,12 @@ export class CallViewModel extends ViewModel {
                       this.livekitRoom,
                       this.memberDisplaynames$.pipe(
                         map((m) => m.get(livekitParticipantId) ?? "[👻]"),
+                      ),
+                      this.handsRaised$.pipe(
+                        map((v) => v[matrixIdentifier]?.time ?? null),
+                      ),
+                      this.reactions$.pipe(
+                        map((v) => v[matrixIdentifier] ?? undefined),
                       ),
                     ),
                 ];
@@ -673,6 +701,8 @@ export class CallViewModel extends ViewModel {
                             this.memberDisplaynames$.pipe(
                               map((m) => m.get(participant.identity) ?? "[👻]"),
                             ),
+                            of(null),
+                            of(null),
                           ),
                       ];
                     }
@@ -780,11 +810,12 @@ export class CallViewModel extends ViewModel {
               m.speaker$,
               m.presenter$,
               m.vm.videoEnabled$,
+              m.vm.handRaised$,
               m.vm instanceof LocalUserMediaViewModel
                 ? m.vm.alwaysShow$
                 : of(false),
             ],
-            (speaker, presenter, video, alwaysShow) => {
+            (speaker, presenter, video, handRaised, alwaysShow) => {
               let bin: SortingBin;
               if (m.vm.local)
                 bin = alwaysShow
@@ -792,6 +823,7 @@ export class CallViewModel extends ViewModel {
                   : SortingBin.SelfNotAlwaysShown;
               else if (presenter) bin = SortingBin.Presenters;
               else if (speaker) bin = SortingBin.Speakers;
+              else if (handRaised) bin = SortingBin.HandRaised;
               else if (video) bin = SortingBin.Video;
               else bin = SortingBin.NoVideo;
 
@@ -1270,12 +1302,104 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  public readonly reactions$ = this.reactionsSubject$.pipe(
+    map((v) =>
+      Object.fromEntries(
+        Object.entries(v).map(([a, { reactionOption }]) => [a, reactionOption]),
+      ),
+    ),
+  );
+
+  public readonly handsRaised$ = this.handsRaisedSubject$.pipe();
+
+  /**
+   * Emits an array of reactions that should be visible on the screen.
+   */
+  public readonly visibleReactions$ = showReactions.value$.pipe(
+    switchMap((show) => (show ? this.reactions$ : of({}))),
+    scan<
+      Record<string, ReactionOption>,
+      { sender: string; emoji: string; startX: number }[]
+    >((acc, latest) => {
+      const newSet: { sender: string; emoji: string; startX: number }[] = [];
+      for (const [sender, reaction] of Object.entries(latest)) {
+        const startX =
+          acc.find((v) => v.sender === sender && v.emoji)?.startX ??
+          Math.ceil(Math.random() * 80) + 10;
+        newSet.push({ sender, emoji: reaction.emoji, startX });
+      }
+      return newSet;
+    }, []),
+  );
+
+  /**
+   * Emits an array of reactions that should be played.
+   */
+  public readonly audibleReactions$ = playReactionsSound.value$.pipe(
+    switchMap((show) =>
+      show ? this.reactions$ : of<Record<string, ReactionOption>>({}),
+    ),
+    map((reactions) => Object.values(reactions).map((v) => v.name)),
+    scan<string[], { playing: string[]; newSounds: string[] }>(
+      (acc, latest) => {
+        return {
+          playing: latest.filter(
+            (v) => acc.playing.includes(v) || acc.newSounds.includes(v),
+          ),
+          newSounds: latest.filter(
+            (v) => !acc.playing.includes(v) && !acc.newSounds.includes(v),
+          ),
+        };
+      },
+      { playing: [], newSounds: [] },
+    ),
+    map((v) => v.newSounds),
+  );
+
+  /**
+   * Emits an event every time a new hand is raised in
+   * the call.
+   */
+  public readonly newHandRaised$ = this.handsRaised$.pipe(
+    map((v) => Object.keys(v).length),
+    scan(
+      (acc, newValue) => ({
+        value: newValue,
+        playSounds: newValue > acc.value,
+      }),
+      { value: 0, playSounds: false },
+    ),
+    filter((v) => v.playSounds),
+  );
+
+  /**
+   * Emits an event every time a new screenshare is started in
+   * the call.
+   */
+  public readonly newScreenShare$ = this.screenShares$.pipe(
+    map((v) => v.length),
+    scan(
+      (acc, newValue) => ({
+        value: newValue,
+        playSounds: newValue > acc.value,
+      }),
+      { value: 0, playSounds: false },
+    ),
+    filter((v) => v.playSounds),
+  );
+
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
     private readonly matrixRTCSession: MatrixRTCSession,
     private readonly livekitRoom: LivekitRoom,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly connectionState$: Observable<ECConnectionState>,
+    private readonly handsRaisedSubject$: Observable<
+      Record<string, RaisedHandInfo>
+    >,
+    private readonly reactionsSubject$: Observable<
+      Record<string, ReactionInfo>
+    >,
   ) {
     super();
   }

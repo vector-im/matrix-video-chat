@@ -34,7 +34,7 @@ import {
   ToggleMenuItem,
   Menu,
 } from "@vector-im/compound-web";
-import { useObservableEagerState } from "observable-hooks";
+import { useObservableEagerState, useObservableState } from "observable-hooks";
 
 import styles from "./GridTile.module.css";
 import {
@@ -47,8 +47,7 @@ import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
 import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
-import { useReactions } from "../useReactions";
-import { type ReactionOption } from "../reactions";
+import { useReactionsSender } from "../reactions/useReactionsSender";
 
 interface TileProps {
   className?: string;
@@ -81,6 +80,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     },
     ref,
   ) => {
+    const { toggleRaisedHand } = useReactionsSender();
     const { t } = useTranslation();
     const video = useObservableEagerState(vm.video$);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
@@ -96,7 +96,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
-    const { raisedHands, toggleRaisedHand, reactions } = useReactions();
+    const handRaised = useObservableState(vm.handRaised$);
+    const reaction = useObservableState(vm.reaction$);
 
     const AudioIcon = locallyMuted
       ? VolumeOffSolidIcon
@@ -123,9 +124,6 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       </>
     );
 
-    const handRaised: Date | undefined = raisedHands[vm.member?.userId ?? ""];
-    const currentReaction: ReactionOption | undefined =
-      reactions[vm.member?.userId ?? ""];
     const raisedHandOnClick = vm.local
       ? (): void => void toggleRaisedHand()
       : undefined;
@@ -143,7 +141,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         videoFit={cropVideo ? "cover" : "contain"}
         className={classNames(className, styles.tile, {
           [styles.speaking]: showSpeaking,
-          [styles.handRaised]: !showSpeaking && !!handRaised,
+          [styles.handRaised]: !showSpeaking && handRaised,
         })}
         nameTagLeadingIcon={
           <AudioIcon
@@ -171,8 +169,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
             {menu}
           </Menu>
         }
-        raisedHandTime={handRaised}
-        currentReaction={currentReaction}
+        raisedHandTime={handRaised ?? undefined}
+        currentReaction={reaction ?? undefined}
         raisedHandOnClick={raisedHandOnClick}
         localParticipant={vm.local}
         {...props}

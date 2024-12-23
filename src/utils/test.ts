@@ -28,6 +28,7 @@ import {
   type RemoteTrackPublication,
   type Room as LivekitRoom,
 } from "livekit-client";
+import { randomUUID } from "crypto";
 
 import {
   LocalUserMediaViewModel,
@@ -132,6 +133,7 @@ export function mockRtcMembership(
   };
   const event = new MatrixEvent({
     sender: typeof user === "string" ? user : user.userId,
+    event_id: `$-ev-${randomUUID()}:example.org`,
   });
   return new CallMembership(event, data);
 }
@@ -204,6 +206,8 @@ export async function withLocalMedia(
     },
     mockLivekitRoom({ localParticipant }),
     of(roomMember.rawDisplayName ?? "nodisplayname"),
+    of(null),
+    of(null),
   );
   try {
     await continuation(vm);
@@ -241,6 +245,8 @@ export async function withRemoteMedia(
     },
     mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
     of(roomMember.rawDisplayName ?? "nodisplayname"),
+    of(null),
+    of(null),
   );
   try {
     await continuation(vm);

@@ -49,6 +49,7 @@ import { alwaysShowSelf } from "../settings/settings";
 import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
+import { type ReactionOption } from "../reactions";
 
 export function observeTrackReference$(
   participant$: Observable<Participant | undefined>,
@@ -349,6 +350,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayname$: Observable<string>,
+    public readonly handRaised$: Observable<Date | null>,
+    public readonly reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -383,6 +386,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
 }
 
 /**
+        },
+        },
  * The local participant's user media.
  */
 export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
@@ -417,6 +422,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayname$: Observable<string>,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -425,6 +432,8 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       encryptionSystem,
       livekitRoom,
       displayname$,
+      handRaised$,
+      reaction$,
     );
   }
 }
@@ -486,6 +495,8 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     displayname$: Observable<string>,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -494,6 +505,8 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       encryptionSystem,
       livekitRoom,
       displayname$,
+      handRaised$,
+      reaction$,
     );
 
     // Sync the local volume with LiveKit
