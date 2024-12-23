@@ -844,10 +844,10 @@ it("should disambiguate users with the same displayname", () => {
               [bobId, undefined],
             ]),
           },
-        )
-      });
-    },
-  );
+        );
+      },
+    );
+  });
 });
 
 it("should rank raised hands above video feeds and below speakers and presenters", () => {
