@@ -1,0 +1,4 @@
+# Ignore everything
+/*
+# And then restore just the dist directory
+!/dist/
