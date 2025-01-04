@@ -30,7 +30,8 @@ jobs:
           cache: "yarn"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install"
+        # We should only need the production dependencies to build things
+        run: "yarn install --production --frozen-lockfile"
       - name: Build
         run: "yarn run build"
         env:

@@ -25,6 +25,9 @@ export default {
     // https://github.com/webpro-nl/knip/issues/766
     "@vector-im/compound-web",
     "matrix-widget-api",
+    // @actions/github has an undeclared dependency on undici
+    // https://github.com/actions/toolkit/issues/1684
+    "undici",
   ],
   ignoreExportsUsedInFile: true,
 } satisfies KnipConfig;
