@@ -41,6 +41,7 @@ import { InviteModal } from "./InviteModal";
 import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
+import { usePageTitle } from "../usePageTitle";
 
 declare global {
   interface Window {
@@ -99,6 +100,7 @@ export const GroupCallView: FC<Props> = ({
   const roomAvatar = useRoomAvatar(rtcSession.room);
   const { perParticipantE2EE, returnToLobby } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+  usePageTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {

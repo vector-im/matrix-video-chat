@@ -38,6 +38,7 @@ import { Link } from "../button/Link";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useInitial } from "../useInitial";
 import { useSwitchCamera } from "./useSwitchCamera";
+import { usePageTitle } from "../usePageTitle";
 
 interface Props {
   client: MatrixClient;
@@ -66,6 +67,7 @@ export const LobbyView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   useLocationNavigation();
+  usePageTitle(matrixInfo.roomName);
 
   const onAudioPress = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
