@@ -57,6 +57,7 @@ import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { useAudioContext } from "../useAudioContext";
 import { callEventAudioSounds } from "./CallEventAudioRenderer";
+import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 
 declare global {
