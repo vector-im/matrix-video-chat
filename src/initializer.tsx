@@ -220,6 +220,7 @@ export class Initializer {
             Sentry.reactRouterV5BrowserTracingIntegration({ history }),
           ],
           tracesSampleRate: 1.0,
+          release: import.meta.env.VITE_APP_VERSION,
         });
       }
       // Sentry is now 'loadeed' (even if we actually skipped starting

@@ -56,6 +56,10 @@ export default defineConfig(({ mode }) => {
       sentryVitePlugin({
         release: {
           name: process.env.VITE_APP_VERSION,
+          // We don't inject the release info at build time because it has a side effect of
+          // changing the asset hashes each time meaning that it breaks browser caching.
+          // Instead we pass it in at runtime via Sentry.init().
+          inject: false,
         },
       }),
     );
