@@ -83,7 +83,7 @@
     "eslint-plugin-unicorn": "^56.0.0",
     "global-jsdom": "^25.0.0",
     "history": "^4.0.0",
-    "i18next": "^23.0.0",
+    "i18next": "^24.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-parser": "^9.0.0",
     "jsdom": "^25.0.0",
