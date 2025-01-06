@@ -10,13 +10,13 @@ import {
   RoomContext,
   useLocalParticipant,
 } from "@livekit/components-react";
-import { ConnectionState, Room } from "livekit-client";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { ConnectionState, type Room } from "livekit-client";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
-  FC,
-  PointerEvent,
-  PropsWithoutRef,
-  TouchEvent,
+  type FC,
+  type PointerEvent,
+  type PropsWithoutRef,
+  type TouchEvent,
   forwardRef,
   useCallback,
   useEffect,
@@ -25,7 +25,7 @@ import {
   useState,
 } from "react";
 import useMeasure from "react-use-measure";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservable, useObservableEagerState } from "observable-hooks";
@@ -49,28 +49,32 @@ import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
-import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import { type OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useLiveKit } from "../livekit/useLiveKit";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
-import { MuteStates } from "./MuteStates";
-import { MatrixInfo } from "./VideoPreview";
+import { type MuteStates } from "./MuteStates";
+import { type MatrixInfo } from "./VideoPreview";
 import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
-import { ECConnectionState } from "../livekit/useECConnectionState";
+import { type ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
-import { CallViewModel, GridMode, Layout } from "../state/CallViewModel";
-import { Grid, TileProps } from "../grid/Grid";
+import {
+  CallViewModel,
+  type GridMode,
+  type Layout,
+} from "../state/CallViewModel";
+import { Grid, type TileProps } from "../grid/Grid";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
-  CallLayoutOutputs,
+  type CallLayoutOutputs,
   defaultPipAlignment,
   defaultSpotlightAlignment,
 } from "../grid/CallLayout";
@@ -78,12 +82,20 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
-import { GridTileViewModel, TileViewModel } from "../state/TileViewModel";
-import { ReactionsProvider, useReactions } from "../useReactions";
+import { GridTileViewModel, type TileViewModel } from "../state/TileViewModel";
+import {
+  ReactionsSenderProvider,
+  useReactionsSender,
+} from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
+import {
+  debugTileLayout as debugTileLayoutSetting,
+  useSetting,
+} from "../settings/settings";
+import { ReactionsReader } from "../reactions/ReactionsReader";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -102,8 +114,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     sfuConfig,
     props.e2eeSystem,
   );
-  const connStateObservable = useObservable(
-    (inputs) => inputs.pipe(map(([connState]) => connState)),
+  const connStateObservable$ = useObservable(
+    (inputs$) => inputs$.pipe(map(([connState]) => connState)),
     [connState],
   );
   const [vm, setVm] = useState<CallViewModel | null>(null);
@@ -119,29 +131,35 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
+      const reactionsReader = new ReactionsReader(props.rtcSession);
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
-        connStateObservable,
+        connStateObservable$,
+        reactionsReader.raisedHands$,
+        reactionsReader.reactions$,
       );
       setVm(vm);
-      return (): void => vm.destroy();
+      return (): void => {
+        vm.destroy();
+        reactionsReader.destroy();
+      };
     }
-  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable]);
+  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable$]);
 
   if (livekitRoom === undefined || vm === null) return null;
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <ReactionsProvider rtcSession={props.rtcSession}>
+      <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
         <InCallView
           {...props}
           vm={vm}
           livekitRoom={livekitRoom}
           connState={connState}
         />
-      </ReactionsProvider>
+      </ReactionsSenderProvider>
     </RoomContext.Provider>
   );
 };
@@ -174,7 +192,8 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
-  const { supportsReactions, sendReaction, toggleRaisedHand } = useReactions();
+  const { supportsReactions, sendReaction, toggleRaisedHand } =
+    useReactionsSender();
 
   useWakeLock();
 
@@ -217,12 +236,14 @@ export const InCallView: FC<InCallViewProps> = ({
     () => void toggleRaisedHand(),
   );
 
-  const windowMode = useObservableEagerState(vm.windowMode);
-  const layout = useObservableEagerState(vm.layout);
-  const gridMode = useObservableEagerState(vm.gridMode);
-  const showHeader = useObservableEagerState(vm.showHeader);
-  const showFooter = useObservableEagerState(vm.showFooter);
-  const switchCamera = useSwitchCamera(vm.localVideo);
+  const windowMode = useObservableEagerState(vm.windowMode$);
+  const layout = useObservableEagerState(vm.layout$);
+  const tileStoreGeneration = useObservableEagerState(vm.tileStoreGeneration$);
+  const [debugTileLayout] = useSetting(debugTileLayoutSetting);
+  const gridMode = useObservableEagerState(vm.gridMode$);
+  const showHeader = useObservableEagerState(vm.showHeader$);
+  const showFooter = useObservableEagerState(vm.showFooter$);
+  const switchCamera = useSwitchCamera(vm.localVideo$);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -307,15 +328,15 @@ export const InCallView: FC<InCallViewProps> = ({
       windowMode,
     ],
   );
-  const gridBoundsObservable = useObservable(
-    (inputs) => inputs.pipe(map(([gridBounds]) => gridBounds)),
+  const gridBoundsObservable$ = useObservable(
+    (inputs$) => inputs$.pipe(map(([gridBounds]) => gridBounds)),
     [gridBounds],
   );
 
-  const spotlightAlignment = useInitial(
+  const spotlightAlignment$ = useInitial(
     () => new BehaviorSubject(defaultSpotlightAlignment),
   );
-  const pipAlignment = useInitial(
+  const pipAlignment$ = useInitial(
     () => new BehaviorSubject(defaultPipAlignment),
   );
 
@@ -373,15 +394,17 @@ export const InCallView: FC<InCallViewProps> = ({
         { className, style, targetWidth, targetHeight, model },
         ref,
       ) {
-        const spotlightExpanded = useObservableEagerState(vm.spotlightExpanded);
+        const spotlightExpanded = useObservableEagerState(
+          vm.spotlightExpanded$,
+        );
         const onToggleExpanded = useObservableEagerState(
-          vm.toggleSpotlightExpanded,
+          vm.toggleSpotlightExpanded$,
         );
         const showSpeakingIndicatorsValue = useObservableEagerState(
-          vm.showSpeakingIndicators,
+          vm.showSpeakingIndicators$,
         );
         const showSpotlightIndicatorsValue = useObservableEagerState(
-          vm.showSpotlightIndicators,
+          vm.showSpotlightIndicators$,
         );
 
         return model instanceof GridTileViewModel ? (
@@ -414,9 +437,9 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const layouts = useMemo(() => {
     const inputs = {
-      minBounds: gridBoundsObservable,
-      spotlightAlignment,
-      pipAlignment,
+      minBounds$: gridBoundsObservable$,
+      spotlightAlignment$,
+      pipAlignment$,
     };
     return {
       grid: makeGridLayout(inputs),
@@ -425,7 +448,7 @@ export const InCallView: FC<InCallViewProps> = ({
       "spotlight-expanded": makeSpotlightExpandedLayout(inputs),
       "one-on-one": makeOneOnOneLayout(inputs),
     };
-  }, [gridBoundsObservable, spotlightAlignment, pipAlignment]);
+  }, [gridBoundsObservable$, spotlightAlignment$, pipAlignment$]);
 
   const renderContent = (): JSX.Element => {
     if (layout.type === "pip") {
@@ -539,9 +562,10 @@ export const InCallView: FC<InCallViewProps> = ({
   if (supportsReactions) {
     buttons.push(
       <ReactionToggleButton
+        vm={vm}
         key="raise_hand"
         className={styles.raiseHand}
-        userId={client.getUserId()!}
+        identifier={`${client.getUserId()}:${client.getDeviceId()}`}
         onTouchEnd={onControlsTouchEnd}
       />,
     );
@@ -581,6 +605,10 @@ export const InCallView: FC<InCallViewProps> = ({
             height={11}
             aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
           />
+          {/* Don't mind this odd placement, it's just a little debug label */}
+          {debugTileLayout
+            ? `Tiles generation: ${tileStoreGeneration}`
+            : undefined}
         </div>
       )}
       {showControls && <div className={styles.buttons}>{buttons}</div>}
@@ -637,8 +665,8 @@ export const InCallView: FC<InCallViewProps> = ({
       <RoomAudioRenderer />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} />
-      <ReactionsAudioRenderer />
-      <ReactionsOverlay />
+      <ReactionsAudioRenderer vm={vm} />
+      <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (
         <>

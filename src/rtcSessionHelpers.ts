@@ -5,18 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  LivekitFocus,
-  LivekitFocusActive,
+  type LivekitFocus,
+  type LivekitFocusActive,
   isLivekitFocus,
   isLivekitFocusConfig,
 } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
+import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
-import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
+import { ElementWidgetActions, type WidgetHelpers, widget } from "./widget";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -43,19 +44,28 @@ async function makePreferredLivekitFoci(
     preferredFoci.push(focusInUse);
   }
 
-  // Prioritize the client well known over the configured sfu.
-  const wellKnownFoci =
-    rtcSession.room.client.getClientWellKnown()?.[FOCI_WK_KEY];
-  if (Array.isArray(wellKnownFoci)) {
-    preferredFoci.push(
-      ...wellKnownFoci
-        .filter((f) => !!f)
-        .filter(isLivekitFocusConfig)
-        .map((wellKnownFocus) => {
-          logger.log("Adding livekit focus from well known: ", wellKnownFocus);
-          return { ...wellKnownFocus, livekit_alias: livekitAlias };
-        }),
-    );
+  // Prioritize the .well-known/matrix/client, if available, over the configured SFU
+  const domain = rtcSession.room.client.getDomain();
+  if (domain) {
+    // we use AutoDiscovery instead of relying on the MatrixClient having already
+    // been fully configured and started
+    const wellKnownFoci = (await AutoDiscovery.getRawClientConfig(domain))?.[
+      FOCI_WK_KEY
+    ];
+    if (Array.isArray(wellKnownFoci)) {
+      preferredFoci.push(
+        ...wellKnownFoci
+          .filter((f) => !!f)
+          .filter(isLivekitFocusConfig)
+          .map((wellKnownFocus) => {
+            logger.log(
+              "Adding livekit focus from well known: ",
+              wellKnownFocus,
+            );
+            return { ...wellKnownFocus, livekit_alias: livekitAlias };
+          }),
+      );
+    }
   }
 
   const urlFromConf = Config.get().livekit?.livekit_service_url;
@@ -120,6 +130,7 @@ export async function enterRTCSession(
 
 const widgetPostHangupProcedure = async (
   widget: WidgetHelpers,
+  promiseBeforeHangup?: Promise<unknown>,
 ): Promise<void> => {
   // we need to wait until the callEnded event is tracked on posthog.
   // Otherwise the iFrame gets killed before the callEnded event got tracked.
@@ -132,6 +143,8 @@ const widgetPostHangupProcedure = async (
     logger.error("Failed to set call widget `alwaysOnScreen` to false", e);
   }
 
+  // Wait for any last bits before hanging up.
+  await promiseBeforeHangup;
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
   // We need to wait because this makes the client hosting this widget killing the IFrame.
@@ -140,9 +153,12 @@ const widgetPostHangupProcedure = async (
 
 export async function leaveRTCSession(
   rtcSession: MatrixRTCSession,
+  promiseBeforeHangup?: Promise<unknown>,
 ): Promise<void> {
   await rtcSession.leaveRoomSession();
   if (widget) {
-    await widgetPostHangupProcedure(widget);
+    await widgetPostHangupProcedure(widget, promiseBeforeHangup);
+  } else {
+    await promiseBeforeHangup;
   }
 }

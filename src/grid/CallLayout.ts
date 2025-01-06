@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, Observable } from "rxjs";
-import { ComponentType } from "react";
+import { type BehaviorSubject, type Observable } from "rxjs";
+import { type ComponentType } from "react";
 
-import { LayoutProps } from "./Grid";
-import { TileViewModel } from "../state/TileViewModel";
+import { type LayoutProps } from "./Grid";
+import { type TileViewModel } from "../state/TileViewModel";
 
 export interface Bounds {
   width: number;
@@ -31,15 +31,15 @@ export interface CallLayoutInputs {
   /**
    * The minimum bounds of the layout area.
    */
-  minBounds: Observable<Bounds>;
+  minBounds$: Observable<Bounds>;
   /**
    * The alignment of the floating spotlight tile, if present.
    */
-  spotlightAlignment: BehaviorSubject<Alignment>;
+  spotlightAlignment$: BehaviorSubject<Alignment>;
   /**
    * The alignment of the small picture-in-picture tile, if present.
    */
-  pipAlignment: BehaviorSubject<Alignment>;
+  pipAlignment$: BehaviorSubject<Alignment>;
 }
 
 export interface CallLayoutOutputs<Model> {

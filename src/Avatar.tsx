@@ -5,9 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useMemo, FC, CSSProperties, useState, useEffect } from "react";
+import {
+  useMemo,
+  type FC,
+  type CSSProperties,
+  useState,
+  useEffect,
+} from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 
 import { useClientState } from "./ClientContext";
 
@@ -27,7 +33,7 @@ export const sizes = new Map([
   [Size.XL, 90],
 ]);
 
-interface Props {
+export interface Props {
   id: string;
   name: string;
   className?: string;

@@ -5,10 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, test, vitest } from "vitest";
-import { FC } from "react";
+import { expect, test, vitest, afterEach } from "vitest";
+import { type FC } from "react";
 import { render } from "@testing-library/react";
-import { afterEach } from "node:test";
 import userEvent from "@testing-library/user-event";
 
 import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
@@ -29,9 +28,11 @@ const TestComponent: FC = () => {
   }
   return (
     <>
-      <button onClick={() => audioCtx.playSound("aSound")}>Valid sound</button>
+      <button onClick={() => void audioCtx.playSound("aSound")}>
+        Valid sound
+      </button>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-      <button onClick={() => audioCtx.playSound("not-valid" as any)}>
+      <button onClick={() => void audioCtx.playSound("not-valid" as any)}>
         Invalid sound
       </button>
     </>
@@ -61,6 +62,7 @@ class MockAudioContext {
     vitest.mocked({
       connect: (v: unknown) => v,
       start: () => {},
+      addEventListener: (_name: string, cb: () => void) => cb(),
     }),
   );
   public createGain = vitest.fn().mockReturnValue(this.gain);
@@ -98,7 +100,8 @@ test("will use the correct device", () => {
         audioInput: deviceStub,
         audioOutput: {
           selectedId: "chosen-device",
-          available: [],
+          selectedGroupId: "",
+          available: new Map(),
           select: () => {},
         },
         videoInput: deviceStub,

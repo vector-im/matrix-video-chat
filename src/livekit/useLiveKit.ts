@@ -7,32 +7,32 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ConnectionState,
-  E2EEOptions,
+  type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
   Room,
-  RoomOptions,
+  type RoomOptions,
   Track,
 } from "livekit-client";
 import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { defaultLiveKitOptions } from "./options";
-import { SFUConfig } from "./openIDSFU";
-import { MuteStates } from "../room/MuteStates";
+import { type SFUConfig } from "./openIDSFU";
+import { type MuteStates } from "../room/MuteStates";
 import {
-  MediaDevice,
-  MediaDevices,
+  type MediaDevice,
+  type MediaDevices,
   useMediaDevices,
 } from "./MediaDevicesContext";
 import {
-  ECConnectionState,
+  type ECConnectionState,
   useECConnectionState,
 } from "./useECConnectionState";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { E2eeType } from "../e2ee/e2eeType";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -45,7 +45,7 @@ export function useLiveKit(
   sfuConfig: SFUConfig | undefined,
   e2eeSystem: EncryptionSystem,
 ): UseLivekitResult {
-  const e2eeOptions = useMemo((): E2EEOptions | undefined => {
+  const e2eeOptions = useMemo((): E2EEManagerOptions | undefined => {
     if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
@@ -290,18 +290,14 @@ export function useLiveKit(
             room.localParticipant.audioTrackPublications.values(),
           ).find((d) => d.source === Track.Source.Microphone)?.track;
 
-          const defaultDevice = device.available.find(
-            (d) => d.deviceId === "default",
-          );
           if (
-            defaultDevice &&
             activeMicTrack &&
             // only restart if the stream is still running: LiveKit will detect
             // when a track stops & restart appropriately, so this is not our job.
             // Plus, we need to avoid restarting again if the track is already in
             // the process of being restarted.
             activeMicTrack.mediaStreamTrack.readyState !== "ended" &&
-            defaultDevice.groupId !==
+            device.selectedGroupId !==
               activeMicTrack.mediaStreamTrack.getSettings().groupId
           ) {
             // It's different, so restart the track, ie. cause Livekit to do another

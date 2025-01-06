@@ -6,45 +6,30 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ComponentPropsWithoutRef,
+  type ComponentPropsWithoutRef,
   forwardRef,
-  MouseEvent,
-  useCallback,
-  useMemo,
+  type MouseEvent,
 } from "react";
 import { Link as CpdLink } from "@vector-im/compound-web";
-import { useHistory } from "react-router-dom";
-import { createPath, LocationDescriptor, Path } from "history";
+import { type LinkProps, useHref, useLinkClickHandler } from "react-router-dom";
 import classNames from "classnames";
 
-import { useLatest } from "../useLatest";
 import styles from "./Link.module.css";
 
 export function useLink(
-  to: LocationDescriptor,
+  to: LinkProps["to"],
   state?: unknown,
-): [Path, (e: MouseEvent) => void] {
-  const latestState = useLatest(state);
-  const history = useHistory();
-  const path = useMemo(
-    () => (typeof to === "string" ? to : createPath(to)),
-    [to],
-  );
-  const onClick = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      history.push(to, latestState.current);
-    },
-    [history, to, latestState],
-  );
+): [string, (e: MouseEvent<HTMLAnchorElement>) => void] {
+  const href = useHref(to);
+  const onClick = useLinkClickHandler(to, { state });
 
-  return [path, onClick];
+  return [href, onClick];
 }
 
 type Props = Omit<
   ComponentPropsWithoutRef<typeof CpdLink>,
   "href" | "onClick"
-> & { to: LocationDescriptor; state?: unknown };
+> & { to: LinkProps["to"]; state?: unknown };
 
 /**
  * A version of Compound's link component that integrates with our router setup.

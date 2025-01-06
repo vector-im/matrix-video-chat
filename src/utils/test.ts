@@ -4,37 +4,41 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { map, Observable, of, SchedulerLike } from "rxjs";
-import { RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, vi } from "vitest";
+import { map, type Observable, of, type SchedulerLike } from "rxjs";
+import { type RunHelpers, TestScheduler } from "rxjs/testing";
+import { expect, vi, vitest } from "vitest";
 import {
-  RoomMember,
-  Room as MatrixRoom,
+  type RoomMember,
+  type Room as MatrixRoom,
   MatrixEvent,
-  Room,
+  type Room,
   TypedEventEmitter,
 } from "matrix-js-sdk/src/matrix";
 import {
   CallMembership,
-  Focus,
+  type Focus,
   MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap,
-  SessionMembershipData,
+  type MatrixRTCSessionEventHandlerMap,
+  type SessionMembershipData,
 } from "matrix-js-sdk/src/matrixrtc";
 import {
-  LocalParticipant,
-  LocalTrackPublication,
-  RemoteParticipant,
-  RemoteTrackPublication,
-  Room as LivekitRoom,
+  type LocalParticipant,
+  type LocalTrackPublication,
+  type RemoteParticipant,
+  type RemoteTrackPublication,
+  type Room as LivekitRoom,
 } from "livekit-client";
+import { randomUUID } from "crypto";
 
 import {
   LocalUserMediaViewModel,
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
-import { DEFAULT_CONFIG, ResolvedConfigOptions } from "../config/ConfigOptions";
+import {
+  DEFAULT_CONFIG,
+  type ResolvedConfigOptions,
+} from "../config/ConfigOptions";
 import { Config } from "../config/Config";
 
 export function withFakeTimers(continuation: () => void): void {
@@ -74,14 +78,14 @@ export function withTestScheduler(
     continuation({
       ...helpers,
       schedule(marbles, actions) {
-        const actionsObservable = helpers
+        const actionsObservable$ = helpers
           .cold(marbles)
           .pipe(map((value) => actions[value]()));
         const results = Object.fromEntries(
           Object.keys(actions).map((value) => [value, undefined] as const),
         );
         // Run the actions and verify that none of them error
-        helpers.expectObservable(actionsObservable).toBe(marbles, results);
+        helpers.expectObservable(actionsObservable$).toBe(marbles, results);
       },
     }),
   );
@@ -129,6 +133,7 @@ export function mockRtcMembership(
   };
   const event = new MatrixEvent({
     sender: typeof user === "string" ? user : user.userId,
+    event_id: `$-ev-${randomUUID()}:example.org`,
   });
   return new CallMembership(event, data);
 }
@@ -154,16 +159,16 @@ export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
 export function mockLivekitRoom(
   room: Partial<LivekitRoom>,
   {
-    remoteParticipants,
-  }: { remoteParticipants?: Observable<RemoteParticipant[]> } = {},
+    remoteParticipants$,
+  }: { remoteParticipants$?: Observable<RemoteParticipant[]> } = {},
 ): LivekitRoom {
   const livekitRoom = {
     ...mockEmitter(),
     ...room,
   } as Partial<LivekitRoom> as LivekitRoom;
-  if (remoteParticipants) {
+  if (remoteParticipants$) {
     livekitRoom.remoteParticipants = new Map();
-    remoteParticipants.subscribe((newRemoteParticipants) => {
+    remoteParticipants$.subscribe((newRemoteParticipants) => {
       livekitRoom.remoteParticipants.clear();
       newRemoteParticipants.forEach((p) => {
         livekitRoom.remoteParticipants.set(p.identity, p);
@@ -200,6 +205,8 @@ export async function withLocalMedia(
       kind: E2eeType.PER_PARTICIPANT,
     },
     mockLivekitRoom({ localParticipant }),
+    of(null),
+    of(null),
   );
   try {
     await continuation(vm);
@@ -235,7 +242,9 @@ export async function withRemoteMedia(
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    mockLivekitRoom({}, { remoteParticipants: of([remoteParticipant]) }),
+    mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
+    of(null),
+    of(null),
   );
   try {
     await continuation(vm);
@@ -255,6 +264,12 @@ export class MockRTCSession extends TypedEventEmitter<
   MatrixRTCSessionEvent,
   MatrixRTCSessionEventHandlerMap
 > {
+  public readonly statistics = {
+    counters: {},
+  };
+
+  public leaveRoomSession = vitest.fn().mockResolvedValue(undefined);
+
   public constructor(
     public readonly room: Room,
     private localMembership: CallMembership,
@@ -263,10 +278,14 @@ export class MockRTCSession extends TypedEventEmitter<
     super();
   }
 
+  public isJoined(): true {
+    return true;
+  }
+
   public withMemberships(
-    rtcMembers: Observable<Partial<CallMembership>[]>,
+    rtcMembers$: Observable<Partial<CallMembership>[]>,
   ): MockRTCSession {
-    rtcMembers.subscribe((m) => {
+    rtcMembers$.subscribe((m) => {
       const old = this.memberships;
       // always prepend the local participant
       const updated = [this.localMembership, ...(m as CallMembership[])];

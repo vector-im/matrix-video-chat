@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useMemo, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Menu, MenuItem } from "@vector-im/compound-web";
@@ -82,7 +82,7 @@ export const UserMenu: FC<Props> = ({
 
   if (!isAuthenticated) {
     return (
-      <LinkButton to={{ pathname: "/login", state: { from: location } }}>
+      <LinkButton to={{ pathname: "/login" }} state={{ from: location }}>
         {t("log_in")}
       </LinkButton>
     );

@@ -5,19 +5,20 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useDeferredValue, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect } from "react";
 import { filter, interval, throttle } from "rxjs";
 
-import { CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel";
 import joinCallSoundMp3 from "../sound/join_call.mp3";
 import joinCallSoundOgg from "../sound/join_call.ogg";
 import leftCallSoundMp3 from "../sound/left_call.mp3";
 import leftCallSoundOgg from "../sound/left_call.ogg";
-import handSoundOgg from "../sound/raise_hand.ogg?url";
-import handSoundMp3 from "../sound/raise_hand.mp3?url";
+import handSoundOgg from "../sound/raise_hand.ogg";
+import handSoundMp3 from "../sound/raise_hand.mp3";
+import screenShareStartedOgg from "../sound/screen_share_started.ogg";
+import screenShareStartedMp3 from "../sound/screen_share_started.mp3";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
-import { useReactions } from "../useReactions";
 import { useLatest } from "../useLatest";
 
 // Do not play any sounds if the participant count has exceeded this
@@ -25,7 +26,7 @@ import { useLatest } from "../useLatest";
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
 export const THROTTLE_SOUND_EFFECT_MS = 500;
 
-const sounds = prefetchSounds({
+export const callEventAudioSounds = prefetchSounds({
   join: {
     mp3: joinCallSoundMp3,
     ogg: joinCallSoundOgg,
@@ -38,6 +39,10 @@ const sounds = prefetchSounds({
     mp3: handSoundMp3,
     ogg: handSoundOgg,
   },
+  screenshareStarted: {
+    mp3: screenShareStartedMp3,
+    ogg: screenShareStartedOgg,
+  },
 });
 
 export function CallEventAudioRenderer({
@@ -46,26 +51,13 @@ export function CallEventAudioRenderer({
   vm: CallViewModel;
 }): ReactNode {
   const audioEngineCtx = useAudioContext({
-    sounds,
+    sounds: callEventAudioSounds,
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
 
-  const { raisedHands } = useReactions();
-  const raisedHandCount = useMemo(
-    () => Object.keys(raisedHands).length,
-    [raisedHands],
-  );
-  const previousRaisedHandCount = useDeferredValue(raisedHandCount);
-
   useEffect(() => {
-    if (audioEngineRef.current && previousRaisedHandCount < raisedHandCount) {
-      audioEngineRef.current.playSound("raiseHand");
-    }
-  }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
-
-  useEffect(() => {
-    const joinSub = vm.memberChanges
+    const joinSub = vm.memberChanges$
       .pipe(
         filter(
           ({ joined, ids }) =>
@@ -74,10 +66,10 @@ export function CallEventAudioRenderer({
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        audioEngineRef.current?.playSound("join");
+        void audioEngineRef.current?.playSound("join");
       });
 
-    const leftSub = vm.memberChanges
+    const leftSub = vm.memberChanges$
       .pipe(
         filter(
           ({ ids, left }) =>
@@ -86,12 +78,22 @@ export function CallEventAudioRenderer({
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        audioEngineRef.current?.playSound("left");
+        void audioEngineRef.current?.playSound("left");
       });
+
+    const handRaisedSub = vm.newHandRaised$.subscribe(() => {
+      void audioEngineRef.current?.playSound("raiseHand");
+    });
+
+    const screenshareSub = vm.newScreenShare$.subscribe(() => {
+      void audioEngineRef.current?.playSound("screenshareStarted");
+    });
 
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
+      handRaisedSub.unsubscribe();
+      screenshareSub.unsubscribe();
     };
   }, [audioEngineRef, vm]);
 

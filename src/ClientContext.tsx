@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  FC,
+  type FC,
   useCallback,
   useEffect,
   useState,
@@ -15,10 +15,10 @@ import {
   useRef,
   useMemo,
 } from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
-import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk/src/client";
 
 import type { WidgetApi } from "matrix-widget-api";
@@ -144,7 +144,7 @@ interface Props {
 }
 
 export const ClientProvider: FC<Props> = ({ children }) => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
@@ -228,9 +228,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     await client.clearStores();
     clearSession();
     setInitClientState(null);
-    history.push("/");
+    navigate("/");
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
-  }, [history, initClientState?.client]);
+  }, [navigate, initClientState?.client]);
 
   const { t } = useTranslation();
 

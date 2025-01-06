@@ -5,13 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useState, useCallback, FormEvent, FormEventHandler, FC } from "react";
-import { useHistory } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import {
+  useState,
+  useCallback,
+  type FormEvent,
+  type FormEventHandler,
+  type FC,
+} from "react";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 import { Button } from "@vector-im/compound-web";
+import { useNavigate } from "react-router-dom";
 
 import {
   createRoom,
@@ -40,7 +46,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [joinExistingCallModalOpen, setJoinExistingCallModalOpen] =
     useState(false);
@@ -71,7 +77,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         if (!createRoomResult.password)
           throw new Error("Failed to create room with shared secret");
 
-        history.push(
+        navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
@@ -93,15 +99,15 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         }
       });
     },
-    [client, history, setJoinExistingCallModalOpen],
+    [client, navigate, setJoinExistingCallModalOpen],
   );
 
   const recentRooms = useGroupCallRooms(client);
 
   const [existingAlias, setExistingAlias] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
-    history.push(`/${existingAlias}`);
-  }, [history, existingAlias]);
+    navigate(`/${existingAlias}`);
+  }, [navigate, existingAlias]);
 
   return (
     <>
