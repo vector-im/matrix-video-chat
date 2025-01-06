@@ -6,14 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ComponentProps,
-  ReactNode,
+  type ComponentProps,
+  type ReactNode,
   forwardRef,
   useCallback,
   useRef,
   useState,
 } from "react";
-import { animated } from "@react-spring/web";
+import { type animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import {
@@ -34,22 +34,21 @@ import {
   ToggleMenuItem,
   Menu,
 } from "@vector-im/compound-web";
-import { useObservableEagerState } from "observable-hooks";
+import { useObservableEagerState, useObservableState } from "observable-hooks";
 
 import styles from "./GridTile.module.css";
 import {
-  UserMediaViewModel,
+  type UserMediaViewModel,
   useDisplayName,
   LocalUserMediaViewModel,
-  RemoteUserMediaViewModel,
+  type RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
-import { GridTileViewModel } from "../state/TileViewModel";
+import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
-import { useReactions } from "../useReactions";
-import { ReactionOption } from "../reactions";
+import { useReactionsSender } from "../reactions/useReactionsSender";
 
 interface TileProps {
   className?: string;
@@ -82,14 +81,21 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     },
     ref,
   ) => {
+    const { toggleRaisedHand } = useReactionsSender();
     const { t } = useTranslation();
-    const video = useObservableEagerState(vm.video);
-    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
-    const encryptionStatus = useObservableEagerState(vm.encryptionStatus);
-    const audioEnabled = useObservableEagerState(vm.audioEnabled);
-    const videoEnabled = useObservableEagerState(vm.videoEnabled);
-    const speaking = useObservableEagerState(vm.speaking);
-    const cropVideo = useObservableEagerState(vm.cropVideo);
+    const video = useObservableEagerState(vm.video$);
+    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
+    const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
+    const audioStreamStats = useObservableEagerState<
+      RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+    >(vm.audioStreamStats$);
+    const videoStreamStats = useObservableEagerState<
+      RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+    >(vm.videoStreamStats$);
+    const audioEnabled = useObservableEagerState(vm.audioEnabled$);
+    const videoEnabled = useObservableEagerState(vm.videoEnabled$);
+    const speaking = useObservableEagerState(vm.speaking$);
+    const cropVideo = useObservableEagerState(vm.cropVideo$);
     const onSelectFitContain = useCallback(
       (e: Event) => {
         e.preventDefault();
@@ -97,7 +103,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
-    const { raisedHands, toggleRaisedHand, reactions } = useReactions();
+    const handRaised = useObservableState(vm.handRaised$);
+    const reaction = useObservableState(vm.reaction$);
 
     const AudioIcon = locallyMuted
       ? VolumeOffSolidIcon
@@ -124,9 +131,6 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       </>
     );
 
-    const handRaised: Date | undefined = raisedHands[vm.member?.userId ?? ""];
-    const currentReaction: ReactionOption | undefined =
-      reactions[vm.member?.userId ?? ""];
     const raisedHandOnClick = vm.local
       ? (): void => void toggleRaisedHand()
       : undefined;
@@ -144,7 +148,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         videoFit={cropVideo ? "cover" : "contain"}
         className={classNames(className, styles.tile, {
           [styles.speaking]: showSpeaking,
-          [styles.handRaised]: !showSpeaking && !!handRaised,
+          [styles.handRaised]: !showSpeaking && handRaised,
         })}
         nameTagLeadingIcon={
           <AudioIcon
@@ -172,9 +176,12 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
             {menu}
           </Menu>
         }
-        raisedHandTime={handRaised}
-        currentReaction={currentReaction}
+        raisedHandTime={handRaised ?? undefined}
+        currentReaction={reaction ?? undefined}
         raisedHandOnClick={raisedHandOnClick}
+        localParticipant={vm.local}
+        audioStreamStats={audioStreamStats}
+        videoStreamStats={videoStreamStats}
         {...props}
       />
     );
@@ -197,8 +204,8 @@ interface LocalUserMediaTileProps extends TileProps {
 const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
   ({ vm, onOpenProfile, ...props }, ref) => {
     const { t } = useTranslation();
-    const mirror = useObservableEagerState(vm.mirror);
-    const alwaysShow = useObservableEagerState(vm.alwaysShow);
+    const mirror = useObservableEagerState(vm.mirror$);
+    const alwaysShow = useObservableEagerState(vm.alwaysShow$);
     const latestAlwaysShow = useLatest(alwaysShow);
     const onSelectAlwaysShow = useCallback(
       (e: Event) => {
@@ -248,8 +255,8 @@ const RemoteUserMediaTile = forwardRef<
   RemoteUserMediaTileProps
 >(({ vm, ...props }, ref) => {
   const { t } = useTranslation();
-  const locallyMuted = useObservableEagerState(vm.locallyMuted);
-  const localVolume = useObservableEagerState(vm.localVolume);
+  const locallyMuted = useObservableEagerState(vm.locallyMuted$);
+  const localVolume = useObservableEagerState(vm.localVolume$);
   const onSelectMute = useCallback(
     (e: Event) => {
       e.preventDefault();
@@ -315,7 +322,7 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
   ({ vm, onOpenProfile, ...props }, theirRef) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const media = useObservableEagerState(vm.media);
+    const media = useObservableEagerState(vm.media$);
     const displayName = useDisplayName(media);
 
     if (media instanceof LocalUserMediaViewModel) {

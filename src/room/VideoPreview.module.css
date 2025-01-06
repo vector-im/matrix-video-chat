@@ -18,12 +18,22 @@ Please see LICENSE in the repository root for full details.
   width: 100%;
   height: 100%;
   object-fit: cover;
-  background-color: black;
-  background-color: var(--cpd-color-bg-subtle-primary);
+  background-color: var(--video-tile-background);
 }
 
 video.mirror {
   transform: scaleX(-1);
+}
+
+.preview .cameraStarting {
+  position: absolute;
+  top: var(--cpd-space-10x);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  color: var(--cpd-color-text-secondary);
 }
 
 .avatarContainer {
@@ -35,7 +45,7 @@ video.mirror {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--cpd-color-bg-subtle-secondary);
+  background-color: var(--video-tile-background);
 }
 
 .buttonBar {

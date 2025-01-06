@@ -8,14 +8,17 @@ Please see LICENSE in the repository root for full details.
 import { expect, test, vi } from "vitest";
 
 import {
+  mockRtcMembership,
   withLocalMedia,
   withRemoteMedia,
   withTestScheduler,
 } from "../utils/test";
 
+const rtcMembership = mockRtcMembership("@alice:example.org", "AAAA");
+
 test("control a participant's volume", async () => {
   const setVolumeSpy = vi.fn();
-  await withRemoteMedia({}, { setVolume: setVolumeSpy }, (vm) =>
+  await withRemoteMedia(rtcMembership, {}, { setVolume: setVolumeSpy }, (vm) =>
     withTestScheduler(({ expectObservable, schedule }) => {
       schedule("-ab---c---d|", {
         a() {
@@ -46,7 +49,7 @@ test("control a participant's volume", async () => {
           expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
         },
       });
-      expectObservable(vm.localVolume).toBe("ab(cd)(ef)g", {
+      expectObservable(vm.localVolume$).toBe("ab(cd)(ef)g", {
         a: 1,
         b: 0,
         c: 0.6,
@@ -60,13 +63,13 @@ test("control a participant's volume", async () => {
 });
 
 test("toggle fit/contain for a participant's video", async () => {
-  await withRemoteMedia({}, {}, (vm) =>
+  await withRemoteMedia(rtcMembership, {}, {}, (vm) =>
     withTestScheduler(({ expectObservable, schedule }) => {
       schedule("-ab|", {
         a: () => vm.toggleFitContain(),
         b: () => vm.toggleFitContain(),
       });
-      expectObservable(vm.cropVideo).toBe("abc", {
+      expectObservable(vm.cropVideo$).toBe("abc", {
         a: true,
         b: false,
         c: true,
@@ -76,17 +79,21 @@ test("toggle fit/contain for a participant's video", async () => {
 });
 
 test("local media remembers whether it should always be shown", async () => {
-  await withLocalMedia({}, (vm) =>
+  await withLocalMedia(rtcMembership, {}, (vm) =>
     withTestScheduler(({ expectObservable, schedule }) => {
       schedule("-a|", { a: () => vm.setAlwaysShow(false) });
-      expectObservable(vm.alwaysShow).toBe("ab", { a: true, b: false });
+      expectObservable(vm.alwaysShow$).toBe("ab", { a: true, b: false });
     }),
   );
   // Next local media should start out *not* always shown
-  await withLocalMedia({}, (vm) =>
-    withTestScheduler(({ expectObservable, schedule }) => {
-      schedule("-a|", { a: () => vm.setAlwaysShow(true) });
-      expectObservable(vm.alwaysShow).toBe("ab", { a: false, b: true });
-    }),
+  await withLocalMedia(
+    rtcMembership,
+
+    {},
+    (vm) =>
+      withTestScheduler(({ expectObservable, schedule }) => {
+        schedule("-a|", { a: () => vm.setAlwaysShow(true) });
+        expectObservable(vm.alwaysShow$).toBe("ab", { a: false, b: true });
+      }),
   );
 });

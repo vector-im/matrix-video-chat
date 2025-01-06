@@ -6,89 +6,86 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { afterAll, expect, test } from "vitest";
-import { TooltipProvider } from "@vector-im/compound-web";
-import { act, ReactNode } from "react";
-
 import {
-  MockRoom,
-  MockRTCSession,
-  TestReactionsWrapper,
-} from "../utils/testReactions";
+  afterAll,
+  afterEach,
+  beforeEach,
+  expect,
+  test,
+  vitest,
+  type MockedFunction,
+  type Mock,
+} from "vitest";
+import { TooltipProvider } from "@vector-im/compound-web";
+import { act, type ReactNode } from "react";
+
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
-import { GenericReaction, ReactionSet } from "../reactions";
 import {
   playReactionsSound,
   soundEffectVolumeSetting,
 } from "../settings/settings";
+import { useAudioContext } from "../useAudioContext";
+import { GenericReaction, ReactionSet } from "../reactions";
+import { prefetchSounds } from "../soundUtils";
+import { type CallViewModel } from "../state/CallViewModel";
+import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
+import {
+  alice,
+  aliceRtcMember,
+  bobRtcMember,
+  local,
+  localRtcMember,
+} from "../utils/test-fixtures";
 
-const memberUserIdAlice = "@alice:example.org";
-const memberUserIdBob = "@bob:example.org";
-const memberUserIdCharlie = "@charlie:example.org";
-const memberEventAlice = "$membership-alice:example.org";
-const memberEventBob = "$membership-bob:example.org";
-const memberEventCharlie = "$membership-charlie:example.org";
-
-const membership: Record<string, string> = {
-  [memberEventAlice]: memberUserIdAlice,
-  [memberEventBob]: memberUserIdBob,
-  [memberEventCharlie]: memberUserIdCharlie,
-};
-
-function TestComponent({
-  rtcSession,
-}: {
-  rtcSession: MockRTCSession;
-}): ReactNode {
+function TestComponent({ vm }: { vm: CallViewModel }): ReactNode {
   return (
     <TooltipProvider>
-      <TestReactionsWrapper rtcSession={rtcSession}>
-        <ReactionsAudioRenderer />
-      </TestReactionsWrapper>
+      <ReactionsAudioRenderer vm={vm} />
     </TooltipProvider>
   );
 }
 
-const originalPlayFn = window.HTMLMediaElement.prototype.play;
-afterAll(() => {
+vitest.mock("../useAudioContext");
+vitest.mock("../soundUtils");
+
+afterEach(() => {
+  vitest.resetAllMocks();
   playReactionsSound.setValue(playReactionsSound.defaultValue);
   soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
-  window.HTMLMediaElement.prototype.play = originalPlayFn;
+});
+
+afterAll(() => {
+  vitest.restoreAllMocks();
+});
+
+let playSound: Mock<
+  NonNullable<ReturnType<typeof useAudioContext>>["playSound"]
+>;
+
+beforeEach(() => {
+  (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
+    sound: new ArrayBuffer(0),
+  });
+  playSound = vitest.fn();
+  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
+    playSound,
+  });
 });
 
 test("preloads all audio elements", () => {
+  const { vm } = getBasicCallViewModelEnvironment([local, alice]);
   playReactionsSound.setValue(true);
-  const rtcSession = new MockRTCSession(
-    new MockRoom(memberUserIdAlice),
-    membership,
-  );
-  const { container } = render(<TestComponent rtcSession={rtcSession} />);
-  expect(container.getElementsByTagName("audio")).toHaveLength(
-    // All reactions plus the generic sound
-    ReactionSet.filter((r) => r.sound).length + 1,
-  );
-});
-
-test("loads no audio elements when disabled in settings", () => {
-  playReactionsSound.setValue(false);
-  const rtcSession = new MockRTCSession(
-    new MockRoom(memberUserIdAlice),
-    membership,
-  );
-  const { container } = render(<TestComponent rtcSession={rtcSession} />);
-  expect(container.getElementsByTagName("audio")).toHaveLength(0);
+  render(<TestComponent vm={vm} />);
+  expect(prefetchSounds).toHaveBeenCalledOnce();
 });
 
 test("will play an audio sound when there is a reaction", () => {
-  const audioIsPlaying: string[] = [];
-  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
-    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
-    return Promise.resolve();
-  };
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
-  const room = new MockRoom(memberUserIdAlice);
-  const rtcSession = new MockRTCSession(room, membership);
-  render(<TestComponent rtcSession={rtcSession} />);
+  render(<TestComponent vm={vm} />);
 
   // Find the first reaction with a sound effect
   const chosenReaction = ReactionSet.find((r) => !!r.sound);
@@ -98,22 +95,23 @@ test("will play an audio sound when there is a reaction", () => {
     );
   }
   act(() => {
-    room.testSendReaction(memberEventAlice, chosenReaction, membership);
+    reactionsSubject$.next({
+      [aliceRtcMember.deviceId]: {
+        reactionOption: chosenReaction,
+        expireAfter: new Date(0),
+      },
+    });
   });
-  expect(audioIsPlaying).toHaveLength(1);
-  expect(audioIsPlaying[0]).toContain(chosenReaction.sound?.ogg);
+  expect(playSound).toHaveBeenCalledWith(chosenReaction.name);
 });
 
 test("will play the generic audio sound when there is soundless reaction", () => {
-  const audioIsPlaying: string[] = [];
-  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
-    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
-    return Promise.resolve();
-  };
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
-  const room = new MockRoom(memberUserIdAlice);
-  const rtcSession = new MockRTCSession(room, membership);
-  render(<TestComponent rtcSession={rtcSession} />);
+  render(<TestComponent vm={vm} />);
 
   // Find the first reaction with a sound effect
   const chosenReaction = ReactionSet.find((r) => !r.sound);
@@ -123,45 +121,23 @@ test("will play the generic audio sound when there is soundless reaction", () =>
     );
   }
   act(() => {
-    room.testSendReaction(memberEventAlice, chosenReaction, membership);
+    reactionsSubject$.next({
+      [aliceRtcMember.deviceId]: {
+        reactionOption: chosenReaction,
+        expireAfter: new Date(0),
+      },
+    });
   });
-  expect(audioIsPlaying).toHaveLength(1);
-  expect(audioIsPlaying[0]).toContain(GenericReaction.sound?.ogg);
-});
-
-test("will play an audio sound with the correct volume", () => {
-  playReactionsSound.setValue(true);
-  soundEffectVolumeSetting.setValue(0.5);
-  const room = new MockRoom(memberUserIdAlice);
-  const rtcSession = new MockRTCSession(room, membership);
-  const { getByTestId } = render(<TestComponent rtcSession={rtcSession} />);
-
-  // Find the first reaction with a sound effect
-  const chosenReaction = ReactionSet.find((r) => !!r.sound);
-  if (!chosenReaction) {
-    throw Error(
-      "No reactions have sounds configured, this test cannot succeed",
-    );
-  }
-  act(() => {
-    room.testSendReaction(memberEventAlice, chosenReaction, membership);
-  });
-  expect((getByTestId(chosenReaction.name) as HTMLAudioElement).volume).toEqual(
-    0.5,
-  );
+  expect(playSound).toHaveBeenCalledWith(GenericReaction.name);
 });
 
 test("will play multiple audio sounds when there are multiple different reactions", () => {
-  const audioIsPlaying: string[] = [];
-  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
-    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
-    return Promise.resolve();
-  };
+  const { vm, reactionsSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
   playReactionsSound.setValue(true);
-
-  const room = new MockRoom(memberUserIdAlice);
-  const rtcSession = new MockRTCSession(room, membership);
-  render(<TestComponent rtcSession={rtcSession} />);
+  render(<TestComponent vm={vm} />);
 
   // Find the first reaction with a sound effect
   const [reaction1, reaction2] = ReactionSet.filter((r) => !!r.sound);
@@ -171,11 +147,21 @@ test("will play multiple audio sounds when there are multiple different reaction
     );
   }
   act(() => {
-    room.testSendReaction(memberEventAlice, reaction1, membership);
-    room.testSendReaction(memberEventBob, reaction2, membership);
-    room.testSendReaction(memberEventCharlie, reaction1, membership);
+    reactionsSubject$.next({
+      [aliceRtcMember.deviceId]: {
+        reactionOption: reaction1,
+        expireAfter: new Date(0),
+      },
+      [bobRtcMember.deviceId]: {
+        reactionOption: reaction2,
+        expireAfter: new Date(0),
+      },
+      [localRtcMember.deviceId]: {
+        reactionOption: reaction1,
+        expireAfter: new Date(0),
+      },
+    });
   });
-  expect(audioIsPlaying).toHaveLength(2);
-  expect(audioIsPlaying[0]).toContain(reaction1.sound?.ogg);
-  expect(audioIsPlaying[1]).toContain(reaction2.sound?.ogg);
+  expect(playSound).toHaveBeenCalledWith(reaction1.name);
+  expect(playSound).toHaveBeenCalledWith(reaction2.name);
 });
