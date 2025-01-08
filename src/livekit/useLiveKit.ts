@@ -9,6 +9,7 @@ import {
   ConnectionState,
   type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
+  type LocalVideoTrack,
   Room,
   type RoomOptions,
   Track,
@@ -33,6 +34,11 @@ import {
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import {
+  useTrackProcessor,
+  useTrackProcessorSync,
+} from "./TrackProcessorContext";
+import { useInitial } from "../useInitial";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -79,12 +85,15 @@ export function useLiveKit(
   const devices = useMediaDevices();
   const initialDevices = useRef<MediaDevices>(devices);
 
+  const { processor } = useTrackProcessor() || {};
+  const initialProcessor = useInitial(() => processor);
   const roomOptions = useMemo(
     (): RoomOptions => ({
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: initialDevices.current.videoInput.selectedId,
+        processor: initialProcessor,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
@@ -95,7 +104,7 @@ export function useLiveKit(
       },
       e2ee: e2eeOptions,
     }),
-    [e2eeOptions],
+    [e2eeOptions, initialProcessor],
   );
 
   // Store if audio/video are currently updating. If to prohibit unnecessary calls
@@ -119,6 +128,21 @@ export function useLiveKit(
     });
     return r;
   }, [roomOptions, e2eeSystem]);
+
+  const videoTrack = useMemo(
+    () =>
+      Array.from(room.localParticipant.videoTrackPublications.values()).find(
+        (v) => v.source === Track.Source.Camera,
+      )?.track as LocalVideoTrack | null,
+    [
+      room.localParticipant.videoTrackPublications,
+      // We need to update on map changes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      room.localParticipant.videoTrackPublications.keys(),
+    ],
+  );
+
+  useTrackProcessorSync(videoTrack);
 
   const connectionState = useECConnectionState(
     {
@@ -195,6 +219,7 @@ export function useLiveKit(
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
                   buttonEnabled.current.audio,
+                  room.options.audioCaptureDefaults,
                 );
                 audioMuteUpdating.current = false;
                 break;
@@ -202,6 +227,7 @@ export function useLiveKit(
                 videoMuteUpdating.current = true;
                 trackPublication = await participant.setCameraEnabled(
                   buttonEnabled.current.video,
+                  room.options.videoCaptureDefaults,
                 );
                 videoMuteUpdating.current = false;
                 break;

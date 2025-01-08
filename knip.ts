@@ -24,7 +24,13 @@ export default {
     // then Knip will flag it as a false positive
     // https://github.com/webpro-nl/knip/issues/766
     "@vector-im/compound-web",
+    // We need this so the eslint is happy with @livekit/track-processors.
+    // This might be a bug in the livekit repo but for now we fix it on the
+    // element call side.
+    "@types/dom-mediacapture-transform",
     "matrix-widget-api",
+    // we bundle files from this and lazy load them:
+    "@mediapipe/tasks-vision",
   ],
   ignoreExportsUsedInFile: true,
 } satisfies KnipConfig;

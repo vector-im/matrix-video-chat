@@ -22,6 +22,7 @@ import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
+import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 
 const SentryRoute = Sentry.withSentryReactRouterV6Routing(Route);
 
@@ -72,22 +73,20 @@ export const App: FC = () => {
           <TooltipProvider>
             {loaded ? (
               <Suspense fallback={null}>
-                <ClientProvider>
-                  <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary fallback={errorPage}>
-                      <DisconnectedBanner />
-                      <Routes>
-                        <SentryRoute path="/" element={<HomePage />} />
-                        <SentryRoute path="/login" element={<LoginPage />} />
-                        <SentryRoute
-                          path="/register"
-                          element={<RegisterPage />}
-                        />
-                        <SentryRoute path="*" element={<RoomPage />} />
-                      </Routes>
-                    </Sentry.ErrorBoundary>
-                  </MediaDevicesProvider>
-                </ClientProvider>
+                <Providers>
+                  <Sentry.ErrorBoundary fallback={errorPage}>
+                    <DisconnectedBanner />
+                    <Routes>
+                      <SentryRoute path="/" element={<HomePage />} />
+                      <SentryRoute path="/login" element={<LoginPage />} />
+                      <SentryRoute
+                        path="/register"
+                        element={<RegisterPage />}
+                      />
+                      <SentryRoute path="*" element={<RoomPage />} />
+                    </Routes>
+                  </Sentry.ErrorBoundary>
+                </Providers>
               </Suspense>
             ) : (
               <LoadingView />
@@ -96,5 +95,18 @@ export const App: FC = () => {
         </ThemeProvider>
       </BackgroundProvider>
     </BrowserRouter>
+  );
+};
+
+const Providers: FC<{
+  children: JSX.Element;
+}> = ({ children }) => {
+  // We use this to stack all used providers to not make the App component to verbose
+  return (
+    <ClientProvider>
+      <MediaDevicesProvider>
+        <ProcessorProvider>{children}</ProcessorProvider>
+      </MediaDevicesProvider>
+    </ClientProvider>
   );
 };
