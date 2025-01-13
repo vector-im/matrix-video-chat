@@ -6,7 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState } from "react";
-import { useHistory, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClientLegacy } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";
@@ -19,7 +20,7 @@ interface Props {
 
 export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
   const location = useLocation();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { client, logout, authenticated, passwordlessUser } = useClientLegacy();
   const { displayName, avatarUrl } = useProfile(client);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -45,11 +46,13 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
           logout?.();
           break;
         case "login":
-          history.push("/login", { state: { from: location } });
+          navigate("/login", { state: { from: location } })?.catch((error) =>
+            logger.error("Failed to navigate to login", error),
+          );
           break;
       }
     },
-    [history, location, logout, setSettingsModalOpen],
+    [navigate, location, logout, setSettingsModalOpen],
   );
 
   const userName = client?.getUserIdLocalpart() ?? "";

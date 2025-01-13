@@ -14,8 +14,9 @@ import {
 } from "react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
 import { Button, Heading, Text } from "@vector-im/compound-web";
+import { useNavigate } from "react-router-dom";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import styles from "./CallEndedView.module.css";
 import feedbackStyle from "../input/FeedbackInput.module.css";
@@ -46,7 +47,7 @@ export const CallEndedView: FC<Props> = ({
   reconnect,
 }) => {
   const { t } = useTranslation();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const { displayName } = useProfile(client);
   const [surveySubmitted, setSurveySubmitted] = useState(false);
@@ -76,12 +77,14 @@ export const CallEndedView: FC<Props> = ({
             setSurveySubmitted(true);
           } else if (!confineToRoom) {
             // if the user already has an account immediately go back to the home screen
-            history.push("/");
+            navigate("/")?.catch((error) => {
+              logger.error("Failed to navigate to /", error);
+            });
           }
         }, 1000);
       }, 1000);
     },
-    [endedCallId, history, isPasswordlessUser, confineToRoom, starRating],
+    [endedCallId, navigate, isPasswordlessUser, confineToRoom, starRating],
   );
 
   const createAccountDialog = isPasswordlessUser && (
