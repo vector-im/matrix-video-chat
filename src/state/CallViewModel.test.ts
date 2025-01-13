@@ -55,7 +55,7 @@ vi.mock("@livekit/components-core");
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
 const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
-const aliceDopplegangerRtcMember = mockRtcMembership(
+const aliceDoppelgangerRtcMember = mockRtcMembership(
   "@alice2:example.org",
   "AAAA",
 );
@@ -63,7 +63,7 @@ const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
 const alice = mockMatrixRoomMember(aliceRtcMember, { rawDisplayName: "Alice" });
-const aliceDoppleganger = mockMatrixRoomMember(aliceDopplegangerRtcMember, {
+const aliceDoppelganger = mockMatrixRoomMember(aliceDoppelgangerRtcMember, {
   rawDisplayName: "Alice",
 });
 const bob = mockMatrixRoomMember(bobRtcMember);
@@ -71,7 +71,7 @@ const carol = mockMatrixRoomMember(localRtcMember);
 const dave = mockMatrixRoomMember(daveRtcMember);
 
 const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
-const aliceDopplegangerId = `${aliceDoppleganger.userId}:${aliceRtcMember.deviceId}`;
+const aliceDoppelgangerId = `${aliceDoppelganger.userId}:${aliceRtcMember.deviceId}`;
 const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
@@ -89,7 +89,7 @@ const bobSharingScreen = mockRemoteParticipant({
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
 const roomMembers = new Map(
-  [alice, aliceDoppleganger, bob, carol, dave].map((p) => [p.userId, p]),
+  [alice, aliceDoppelganger, bob, carol, dave].map((p) => [p.userId, p]),
 );
 
 export interface GridLayoutSummary {
@@ -811,9 +811,9 @@ it("should disambiguate users with the same displayname", () => {
       hot(scenarioInputMarbles, {
         a: [],
         b: [aliceRtcMember],
-        c: [aliceRtcMember, aliceDopplegangerRtcMember],
-        d: [aliceRtcMember, aliceDopplegangerRtcMember, bobRtcMember],
-        e: [aliceDopplegangerRtcMember, bobRtcMember],
+        c: [aliceRtcMember, aliceDoppelgangerRtcMember],
+        d: [aliceRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
+        e: [aliceDoppelgangerRtcMember, bobRtcMember],
       }),
       of(ConnectionState.Connected),
       new Map(),
@@ -830,17 +830,17 @@ it("should disambiguate users with the same displayname", () => {
             c: new Map([
               ["local", undefined],
               [aliceId, "Alice (@alice:example.org)"],
-              [aliceDopplegangerId, "Alice (@alice2:example.org)"],
+              [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
             ]),
             d: new Map([
               ["local", undefined],
               [aliceId, "Alice (@alice:example.org)"],
-              [aliceDopplegangerId, "Alice (@alice2:example.org)"],
+              [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
               [bobId, undefined],
             ]),
             e: new Map([
               ["local", undefined],
-              [aliceDopplegangerId, "Alice"],
+              [aliceDoppelgangerId, "Alice"],
               [bobId, undefined],
             ]),
           },
