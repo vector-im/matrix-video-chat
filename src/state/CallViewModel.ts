@@ -18,7 +18,11 @@ import {
   type RemoteParticipant,
   Track,
 } from "livekit-client";
-import { type Room, type RoomMember } from "matrix-js-sdk/src/matrix";
+import {
+  RoomStateEvent,
+  type Room,
+  type RoomMember,
+} from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   EMPTY,
@@ -465,10 +469,11 @@ export class CallViewModel extends ViewModel {
    * any displaynames that clashes with another member. Only members
    * joined to the call are considered here.
    */
-  public readonly memberDisplaynames$ = fromEvent(
-    this.matrixRTCSession,
-    // This fires on both joins and leaves, as well as profile changes.
-    MatrixRTCSessionEvent.MembershipsChanged,
+  public readonly memberDisplaynames$ = merge(
+    // Handle call membership changes.
+    fromEvent(this.matrixRTCSession, MatrixRTCSessionEvent.MembershipsChanged),
+    // Handle room membership changes (and displayname updates)
+    fromEvent(this.matrixRTCSession.room, RoomStateEvent.Members),
   ).pipe(
     startWith(null),
     map(() => {
