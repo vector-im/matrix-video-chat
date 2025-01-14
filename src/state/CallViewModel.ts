@@ -364,13 +364,13 @@ type MediaItem = UserMedia | ScreenShare;
 function getRoomMemberFromRtcMember(
   rtcMember: CallMembership,
   room: Room,
-): { id: string; member: RoomMember | null } {
+): { id: string; member: RoomMember | undefined } {
   // WARN! This is not exactly the sender but the user defined in the state key.
   // This will be available once we change to the new "member as object" format in the MatrixRTC object.
   let id = rtcMember.sender + ":" + rtcMember.deviceId;
 
   if (!rtcMember.sender) {
-    return { id, member: null };
+    return { id, member: undefined };
   }
   if (
     rtcMember.sender === room.client.getUserId() &&
@@ -379,7 +379,7 @@ function getRoomMemberFromRtcMember(
     id = "local";
   }
 
-  const member = room.getMember(rtcMember.sender);
+  const member = room.getMember(rtcMember.sender) ?? undefined;
   return { id, member };
 }
 
@@ -551,7 +551,6 @@ export class CallViewModel extends ViewModel {
                   "Could not find member for media id: ",
                   livekitParticipantId,
                 );
-                break;
               }
               for (let i = 0; i < 1 + duplicateTiles; i++) {
                 const indexedMediaId = `${livekitParticipantId}:${i}`;
