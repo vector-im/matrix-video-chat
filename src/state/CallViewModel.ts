@@ -1,5 +1,5 @@
 /*
-Copyright 2023, 2024 New Vector Ltd.
+Copyright 2023, 2024, 2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
@@ -18,10 +18,7 @@ import {
   type RemoteParticipant,
   Track,
 } from "livekit-client";
-import {
-  type Room as MatrixRoom,
-  type RoomMember,
-} from "matrix-js-sdk/src/matrix";
+import { type Room, type RoomMember } from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   EMPTY,
@@ -54,7 +51,6 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc";
-import { removeHiddenChars } from "matrix-js-sdk/src/utils";
 
 import { ViewModel } from "./ViewModel";
 import {
@@ -96,6 +92,7 @@ import {
 } from "../reactions";
 import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
+import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -360,59 +357,26 @@ class ScreenShare {
 
 type MediaItem = UserMedia | ScreenShare;
 
-function findMatrixRoomMember(
-  room: MatrixRoom,
-  id: string,
-): RoomMember | undefined {
-  if (id === "local")
-    return room.getMember(room.client.getUserId()!) ?? undefined;
+function getRoomMemberFromRtcMember(
+  rtcMember: CallMembership,
+  room: Room,
+): { id: string; member: RoomMember | null } {
+  // WARN! This is not exactly the sender but the user defined in the state key.
+  // This will be available once we change to the new "member as object" format in the MatrixRTC object.
+  let id = rtcMember.sender + ":" + rtcMember.deviceId;
 
-  const parts = id.split(":");
-  // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
-  if (parts.length < 3) {
-    logger.warn(
-      `Livekit participants ID (${id}) doesn't look like a userId:deviceId combination`,
-    );
-    return undefined;
+  if (!rtcMember.sender) {
+    return { id, member: null };
+  }
+  if (
+    rtcMember.sender === room.client.getUserId() &&
+    rtcMember.deviceId === room.client.getDeviceId()
+  ) {
+    id = "local";
   }
 
-  parts.pop();
-  const userId = parts.join(":");
-
-  return room.getMember(userId) ?? undefined;
-}
-
-// Borrowed from https://github.com/matrix-org/matrix-js-sdk/blob/f10deb5ef2e8f061ff005af0476034382ea128ca/src/models/room-member.ts#L409
-function shouldDisambiguate(
-  displayName: string,
-  userId: string,
-  memberships: CallMembership[],
-  room: MatrixRoom,
-): boolean {
-  if (!displayName || displayName === userId) return false;
-
-  // First check if the displayname is something we consider truthy
-  // after stripping it of zero width characters and padding spaces
-  const strippedDisplayName = removeHiddenChars(displayName);
-  if (!strippedDisplayName) return false;
-
-  // Next check if the name contains something that look like a mxid
-  // If it does, it may be someone trying to impersonate someone else
-  // Show full mxid in this case
-  if (/@.+:.+/.test(displayName)) return true;
-
-  // Also show mxid if the display name contains any LTR/RTL characters as these
-  // make it very difficult for us to find similar *looking* display names
-  // E.g "Mark" could be cloned by writing "kraM" but in RTL.
-  if (/[\u200E\u200F\u202A-\u202F]/.test(displayName)) return true;
-
-  // Also show mxid if there are other people with the same or similar
-  // displayname, after hidden character removal.
-  return memberships
-    .map((m) => findMatrixRoomMember(room, `${m.sender}:${m.deviceId}`))
-    .some(
-      (m) => m?.userId !== userId && m?.rawDisplayName === strippedDisplayName,
-    );
+  const member = room.getMember(rtcMember.sender);
+  return { id, member };
 }
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
@@ -503,44 +467,27 @@ export class CallViewModel extends ViewModel {
    */
   public readonly memberDisplaynames$ = fromEvent(
     this.matrixRTCSession,
+    // This fires on both joins and leaves, as well as profile changes.
     MatrixRTCSessionEvent.MembershipsChanged,
   ).pipe(
     startWith(null),
     map(() => {
-      const { memberships, room } = this.matrixRTCSession;
       const displaynameMap = new Map<string, string>();
-      // m.rtc.members are the basis for calculating what is visible in the call
+      const { room, memberships } = this.matrixRTCSession;
+
+      // We only consider RTC members for disambiguation as they are the only visible members.
       for (const rtcMember of memberships) {
-        // WARN! This is not exactly the sender but the user defined in the state key.
-        // This will be available once we change to the new "member as object" format in the MatrixRTC object.
-        let livekitParticipantId = rtcMember.sender + ":" + rtcMember.deviceId;
-
-        if (
-          rtcMember.sender === room.client.getUserId() &&
-          rtcMember.deviceId === room.client.getDeviceId()
-        ) {
-          livekitParticipantId = "local";
-        }
-
-        const member = findMatrixRoomMember(room, livekitParticipantId);
+        const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+        const { member } = getRoomMemberFromRtcMember(rtcMember, room);
         if (!member) {
-          logger.error(
-            "Could not find member for media id: ",
-            livekitParticipantId,
-          );
-          break;
+          logger.error("Could not find member for media id:", matrixIdentifier);
+          continue;
         }
-        const rawDisplayName = member?.rawDisplayName;
-        if (
-          shouldDisambiguate(rawDisplayName, member.userId, memberships, room)
-        ) {
-          displaynameMap.set(
-            livekitParticipantId,
-            `${member.rawDisplayName} (${member.userId})`,
-          );
-        } else {
-          displaynameMap.set(livekitParticipantId, member.rawDisplayName);
-        }
+        const disambiguate = shouldDisambiguate(member, memberships, room);
+        displaynameMap.set(
+          matrixIdentifier,
+          calculateDisplayName(member, disambiguate),
+        );
       }
       return displaynameMap;
     }),
@@ -578,22 +525,15 @@ export class CallViewModel extends ViewModel {
             const room = this.matrixRTCSession.room;
             // m.rtc.members are the basis for calculating what is visible in the call
             for (const rtcMember of this.matrixRTCSession.memberships) {
-              // WARN! This is not exactly the sender but the user defined in the state key.
-              // This will be available once we change to the new "member as object" format in the MatrixRTC object.
-              let livekitParticipantId =
-                rtcMember.sender + ":" + rtcMember.deviceId;
-
+              const { member, id: livekitParticipantId } =
+                getRoomMemberFromRtcMember(rtcMember, room);
               const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
 
               let participant:
                 | LocalParticipant
                 | RemoteParticipant
                 | undefined = undefined;
-              if (
-                rtcMember.sender === room.client.getUserId()! &&
-                rtcMember.deviceId === room.client.getDeviceId()
-              ) {
-                livekitParticipantId = "local";
+              if (livekitParticipantId === "local") {
                 participant = localParticipant;
               } else {
                 participant = remoteParticipants.find(
@@ -601,12 +541,12 @@ export class CallViewModel extends ViewModel {
                 );
               }
 
-              const member = findMatrixRoomMember(room, livekitParticipantId);
               if (!member) {
                 logger.error(
                   "Could not find member for media id: ",
                   livekitParticipantId,
                 );
+                break;
               }
               for (let i = 0; i < 1 + duplicateTiles; i++) {
                 const indexedMediaId = `${livekitParticipantId}:${i}`;
@@ -635,7 +575,7 @@ export class CallViewModel extends ViewModel {
                       this.encryptionSystem,
                       this.livekitRoom,
                       this.memberDisplaynames$.pipe(
-                        map((m) => m.get(livekitParticipantId) ?? "[👻]"),
+                        map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                       ),
                       this.handsRaised$.pipe(
                         map((v) => v[matrixIdentifier]?.time ?? null),
