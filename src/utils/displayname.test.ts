@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, test } from "vitest";
+
 import { calculateDisplayName, shouldDisambiguate } from "./displayname";
 import {
   alice,
