@@ -50,33 +50,39 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import type { RaisedHandInfo } from "../reactions";
 import { showNonMemberTiles } from "../settings/settings";
+import {
+  alice,
+  aliceDoppelganger,
+  aliceDoppelgangerId,
+  aliceDoppelgangerRtcMember,
+  aliceId,
+  aliceParticipant,
+  aliceRtcMember,
+  bob,
+  bobId,
+  bobRtcMember,
+  bobZeroWidthSpace,
+  bobZeroWidthSpaceId,
+  bobZeroWidthSpaceRtcMember,
+  daveRTL,
+  daveRTLId,
+  daveRTLRtcMember,
+  local,
+  localId,
+  localRtcMember,
+} from "../utils/test-fixtures";
 
 vi.mock("@livekit/components-core");
 
-const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
-const aliceDoppelgangerRtcMember = mockRtcMembership(
-  "@alice2:example.org",
-  "AAAA",
-);
-const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
-const alice = mockMatrixRoomMember(aliceRtcMember, { rawDisplayName: "Alice" });
-const aliceDoppelganger = mockMatrixRoomMember(aliceDoppelgangerRtcMember, {
-  rawDisplayName: "Alice",
-});
-const bob = mockMatrixRoomMember(bobRtcMember);
-const carol = mockMatrixRoomMember(localRtcMember);
-const dave = mockMatrixRoomMember(daveRtcMember);
+const carol = local;
+const carolId = localId;
+const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 
-const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
-const aliceDoppelgangerId = `${aliceDoppelganger.userId}:${aliceRtcMember.deviceId}`;
-const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
 const localParticipant = mockLocalParticipant({ identity: "" });
-const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
 const aliceSharingScreen = mockRemoteParticipant({
   identity: aliceId,
   isScreenShareEnabled: true,
@@ -89,7 +95,9 @@ const bobSharingScreen = mockRemoteParticipant({
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
 const roomMembers = new Map(
-  [alice, aliceDoppelganger, bob, carol, dave].map((p) => [p.userId, p]),
+  [alice, aliceDoppelganger, bob, bobZeroWidthSpace, carol, dave, daveRTL].map(
+    (p) => [p.userId, p],
+  ),
 );
 
 export interface GridLayoutSummary {
