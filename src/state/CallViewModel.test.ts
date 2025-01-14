@@ -809,10 +809,10 @@ it("should show at least one tile per MatrixRTCSession", () => {
   });
 });
 
-it("should disambiguate users with the same displayname", () => {
+test("should disambiguate users with the same displayname", () => {
   withTestScheduler(({ hot, expectObservable }) => {
-    const scenarioInputMarbles = "abcd";
-    const expectedLayoutMarbles = "abcd";
+    const scenarioInputMarbles = "abcde";
+    const expectedLayoutMarbles = "abcde";
 
     withCallViewModel(
       of([]),
@@ -830,26 +830,98 @@ it("should disambiguate users with the same displayname", () => {
         expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
           expectedLayoutMarbles,
           {
-            a: new Map([["local", undefined]]),
+            // Carol has no displayname - So userId is used.
+            a: new Map([[carolId, carol.userId]]),
             b: new Map([
-              ["local", undefined],
-              [aliceId, "Alice"],
+              [carolId, carol.userId],
+              [aliceId, alice.rawDisplayName],
             ]),
+            // The second alice joins.
             c: new Map([
-              ["local", undefined],
+              [carolId, carol.userId],
               [aliceId, "Alice (@alice:example.org)"],
               [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
             ]),
+            // Bob also joins
             d: new Map([
-              ["local", undefined],
+              [carolId, carol.userId],
               [aliceId, "Alice (@alice:example.org)"],
               [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
-              [bobId, undefined],
+              [bobId, bob.rawDisplayName],
             ]),
+            // Alice leaves, and the displayname should reset.
             e: new Map([
-              ["local", undefined],
+              [carolId, carol.userId],
               [aliceDoppelgangerId, "Alice"],
-              [bobId, undefined],
+              [bobId, bob.rawDisplayName],
+            ]),
+          },
+        );
+      },
+    );
+  });
+});
+
+test("should disambiguate users with invisible characters", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    const scenarioInputMarbles = "ab";
+    const expectedLayoutMarbles = "ab";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [bobRtcMember, bobZeroWidthSpaceRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        // Skip the null state.
+        expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
+          expectedLayoutMarbles,
+          {
+            // Carol has no displayname - So userId is used.
+            a: new Map([[carolId, carol.userId]]),
+            // Both Bobs join, and should handle zero width hacks.
+            b: new Map([
+              [carolId, carol.userId],
+              [bobId, `Bob (${bob.userId})`],
+              [bobZeroWidthSpaceId, `Bob (${bobZeroWidthSpace.userId})`],
+            ]),
+          },
+        );
+      },
+    );
+  });
+});
+
+test("should strip RTL characters from displayname", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    const scenarioInputMarbles = "ab";
+    const expectedLayoutMarbles = "ab";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [daveRtcMember, daveRTLRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        // Skip the null state.
+        expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
+          expectedLayoutMarbles,
+          {
+            // Carol has no displayname - So userId is used.
+            a: new Map([[carolId, carol.userId]]),
+            // Both Dave's join. Since after stripping
+            b: new Map([
+              [carolId, carol.userId],
+              // Not disambiguated
+              [daveId, "Dave"],
+              // This one is, since it's using RTL.
+              [daveRTLId, `evaD (${daveRTL.userId})`],
             ]),
           },
         );
