@@ -72,16 +72,22 @@
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
+    "auth_connection_failed_details": "<0>The application could not reach the call authentication service at <2>{{url}}</2>. If you are the server admin, check the network logs and make sure <5>lk-jwt-service</5> is listening at that address.</0>",
+    "auth_connection_rejected_details": "<0>The application connected to the call authentication service at <2>{{url}}</2>, but it responded with status code {{status}}. If you are the server admin, make sure <8>lk-jwt-service</8> is listening at that address and check the logs for more information.</0>",
     "call_not_found": "Call not found",
     "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <1>create a new one</1>.</0>",
+    "connection_failed": "Connection failed",
+    "connection_failed_description": "Could not connect to the call server. Check your network connection or try again later.",
     "connection_lost": "Connection lost",
     "connection_lost_description": "You were disconnected from the call.",
+    "connection_rejected_description": "Could not connect to the call server. Try again later or contact your server admin if this persists.",
     "e2ee_unsupported": "Incompatible browser",
     "e2ee_unsupported_description": "Your web browser does not support encrypted calls. Supported browsers include Chrome, Safari, and Firefox 117+.",
     "generic": "Something went wrong",
     "generic_description": "Submitting debug logs will help us track down the problem.",
     "open_elsewhere": "Opened in another tab",
-    "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page."
+    "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
+    "show_details": "Show details"
   },
   "group_call_loader": {
     "banned_body": "You have been banned from the room.",
