@@ -91,8 +91,7 @@ export class PosthogAnalytics {
    * 1. Declare a type for the event, extending IPosthogEvent.
    */
 
-  private static ANALYTICS_EVENT_TYPE =
-    "im.vector.analytics" as const;
+  private static ANALYTICS_EVENT_TYPE = "im.vector.analytics" as const;
 
   // set true during the constructor if posthog config is present, otherwise false
   private static internalInstance: PosthogAnalytics | null = null;
