@@ -13,8 +13,11 @@ import { type LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
 import {
-  AuthConnectionFailedError,
-  AuthConnectionRejectedError,
+  FetchError,
+  InvalidServerResponseError,
+  ResourceNotFoundConfigurationError,
+  UnexpectedResponseCodeError,
+  URLBuildingConfigurationError,
 } from "../RichError";
 
 export interface SFUConfig {
@@ -87,9 +90,18 @@ async function getLiveKitJWT(
   roomName: string,
   openIDToken: IOpenIDToken,
 ): Promise<SFUConfig> {
+  let url: URL;
+
+  try {
+    // TODO: check that relative URLs are handled as expected by this
+    url = new URL("sfu/get", livekitServiceURL);
+  } catch (e) {
+    throw new URLBuildingConfigurationError(livekitServiceURL, e);
+  }
+
   let res: Response;
   try {
-    res = await fetch(livekitServiceURL + "/sfu/get", {
+    res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -101,16 +113,17 @@ async function getLiveKitJWT(
       }),
     });
   } catch (e) {
-    throw new AuthConnectionFailedError(livekitServiceURL, e);
+    throw new FetchError(url, e);
   }
   if (!res.ok) {
     throw res.status === 404
-      ? new AuthConnectionFailedError(livekitServiceURL)
-      : new AuthConnectionRejectedError(
-          livekitServiceURL,
-          res.status,
-          await res.text(),
-        );
+      ? new ResourceNotFoundConfigurationError(url)
+      : new UnexpectedResponseCodeError(url, res.status, await res.text());
   }
-  return await res.json();
+
+  try {
+    return await res.json();
+  } catch (e) {
+    throw new InvalidServerResponseError(url, e);
+  }
 }

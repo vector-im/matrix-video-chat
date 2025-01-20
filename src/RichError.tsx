@@ -14,10 +14,11 @@ import {
 } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
+  ErrorIcon,
   OfflineIcon,
   PopOutIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { Button, Link } from "@vector-im/compound-web";
+import { Button } from "@vector-im/compound-web";
 
 import { ErrorView } from "./ErrorView";
 
@@ -58,40 +59,22 @@ export class OpenElsewhereError extends RichError {
   }
 }
 
-interface AuthConnectionFailedProps {
-  livekitServiceUrl: string;
+interface ConfigurationErrorViewProps {
+  children?: ReactNode;
 }
 
-const AuthConnectionFailed: FC<AuthConnectionFailedProps> = ({
-  livekitServiceUrl,
+const ConfigurationErrorView: FC<ConfigurationErrorViewProps> = ({
+  children,
 }) => {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
   const onShowDetailsClick = useCallback(() => setShowDetails(true), []);
 
   return (
-    <ErrorView Icon={OfflineIcon} title={t("error.connection_failed")}>
-      <p>{t("error.connection_failed_description")}</p>
+    <ErrorView Icon={ErrorIcon} title={t("error.configuration_error")}>
+      <p>{t("error.configuration_error_description")}</p>
       {showDetails ? (
-        <Trans
-          i18nKey="error.auth_connection_failed_details"
-          url={livekitServiceUrl}
-        >
-          <p>
-            The application could not reach the call authentication service at{" "}
-            <Link href={livekitServiceUrl} target="_blank">
-              {{ url: livekitServiceUrl } as unknown as ReactElement}
-            </Link>
-            . If you are the server admin, check the network logs and make sure{" "}
-            <Link
-              href="https://github.com/element-hq/lk-jwt-service/"
-              target="_blank"
-            >
-              lk-jwt-service
-            </Link>{" "}
-            is listening at that address.
-          </p>
-        </Trans>
+        children
       ) : (
         <Button kind="tertiary" onClick={onShowDetailsClick}>
           {t("error.show_details")}
@@ -101,82 +84,186 @@ const AuthConnectionFailed: FC<AuthConnectionFailedProps> = ({
   );
 };
 
-export class AuthConnectionFailedError extends RichError {
-  public constructor(livekitServiceUrl: string, cause?: unknown) {
+interface NetworkErrorViewProps {
+  children?: ReactNode;
+}
+
+const NetworkErrorView: FC<NetworkErrorViewProps> = ({ children }) => {
+  const { t } = useTranslation();
+  const [showDetails, setShowDetails] = useState(false);
+  const onShowDetailsClick = useCallback(() => setShowDetails(true), []);
+
+  return (
+    <ErrorView Icon={OfflineIcon} title={t("error.network_error")}>
+      <p>{t("error.network_error_description")}</p>
+      {showDetails ? (
+        children
+      ) : (
+        <Button kind="tertiary" onClick={onShowDetailsClick}>
+          {t("error.show_details")}
+        </Button>
+      )}
+    </ErrorView>
+  );
+};
+
+interface ServerErrorViewProps {
+  children?: ReactNode;
+}
+
+const ServerErrorView: FC<ServerErrorViewProps> = ({ children }) => {
+  const { t } = useTranslation();
+  const [showDetails, setShowDetails] = useState(false);
+  const onShowDetailsClick = useCallback(() => setShowDetails(true), []);
+
+  return (
+    <ErrorView Icon={ErrorIcon} title={t("error.server_error")}>
+      <p>{t("error.server_error_description")}</p>
+      {showDetails ? (
+        children
+      ) : (
+        <Button kind="tertiary" onClick={onShowDetailsClick}>
+          {t("error.show_details")}
+        </Button>
+      )}
+    </ErrorView>
+  );
+};
+
+export class ConfigurationError extends RichError {
+  public constructor(message: string, richMessage: ReactNode, cause?: unknown) {
     super(
-      `Failed to connect to ${livekitServiceUrl}`,
-      <AuthConnectionFailed livekitServiceUrl={livekitServiceUrl} />,
+      message,
+      <ConfigurationErrorView>{richMessage}</ConfigurationErrorView>,
       cause,
     );
   }
 }
 
-interface AuthConnectionRejectedProps {
-  livekitServiceUrl: string;
-  status: number;
-  response: string;
+export class NetworkError extends RichError {
+  public constructor(message: string, richMessage: ReactNode, cause?: unknown) {
+    super(message, <NetworkErrorView>{richMessage}</NetworkErrorView>, cause);
+  }
 }
 
-const AuthConnectionRejected: FC<AuthConnectionRejectedProps> = ({
-  livekitServiceUrl,
-  status,
-  response,
-}) => {
-  const { t } = useTranslation();
-  const [showDetails, setShowDetails] = useState(false);
-  const onShowDetailsClick = useCallback(() => setShowDetails(true), []);
+export class ServerError extends RichError {
+  public constructor(message: string, richMessage: ReactNode, cause?: unknown) {
+    super(message, <ServerErrorView>{richMessage}</ServerErrorView>, cause);
+  }
+}
 
-  return (
-    <ErrorView Icon={OfflineIcon} title={t("error.connection_failed")}>
-      <p>{t("error.connection_rejected_description")}</p>
-      {showDetails ? (
-        <Trans
-          i18nKey="error.auth_connection_rejected_details"
-          url={livekitServiceUrl}
-          status={status}
-          response={response}
-        >
-          <p>
-            The application connected to the call authentication service at{" "}
-            <Link href={livekitServiceUrl} target="_blank">
-              {{ url: livekitServiceUrl } as unknown as ReactElement}
-            </Link>
-            , but it responded with status code{" "}
-            {{ status } as unknown as ReactElement} (
-            {{ response } as unknown as ReactElement}). If you are the server
-            admin, make sure{" "}
-            <Link
-              href="https://github.com/element-hq/lk-jwt-service/"
-              target="_blank"
-            >
-              lk-jwt-service
-            </Link>{" "}
-            is listening at that address and check the logs for more
-            information.
-          </p>
-        </Trans>
-      ) : (
-        <Button kind="tertiary" onClick={onShowDetailsClick}>
-          {t("error.show_details")}
-        </Button>
-      )}
-    </ErrorView>
-  );
-};
-
-export class AuthConnectionRejectedError extends RichError {
-  public constructor(
-    livekitServiceUrl: string,
-    status: number,
-    response: string,
-  ) {
+export class URLBuildingConfigurationError extends ConfigurationError {
+  public constructor(baseUrl: string, cause?: unknown) {
+    let message: string;
+    if (cause instanceof Error) {
+      message = cause.message;
+    } else {
+      message = "Unknown error";
+    }
     super(
-      `Failed to connect to ${livekitServiceUrl} (status ${status})`,
-      <AuthConnectionRejected
-        livekitServiceUrl={livekitServiceUrl}
+      `Unable to build URL based on: ${baseUrl}`,
+      <Trans
+        i18nKey="error.invalid_url_details"
+        baseUrl={baseUrl}
+        message={message}
+      >
+        <p>
+          The URL derived from{" "}
+          <code>{{ baseUrl } as unknown as ReactElement}</code> is not valid:{" "}
+          <pre>{{ message } as unknown as ReactElement}</pre>
+        </p>
+      </Trans>,
+      cause,
+    );
+  }
+}
+
+export class ResourceNotFoundConfigurationError extends ConfigurationError {
+  public constructor(url: URL) {
+    super(
+      `The server returned a 404 response for: ${url.href}`,
+      <Trans i18nKey="error.resource_not_found_details" url={url.href}>
+        <p>
+          The request to{" "}
+          <code>{{ url: url.href } as unknown as ReactElement}</code> returned a{" "}
+          <code>404</code> response.
+        </p>
+      </Trans>,
+    );
+  }
+}
+
+export class UnexpectedResponseCodeError extends ServerError {
+  public constructor(url: URL, status: number, response: string) {
+    super(
+      `Received unexpected response code from ${url.href}: ${status}`,
+      <Trans
+        i18nKey="error.unexpected_response_code_details"
+        url={url.href}
         status={status}
         response={response}
-      />,
+      >
+        <p>
+          The application received an unexpected response from{" "}
+          <code>{{ url } as unknown as ReactElement}</code>. It received status
+          code <code>{{ status } as unknown as ReactElement}</code>:{" "}
+          <pre>{{ response } as unknown as ReactElement}</pre>.
+        </p>
+      </Trans>,
+    );
+  }
+}
+
+export class FetchError extends ServerError {
+  public constructor(url: URL, cause: unknown) {
+    let message: string;
+    if (cause instanceof Error) {
+      message = cause.message;
+    } else {
+      message = "Unknown error";
+    }
+
+    super(
+      `Failed to connect to ${url.href}: ${message}`,
+      <Trans
+        i18nKey="error.fetch_error_details"
+        url={url.href}
+        message={message}
+      >
+        <p>
+          The application received an unexpected response from{" "}
+          <code>{{ url: url.href } as unknown as ReactElement}</code>. It
+          received status code{" "}
+          <code>{{ message } as unknown as ReactElement}</code>.
+        </p>
+      </Trans>,
+    );
+  }
+}
+
+export class InvalidServerResponseError extends ServerError {
+  public constructor(url: URL, cause: unknown) {
+    let message: string;
+    if (cause instanceof Error) {
+      message = cause.message;
+    } else {
+      message = "Unknown error";
+    }
+
+    super(
+      `Invalid response received from ${url.href}: ${message}`,
+      <Trans
+        i18nKey="error.invalid_server_response_error_details"
+        url={url.href}
+        message={message}
+      >
+        <p>
+          The server at{" "}
+          <code>{{ url: url.href } as unknown as ReactElement}</code> returned
+          an invalid response:{" "}
+          <pre>{{ message } as unknown as ReactElement}</pre>
+        </p>
+      </Trans>,
     );
   }
 }
