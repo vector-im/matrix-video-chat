@@ -104,7 +104,13 @@ async function getLiveKitJWT(
     throw new AuthConnectionFailedError(livekitServiceURL, e);
   }
   if (!res.ok) {
-    throw new AuthConnectionRejectedError(livekitServiceURL, res.status);
+    throw res.status === 404
+      ? new AuthConnectionFailedError(livekitServiceURL)
+      : new AuthConnectionRejectedError(
+          livekitServiceURL,
+          res.status,
+          await res.text(),
+        );
   }
   return await res.json();
 }

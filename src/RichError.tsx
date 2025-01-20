@@ -102,7 +102,7 @@ const AuthConnectionFailed: FC<AuthConnectionFailedProps> = ({
 };
 
 export class AuthConnectionFailedError extends RichError {
-  public constructor(livekitServiceUrl: string, cause: unknown) {
+  public constructor(livekitServiceUrl: string, cause?: unknown) {
     super(
       `Failed to connect to ${livekitServiceUrl}`,
       <AuthConnectionFailed livekitServiceUrl={livekitServiceUrl} />,
@@ -114,11 +114,13 @@ export class AuthConnectionFailedError extends RichError {
 interface AuthConnectionRejectedProps {
   livekitServiceUrl: string;
   status: number;
+  response: string;
 }
 
 const AuthConnectionRejected: FC<AuthConnectionRejectedProps> = ({
   livekitServiceUrl,
   status,
+  response,
 }) => {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
@@ -132,6 +134,7 @@ const AuthConnectionRejected: FC<AuthConnectionRejectedProps> = ({
           i18nKey="error.auth_connection_rejected_details"
           url={livekitServiceUrl}
           status={status}
+          response={response}
         >
           <p>
             The application connected to the call authentication service at{" "}
@@ -139,7 +142,8 @@ const AuthConnectionRejected: FC<AuthConnectionRejectedProps> = ({
               {{ url: livekitServiceUrl } as unknown as ReactElement}
             </Link>
             , but it responded with status code{" "}
-            {{ status } as unknown as ReactElement}. If you are the server
+            {{ status } as unknown as ReactElement} (
+            {{ response } as unknown as ReactElement}). If you are the server
             admin, make sure{" "}
             <Link
               href="https://github.com/element-hq/lk-jwt-service/"
@@ -161,12 +165,17 @@ const AuthConnectionRejected: FC<AuthConnectionRejectedProps> = ({
 };
 
 export class AuthConnectionRejectedError extends RichError {
-  public constructor(livekitServiceUrl: string, status: number) {
+  public constructor(
+    livekitServiceUrl: string,
+    status: number,
+    response: string,
+  ) {
     super(
       `Failed to connect to ${livekitServiceUrl} (status ${status})`,
       <AuthConnectionRejected
         livekitServiceUrl={livekitServiceUrl}
         status={status}
+        response={response}
       />,
     );
   }

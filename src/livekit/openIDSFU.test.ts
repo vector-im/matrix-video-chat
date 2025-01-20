@@ -59,9 +59,22 @@ test("getSFUConfigWithOpenID throws if connection fails", async () => {
   });
 });
 
-test("getSFUConfigWithOpenID throws if server returns error", async () => {
+test("getSFUConfigWithOpenID throws if endpoint is not found", async () => {
   await withFetchSpy(async (fetch) => {
     fetch.mockResolvedValue({ ok: false, status: 404 } as Response);
+    await expect(async () =>
+      getSFUConfigWithOpenID(mockClient, mockFocus),
+    ).rejects.toThrowError(expect.any(AuthConnectionFailedError));
+  });
+});
+
+test("getSFUConfigWithOpenID throws if endpoint returns error", async () => {
+  await withFetchSpy(async (fetch) => {
+    fetch.mockResolvedValue({
+      ok: false,
+      status: 503,
+      text: async () => Promise.resolve("Internal server error"),
+    } as Response);
     await expect(async () =>
       getSFUConfigWithOpenID(mockClient, mockFocus),
     ).rejects.toThrowError(expect.any(AuthConnectionRejectedError));
