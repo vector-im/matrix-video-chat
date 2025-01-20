@@ -47,6 +47,17 @@ test("getSFUConfigWithOpenID gets the JWT token", async () => {
       jwt: "JWT token",
       url: "LiveKit URL",
     });
+    expect(fetch).toHaveBeenCalledWith("LiveKit service URL/sfu/get", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        room: "LiveKit alias",
+        openid_token: {},
+        device_id: "Device ID",
+      }),
+    });
   });
 });
 
