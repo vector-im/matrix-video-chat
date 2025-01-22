@@ -122,7 +122,23 @@ async function getLiveKitJWT(
   }
 
   try {
-    return await res.json();
+    const json = await res.json();
+    if (typeof json.jwt !== "string") {
+      // We don't need to check that the JWT is valid, because we pass it through to
+      // the SFU opaquely.
+      throw new Error("Invalid jwt field in server response: not string");
+    }
+    if (typeof json.url !== "string") {
+      throw new Error("Invalid url field in server response: not string");
+    }
+    if (!json.url.startsWith("wss://")) {
+      throw new Error("Invalid url field in server response: not a wss:// URL");
+    }
+
+    return {
+      jwt: json.jwt,
+      url: json.url,
+    };
   } catch (e) {
     throw new InvalidServerResponseError(url, e);
   }
