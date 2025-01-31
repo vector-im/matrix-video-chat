@@ -158,13 +158,12 @@ Replace ``<server_name>`` with your server's ``public_baseurl`` name and ``<elem
 This configuration will tell Element X to use your hosted Element Call widget for video calls instead of the default one.
 
 #### Element Desktop
-For using it with Element Desktop you have to create / edit the config.json in:
+For using it with Element Desktop you have to create or edit Element's config.json as explained in the official [documentation](https://ems-docs.element.io/books/element-server-suite-documentation-lts-2310/page/configuring-element-desktop)
+>``%APPDATA%\$NAME\config.json`` on Windows \
+>``$XDG_CONFIG_HOME/$NAME/config.json`` or ``~/.config/$NAME/config.json`` on Linux \
+>``~/Library/Application Support/$NAME/config.json`` on macOS
 
-``%APPDATA%\$NAME\config.json`` on Windows \
-``$XDG_CONFIG_HOME/$NAME/config.json`` or ``~/.config/$NAME/config.json`` on Linux \
-``~/Library/Application Support/$NAME/config.json`` on macOS
-
-In the paths above, ``$NAME`` is typically Element, unless you use ``--profile $PROFILE`` in which case it becomes ``Element-$PROFILE``.
+>In the paths above, ``$NAME`` is typically Element, unless you use ``--profile $PROFILE`` in which case it becomes ``Element-$PROFILE``.
 
 ```json
 ...
