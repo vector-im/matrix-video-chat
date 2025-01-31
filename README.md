@@ -140,6 +140,40 @@ The configuration is a list of Foci configs:
     },
 ]
 ```
+## Using your own widget for Element X / Element Desktop
+If you want Element clients to use your own hosted widget of Element Call instead of the one hosted at call.element.io you need to:
+### Element X
+#### Server side requirements
+1. Create a JSON file at the following path on your server: ``https://<server_name>/.well-known/element/element.json``
+
+2. Add the following content to the JSON file:
+```json
+{
+    "call": {
+        "widget_url": "https://<element-call-url>"
+    }
+}
+```
+Replace ``<server_name>`` with your server's ``public_baseurl`` name and ``<element-call-url>`` with the domain where your Element Call widget is hosted.
+This configuration will tell Element X to use your hosted Element Call widget for video calls instead of the default one.
+
+#### Element Desktop
+For using it with Element Desktop you have to create / edit the config.json in:
+
+``%APPDATA%\$NAME\config.json`` on Windows \
+``$XDG_CONFIG_HOME/$NAME/config.json`` or ``~/.config/$NAME/config.json`` on Linux \
+``~/Library/Application Support/$NAME/config.json`` on macOS
+
+In the paths above, ``$NAME`` is typically Element, unless you use ``--profile $PROFILE`` in which case it becomes ``Element-$PROFILE``.
+
+```json
+...
+    "element_call": {
+        "url": "https://<element-call-url>",
+        "use_exclusively": true
+    }
+...
+```
 
 ## Translation
 
