@@ -12,6 +12,13 @@ import { useEffect, useState } from "react";
 import { type LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
+import {
+  FetchError,
+  InvalidServerResponseError,
+  ResourceNotFoundConfigurationError,
+  UnexpectedResponseCodeError,
+  URLBuildingConfigurationError,
+} from "../RichError";
 
 export interface SFUConfig {
   url: string;
@@ -35,25 +42,24 @@ export function useOpenIDSFU(
   client: OpenIDClientParts,
   rtcSession: MatrixRTCSession,
 ): SFUConfig | undefined {
-  const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
+  const [sfuConfig, setSFUConfig] = useState<SFUConfig | Error | undefined>(
+    undefined,
+  );
 
   const activeFocus = useActiveLivekitFocus(rtcSession);
 
   useEffect(() => {
     if (activeFocus) {
       getSFUConfigWithOpenID(client, activeFocus).then(
-        (sfuConfig) => {
-          setSFUConfig(sfuConfig);
-        },
-        (e) => {
-          logger.error("Failed to get SFU config", e);
-        },
+        (sfuConfig) => setSFUConfig(sfuConfig),
+        (e) => setSFUConfig(e),
       );
     } else {
       setSFUConfig(undefined);
     }
   }, [client, activeFocus]);
 
+  if (sfuConfig instanceof Error) throw sfuConfig;
   return sfuConfig;
 }
 
@@ -64,26 +70,18 @@ export async function getSFUConfigWithOpenID(
   const openIdToken = await client.getOpenIdToken();
   logger.debug("Got openID token", openIdToken);
 
-  try {
-    logger.info(
-      `Trying to get JWT from call's active focus URL of ${activeFocus.livekit_service_url}...`,
-    );
-    const sfuConfig = await getLiveKitJWT(
-      client,
-      activeFocus.livekit_service_url,
-      activeFocus.livekit_alias,
-      openIdToken,
-    );
-    logger.info(`Got JWT from call's active focus URL.`);
+  logger.info(
+    `Trying to get JWT from call's active focus URL of ${activeFocus.livekit_service_url}...`,
+  );
+  const sfuConfig = await getLiveKitJWT(
+    client,
+    activeFocus.livekit_service_url,
+    activeFocus.livekit_alias,
+    openIdToken,
+  );
+  logger.info(`Got JWT from call's active focus URL.`);
 
-    return sfuConfig;
-  } catch (e) {
-    logger.warn(
-      `Failed to get JWT from RTC session's active focus URL of ${activeFocus.livekit_service_url}.`,
-      e,
-    );
-    return undefined;
-  }
+  return sfuConfig;
 }
 
 async function getLiveKitJWT(
@@ -92,8 +90,18 @@ async function getLiveKitJWT(
   roomName: string,
   openIDToken: IOpenIDToken,
 ): Promise<SFUConfig> {
+  let url: URL;
+
   try {
-    const res = await fetch(livekitServiceURL + "/sfu/get", {
+    // TODO: check that relative URLs are handled as expected by this
+    url = new URL("sfu/get", livekitServiceURL);
+  } catch (e) {
+    throw new URLBuildingConfigurationError(livekitServiceURL, e);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -104,11 +112,18 @@ async function getLiveKitJWT(
         device_id: client.getDeviceId(),
       }),
     });
-    if (!res.ok) {
-      throw new Error("SFU Config fetch failed with status code " + res.status);
-    }
+  } catch (e) {
+    throw new FetchError(url, e);
+  }
+  if (!res.ok) {
+    throw res.status === 404
+      ? new ResourceNotFoundConfigurationError(url)
+      : new UnexpectedResponseCodeError(url, res.status, await res.text());
+  }
+
+  try {
     return await res.json();
   } catch (e) {
-    throw new Error("SFU Config fetch failed with exception " + e);
+    throw new InvalidServerResponseError(url, e);
   }
 }

@@ -72,16 +72,26 @@
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
+    "configuration_error": "Configuration error",
+    "configuration_error_description": "There is a configuration issues with the system. Please contact your administrator.",
+    "server_error": "Server error",
+    "server_error_description": "There is a server issue with the system. Please try again and contact your administrator if the problem persists.",
+    "network_error": "Network error",
+    "network_error_description": "There is a network issue with the system. Please check your network connection and try again. Alternatively try a different network if available.",
     "call_not_found": "Call not found",
     "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <1>create a new one</1>.</0>",
+    "connection_failed": "Connection failed",
+    "connection_failed_description": "Could not connect to the call. Check your network connection or try again later.",
     "connection_lost": "Connection lost",
     "connection_lost_description": "You were disconnected from the call.",
+    "connection_rejected_description": "Could not connect to the call. Try again later or contact your server admin if this persists.",
     "e2ee_unsupported": "Incompatible browser",
     "e2ee_unsupported_description": "Your web browser does not support encrypted calls. Supported browsers include Chrome, Safari, and Firefox 117+.",
     "generic": "Something went wrong",
     "generic_description": "Submitting debug logs will help us track down the problem.",
     "open_elsewhere": "Opened in another tab",
-    "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page."
+    "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
+    "show_details": "Show details"
   },
   "group_call_loader": {
     "banned_body": "You have been banned from the room.",
