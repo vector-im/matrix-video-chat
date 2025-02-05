@@ -118,5 +118,8 @@
     "vite-plugin-svgr": "^4.0.0",
     "vitest": "^3.0.0",
     "vitest-axe": "^1.0.0-pre.3"
+  },
+  "resolutions": {
+    "matrix-widget-api": "1.10.0"
   }
 }
